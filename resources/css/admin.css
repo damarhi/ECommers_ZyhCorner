@@ -1,0 +1,159 @@
+/* Sidebar Customization */
+.sidebar {
+  background-color: #1E2753 !important;
+}
+
+@media (min-width: 992px) {
+  .sidebar {
+    position: fixed !important;
+    top: 70px !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+    height: calc(100vh - 70px) !important;
+  }
+  
+  .main-panel {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+    transition: width 0.25s ease, margin 0.25s ease;
+  }
+
+  .sidebar-icon-only .main-panel {
+    margin-left: 70px !important;
+    width: calc(100% - 70px) !important;
+  }
+}
+
+/* Sidebar Scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+.sidebar .nav {
+  background-color: #1E2753 !important;
+  padding-top: 30px !important; /* Space at the top of sidebar */
+}
+/* Sidebar Text Color */
+.sidebar .nav .nav-item .nav-link {
+  color: #ffffff !important;
+}
+.sidebar .nav .nav-item .nav-link i.menu-icon,
+.sidebar .nav .nav-item .nav-link i.menu-arrow {
+  color: #ffffff !important;
+}
+.sidebar .nav .nav-profile .nav-profile-text,
+.sidebar .nav .nav-item .nav-profile-text span {
+  color: #ffffff !important;
+}
+.sidebar .nav.sub-menu .nav-item .nav-link {
+  color: #ffffff !important;
+}
+.sidebar .nav.sub-menu .nav-item .nav-link:before {
+  color: #ffffff !important;
+}
+
+/* Base sizing and flex layout for nav-link */
+.sidebar .nav .nav-item .nav-link {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 4px 5px 4px !important;
+  padding: 12px 15px !important;
+  border-radius: 8px !important;
+  white-space: nowrap !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.sidebar .nav.sub-menu {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: -5px !important;
+}
+.sidebar .nav.sub-menu .nav-item .nav-link {
+  padding-left: 45px !important;
+  margin-bottom: 0 !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+.sidebar .nav .nav-item .nav-link i.menu-icon {
+  font-size: 20px !important;
+  order: 1 !important;
+  margin-right: 15px !important;
+  margin-left: 0 !important;
+}
+.sidebar .nav .nav-item .nav-link .menu-title {
+  font-size: 16px !important;
+  order: 2 !important;
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+.sidebar .nav .nav-item .nav-link i.menu-arrow {
+  order: 3 !important;
+  margin-left: 10px !important;
+}
+/* Active State */
+.sidebar .nav .nav-item.active > .nav-link {
+  background-color: #ffffff !important;
+}
+.sidebar .nav .nav-item.active > .nav-link .menu-title,
+.sidebar .nav .nav-item.active > .nav-link i.menu-icon,
+.sidebar .nav .nav-item.active > .nav-link i.menu-arrow {
+  color: #1E2753 !important;
+}
+
+/* Prevent default nav-item backgrounds */
+.sidebar .nav .nav-item {
+  background: transparent !important;
+}
+.sidebar .nav .nav-item:hover,
+.sidebar .nav .nav-item.active {
+  background: transparent !important;
+}
+
+/* Hover State */
+.sidebar .nav .nav-item:not(.active):hover > .nav-link,
+.sidebar .nav.sub-menu .nav-item:not(.active):hover > .nav-link {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+.sidebar .nav .nav-item:not(.active):hover > .nav-link .menu-title,
+.sidebar .nav .nav-item:not(.active):hover > .nav-link i.menu-icon,
+.sidebar .nav .nav-item:not(.active):hover > .nav-link i.menu-arrow,
+.sidebar .nav.sub-menu .nav-item:not(.active):hover > .nav-link {
+  color: #ffffff !important;
+}
+/* Reduce gap between navbar and content */
+.content-wrapper {
+  padding-top: 1.5rem !important;
+}
+
+.custom-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1E2753 !important;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 22px;
+}
+.sidebar-icon-only .navbar .navbar-brand-wrapper .custom-brand-logo {
+  display: none !important;
+}
+.custom-logo-img {
+  width: 40px !important;
+  height: 40px !important;
+  max-width: 40px !important;
+  min-width: 40px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
