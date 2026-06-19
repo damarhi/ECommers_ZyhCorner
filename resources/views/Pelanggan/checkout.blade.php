@@ -342,6 +342,28 @@
             gap: 30px;
         }
     }
+
+    @media (max-width: 768px) {
+        .checkout-container {
+            padding: 30px 15px 40px;
+        }
+        .checkout-card, .summary-card {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-row-2 {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        #map {
+            height: 200px;
+        }
+        .order-item-name {
+            max-width: 120px;
+        }
+    }
 </style>
 
 

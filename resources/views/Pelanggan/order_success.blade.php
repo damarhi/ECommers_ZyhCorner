@@ -35,5 +35,21 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 178, 7, 0.2);
     }
+
+    @media (max-width: 576px) {
+        .success-container {
+            padding: 40px 15px !important;
+        }
+        .success-container h1 {
+            font-size: 26px !important;
+        }
+        .success-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+        .btn-track, .btn-home {
+            width: 100%;
+        }
+    }
 </style>
 @endsection

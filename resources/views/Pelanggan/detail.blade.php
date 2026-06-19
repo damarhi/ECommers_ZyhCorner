@@ -129,8 +129,36 @@
         .product-main { grid-template-columns: 1fr; }
         .related-grid { grid-template-columns: repeat(2, 1fr); }
         .gallery-wrapper { flex-direction: column-reverse; }
-        .gallery-thumbs { flex-direction: row; width: 100%; }
+        .gallery-thumbs { flex-direction: row; width: 100%; overflow-x: auto; }
         .gallery-thumb { width: 70px; height: 70px; }
+    }
+
+    @media (max-width: 480px) {
+        .pi-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .qty-box {
+            width: 100%;
+            justify-content: space-between;
+        }
+        .qty-btn {
+            flex: 1;
+        }
+        .btn-buy {
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-wish {
+            align-self: center;
+        }
+        .tab-btn {
+            padding: 10px 15px;
+            font-size: 13px;
+        }
+        .spec-table td:first-child {
+            width: 120px;
+        }
     }
 </style>
 

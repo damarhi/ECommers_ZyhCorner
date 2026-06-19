@@ -8,9 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/pelanggan.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pelanggan.css') }}?v={{ file_exists(public_path('css/pelanggan.css')) ? filemtime(public_path('css/pelanggan.css')) : time() }}">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @yield('styles')
 </head>
 <body>
 
@@ -18,6 +19,9 @@
     <header>
         <div class="container top-header">
             <div class="logo">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu(true)" style="background: none; border: none; font-size: 20px; color: #1a1a1a; cursor: pointer; display: none; margin-right: 5px; padding: 5px 0;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                 <div class="logo-text">Zyh Corner</div>
             </div>
@@ -47,7 +51,7 @@
                     <div class="profile-dropdown-menu" id="profileDropdownMenu">
                         @auth
                             <div class="profile-dropdown-item profile-dropdown-name">{{ Auth::user()->nama ?? 'User' }}</div>
-                            <a href="#" class="profile-dropdown-item">Settings</a>
+                            <a href="{{ route('dashboard') }}" class="profile-dropdown-item">Dashboard</a>
                             <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="margin: 0;">
                                 @csrf
                                 <button type="button" onclick="confirmLogout()" class="profile-dropdown-item" style="width: 100%; text-align: left; background: none; border: none; font-family: inherit; cursor: pointer;">Logout</button>
@@ -119,11 +123,11 @@
                 <div class="footer-col">
                     <h3>My Account</h3>
                     <div class="footer-links">
-                        <a href="#">My Account</a>
-                        <a href="#">Order History</a>
-                        <a href="#">Shoping Cart</a>
+                        <a href="{{ route('dashboard') }}">My Account</a>
+                        <a href="{{ route('dashboard') }}">Order History</a>
+                        <a href="{{ route('userChart') }}">Shopping Cart</a>
                         <a href="#">Wishlist</a>
-                        <a href="#">Settings</a>
+                        <a href="{{ route('dashboard') }}">Settings</a>
                     </div>
                 </div>
 
@@ -189,6 +193,32 @@
             </div>
         </div>
     </footer>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="toggleMobileMenu(false)"></div>
+    <div class="mobile-nav-drawer" id="mobileNavDrawer">
+        <div class="mobile-nav-header">
+            <div class="logo">
+                <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;">
+                <div class="logo-text" style="font-size: 18px;">Zyh Corner</div>
+            </div>
+            <button class="close-mobile-menu" onclick="toggleMobileMenu(false)"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="mobile-nav-body">
+            <div class="mobile-nav-links">
+                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
+                <a href="{{ route('shop') }}" class="{{ request()->routeIs('shop') ? 'active' : '' }}">Shop</a>
+                <a href="#">Pages</a>
+                <a href="#">Blog</a>
+                <a href="#">About Us</a>
+                <a href="#">Contact Us</a>
+            </div>
+            <div class="mobile-nav-phone" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f2f2f2; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #666;">
+                <i class="fa-solid fa-phone-volume" style="color: #00b207;"></i>
+                <span>(+62) 8123456789</span>
+            </div>
+        </div>
+    </div>
 
     <!-- Shopping Cart Sidebar -->
     <div class="cart-sidebar-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
@@ -381,6 +411,25 @@
             const modal = document.getElementById('productModal');
             if (event.target == modal) {
                 closeProductModal();
+            }
+        }
+
+        // --- Mobile Menu Toggle ---
+        function toggleMobileMenu(show) {
+            const drawer = document.getElementById('mobileNavDrawer');
+            const overlay = document.getElementById('mobileNavOverlay');
+            if(show) {
+                overlay.style.display = 'block';
+                setTimeout(() => {
+                    overlay.style.opacity = '1';
+                    drawer.classList.add('open');
+                }, 10);
+            } else {
+                drawer.classList.remove('open');
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
             }
         }
 

@@ -2,7 +2,7 @@
 
 @section('title', 'Home - Zyh Corner')
 
-@section('content')
+@section('styles')
 <style>
     .breadcrumb-wrapper { display: none !important; }
 
@@ -99,8 +99,74 @@
     .nav-arrows { display: flex; align-items: center; justify-content: space-between; }
     .nav-arrow { width: 40px; height: 40px; border-radius: 50%; background: white; border: 1px solid #e6e6e6; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; }
     .nav-arrow:hover { background: #00b207; color: white; border-color: #00b207; }
-</style>
 
+    /* Base tablet responsive adjustments */
+    @media (max-width: 991px) {
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .four-cols {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .category-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        .hero-section {
+            flex-direction: column-reverse;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .hero-text h1 {
+            font-size: 30px;
+        }
+        .hero-image {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .hero-image img {
+            max-height: 250px;
+        }
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        .promo-banner {
+            min-height: 250px;
+        }
+        .nav-arrow {
+            display: none !important;
+        }
+        .four-cols {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .category-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px;
+        }
+    }
+    
+    @media (max-width: 1240px) {
+        .nav-arrow {
+            display: none !important;
+        }
+    }
+</style>
+@endsection
+
+@section('content')
 <div class="home-container">
     
     <!-- Hero Section -->

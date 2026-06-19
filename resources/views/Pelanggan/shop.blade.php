@@ -8,7 +8,7 @@
     <span style="color: #00b207;">Cake</span>
 @endsection
 
-@section('content')
+@section('styles')
 <style>
     .shop-container { max-width: 1200px; margin: 0 auto; padding: 0 15px; margin-bottom: 80px; }
     
@@ -104,8 +104,50 @@
     .page-link.active { background-color: #00b207; color: white; font-weight: 500; }
     .page-arrow { width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid #e6e6e6; color: #666; text-decoration: none; transition: all 0.3s; }
     .page-arrow:hover { border-color: #00b207; color: #00b207; }
-</style>
 
+    @media (max-width: 991px) {
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .shop-promo-banner {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 30px;
+            gap: 20px;
+        }
+        .shop-promo-banner div[style*="position: absolute"] {
+            display: none !important;
+        }
+        .spb-badge {
+            display: none !important;
+        }
+        .active-filters-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .filter-group {
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+        }
+        .filter-select {
+            width: 100%;
+        }
+        .select-wrapper {
+            width: 100%;
+        }
+    }
+</style>
+@endsection
+
+@section('content')
 <div class="shop-container">
 
     <!-- Promo Banner -->

@@ -8,6 +8,65 @@
     <span>Register</span>
 @endsection
 
+@section('styles')
+<style>
+    /* Google Button Styling */
+    .social-login-separator {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        margin: 25px 0;
+    }
+    
+    .social-login-separator::before,
+    .social-login-separator::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e6e6e6;
+    }
+    
+    .social-login-separator:not(:empty)::before {
+        margin-right: 15px;
+    }
+    
+    .social-login-separator:not(:empty)::after {
+        margin-left: 15px;
+    }
+    
+    .google-login-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        background-color: white;
+        border: 1.5px solid #e6e6e6;
+        color: #4d4d4d;
+        padding: 12px 15px;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+    
+    .google-login-btn:hover {
+        background-color: #f9f9f9;
+        border-color: #cccccc;
+        color: #1a1a1a;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    
+    .google-login-btn img {
+        width: 18px;
+        height: 18px;
+    }
+</style>
+@endsection
+
 @section('content')
     <!-- Register Section -->
     <section class="login-section">
@@ -46,6 +105,13 @@
 
                 <button type="submit" class="login-btn" style="margin-top: 10px;">Daftar</button>
             </form>
+            <!-- Divider & Google Sign-In Button -->
+            <div class="social-login-separator">atau daftar dengan</div>
+            <a href="{{ route('login.google') }}" class="google-login-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+                Akun Google
+            </a>
+
             <div class="register-link" style="margin-top: 20px;">
                 Sudah memiliki akun? <a href="{{ route('login') }}">Masuk</a>
             </div>
