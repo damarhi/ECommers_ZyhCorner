@@ -23,7 +23,7 @@
             <div class="card border-0 shadow-sm category-card" style="border-radius: 8px; overflow: hidden; position: relative;">
                 <div class="card-img-top-wrapper" style="position: relative; height: 220px; overflow: hidden;">
                     <img src="{{ asset('storage/' . $kategori->gambar_kategori) }}" alt="{{ $kategori->nama_kategori }}" class="card-img-top w-100 h-100" style="object-fit: cover;">
-                    <div class="category-action-overlay d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s ease;">
+                    <div class="category-action-overlay d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30,39,83,0.55); opacity: 0; transition: opacity 0.3s ease;">
                         <button type="button" class="btn btn-inverse-info btn-sm px-4 py-2 me-2 shadow-sm d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ $kategori->id_kategori }}">
                             <i class="mdi mdi-pencil me-1"></i> Edit
                         </button>

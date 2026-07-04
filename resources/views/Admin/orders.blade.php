@@ -96,86 +96,43 @@
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->customer_name }}</td>
                                     <td style="padding: 15px 10px;">
                                         @if($order->payment_status == 'Paid')
-                                            <span class="badge badge-success" style="border-radius: 4px; padding: 6px 10px;">Dibayar</span>
+                                            <span class="badge badge-soft-success">Dibayar</span>
                                         @else
-                                            <span class="badge badge-secondary" style="border-radius: 4px; padding: 6px 10px;">Tertunda</span>
+                                            <span class="badge badge-soft-warning">Tertunda</span>
                                         @endif
                                     </td>
                                     <td style="padding: 15px 10px;">
                                         @if($order->order_status == 'menunggu pembayaran')
-                                            <span class="badge badge-warning" style="border-radius: 4px; padding: 6px 10px;">Menunggu Pembayaran</span>
+                                            <span class="badge badge-soft-warning">Menunggu Pembayaran</span>
                                         @elseif($order->order_status == 'dikemas')
-                                            <span class="badge badge-info" style="border-radius: 4px; padding: 6px 10px;">Dikemas</span>
+                                            <span class="badge badge-soft-info">Dikemas</span>
                                         @elseif($order->order_status == 'dikirim')
-                                            <span class="badge badge-primary" style="border-radius: 4px; padding: 6px 10px;">Dikirim</span>
+                                            <span class="badge badge-soft-primary">Dikirim</span>
                                         @elseif($order->order_status == 'selesai')
-                                            <span class="badge badge-success" style="border-radius: 4px; padding: 6px 10px;">Selesai</span>
+                                            <span class="badge badge-soft-success">Selesai</span>
                                         @else
-                                            <span class="badge badge-secondary" style="border-radius: 4px; padding: 6px 10px;">{{ $order->order_status }}</span>
+                                            <span class="badge badge-soft-dark">{{ $order->order_status }}</span>
                                         @endif
                                     </td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
                                     <td style="padding: 15px 10px;">
                                         <div class="d-flex">
-                                            <button type="button" class="btn btn-sm btn-outline-info bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
+                                            <button type="button" class="btn btn-sm btn-outline-success bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Detail Pesanan">
+                                                <i class="mdi mdi-eye" style="font-size: 16px; margin: 0;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Edit Pesanan">
                                                 <i class="mdi mdi-pencil" style="font-size: 16px; margin: 0;"></i>
                                             </button>
                                             <form action="{{ route('orders.destroy', $order->id) }}" method="POST" class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-primary bg-white d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary bg-white d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Hapus Pesanan">
                                                     <i class="mdi mdi-delete-outline" style="font-size: 16px; margin: 0;"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
-
-                                <!-- Edit Order Modal -->
-                                <div class="modal fade" id="editOrderModal{{ $order->id }}" tabindex="-1" aria-labelledby="editOrderModalLabel{{ $order->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content" style="border-radius: 8px;">
-                                            <div class="modal-header border-0 pb-0">
-                                                <h5 class="modal-title font-weight-bold" id="editOrderModalLabel{{ $order->id }}">Edit Pesanan</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <form action="{{ route('orders.update', $order->id) }}" method="POST" class="edit-form">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="modal-body">
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Nama Pelanggan</label>
-                                                        <input type="text" class="form-control" name="customer_name" value="{{ $order->customer_name }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Total (Rp)</label>
-                                                        <input type="number" class="form-control" name="total" value="{{ $order->total }}" required min="0">
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Status Pembayaran</label>
-                                                        <select class="form-select form-control" name="payment_status" required>
-                                                            <option value="Pending" {{ $order->payment_status == 'Pending' ? 'selected' : '' }}>Tertunda</option>
-                                                            <option value="Paid" {{ $order->payment_status == 'Paid' ? 'selected' : '' }}>Dibayar</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="form-group mb-0">
-                                                        <label class="font-weight-500 mb-2">Status Pesanan</label>
-                                                        <select class="form-select form-control" name="order_status" required>
-                                                            <option value="menunggu pembayaran" {{ $order->order_status == 'menunggu pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran</option>
-                                                            <option value="dikemas" {{ $order->order_status == 'dikemas' ? 'selected' : '' }}>Dikemas</option>
-                                                            <option value="dikirim" {{ $order->order_status == 'dikirim' ? 'selected' : '' }}>Dikirim</option>
-                                                            <option value="selesai" {{ $order->order_status == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer border-0 pt-0">
-                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-gradient-primary">Perbarui Pesanan</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                                 @empty
                                 <tr>
                                     <td colspan="8" class="text-center py-5">
@@ -190,6 +147,58 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Modals (placed outside the table to prevent HTML rendering issues) -->
+                    @foreach($orders as $order)
+                        <!-- Edit Order Modal -->
+                        <div class="modal fade" id="editOrderModal{{ $order->id }}" tabindex="-1" aria-labelledby="editOrderModalLabel{{ $order->id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content" style="border-radius: 8px;">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h5 class="modal-title font-weight-bold" id="editOrderModalLabel{{ $order->id }}">Edit Pesanan</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{{ route('orders.update', $order->id) }}" method="POST" class="edit-form">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="modal-body">
+                                            <div class="form-group mb-3">
+                                                <label class="font-weight-500 mb-2">Nama Pelanggan</label>
+                                                <input type="text" class="form-control" name="customer_name" value="{{ $order->customer_name }}" required>
+                                            </div>
+                                            <div class="form-group mb-3">
+                                                <label class="font-weight-500 mb-2">Total (Rp)</label>
+                                                <input type="number" class="form-control" name="total" value="{{ $order->total }}" required min="0">
+                                            </div>
+                                            <div class="form-group mb-3">
+                                                <label class="font-weight-500 mb-2">Status Pembayaran</label>
+                                                <select class="form-select form-control" name="payment_status" required>
+                                                    <option value="Pending" {{ $order->payment_status == 'Pending' ? 'selected' : '' }}>Tertunda</option>
+                                                    <option value="Paid" {{ $order->payment_status == 'Paid' ? 'selected' : '' }}>Dibayar</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group mb-0">
+                                                <label class="font-weight-500 mb-2">Status Pesanan</label>
+                                                <select class="form-select form-control" name="order_status" required>
+                                                    <option value="menunggu pembayaran" {{ $order->order_status == 'menunggu pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran</option>
+                                                    <option value="dikemas" {{ $order->order_status == 'dikemas' ? 'selected' : '' }}>Dikemas</option>
+                                                    <option value="dikirim" {{ $order->order_status == 'dikirim' ? 'selected' : '' }}>Dikirim</option>
+                                                    <option value="selesai" {{ $order->order_status == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-gradient-primary">Perbarui Pesanan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detail Order Modal -->
+                        @include('Admin.order_detail_modal', ['order' => $order])
+                    @endforeach
 
                     <!-- Pagination -->
                     <!-- Pagination -->

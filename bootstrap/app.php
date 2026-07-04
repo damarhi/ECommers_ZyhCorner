@@ -11,7 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'blockKasir' => \App\Http\Middleware\CheckKasirRole::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+            '/midtrans-callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -33,6 +33,8 @@ class AuthController extends Controller
 
             if (Auth::user()->role === 'admin') {
                 return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
+            } elseif (Auth::user()->role === 'kasir') {
+                return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Kasir! Anda berhasil masuk.');
             }
 
             return redirect()->intended('/')->with('success', 'Selamat datang kembali! Anda berhasil masuk.');
@@ -172,7 +174,24 @@ class AuthController extends Controller
             ->orWhere('email', $email)
             ->first();
 
-        // Generate 6-digit OTP for Google Login
+        if ($user) {
+            // Update Google ID if not set
+            if (!$user->google_id) {
+                $user->update(['google_id' => $googleId]);
+            }
+            
+            // Log the user in directly
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            if (Auth::user()->role === 'admin') {
+                return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
+            }
+
+            return redirect()->intended('/')->with('success', 'Selamat datang kembali! Anda berhasil masuk menggunakan Google.');
+        }
+
+        // Generate 6-digit OTP for Google Login (new registration)
         $otp = mt_rand(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
@@ -185,30 +204,21 @@ class AuthController extends Controller
             ]
         );
 
-        if ($user) {
-            // Update Google ID if not set
-            if (!$user->google_id) {
-                $user->update(['google_id' => $googleId]);
-            }
-            // Save user ID to session (existing user logging in)
-            session(['google_auth_pending_user_id' => $user->user_id]);
-        } else {
-            // New user registering via Google OAuth
-            session([
-                'google_register_pending' => [
-                    'nama' => $nama ?? explode('@', $email)[0],
-                    'email' => $email,
-                    'google_id' => $googleId,
-                ]
-            ]);
-        }
+        // New user registering via Google OAuth
+        session([
+            'google_register_pending' => [
+                'nama' => $nama ?? explode('@', $email)[0],
+                'email' => $email,
+                'google_id' => $googleId,
+            ]
+        ]);
 
         try {
             BrevoMailService::sendOtp($email, $otp);
             return redirect()->route('login.google.verify')->with('success', 'Kode verifikasi OTP telah dikirim ke Gmail Anda.');
         } catch (\Exception $e) {
             // If mail failed, clear session and redirect back with error
-            session()->forget(['google_auth_pending_user_id', 'google_register_pending']);
+            session()->forget(['google_register_pending']);
             Otp::where('email', $email)->delete();
             return redirect()->route('login')->withErrors(['email' => 'Gagal mengirim email verifikasi: ' . $e->getMessage()]);
         }
@@ -304,6 +314,8 @@ class AuthController extends Controller
 
         if (Auth::user()->role === 'admin') {
             return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
+        } elseif (Auth::user()->role === 'kasir') {
+            return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Kasir! Anda berhasil masuk.');
         }
 
         return redirect()->intended('/')->with('success', 'Selamat datang kembali! Anda berhasil masuk menggunakan Google.');

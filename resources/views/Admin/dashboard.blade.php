@@ -1,52 +1,63 @@
 @extends('Layout.layout_pAdmin')
 
+@section('title', 'Dashboard - Admin')
+
 @section('content')
           <div class="content-wrapper">
             <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
               <h3 class="page-title m-0">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                   <i class="mdi mdi-home"></i>
-                </span> Dasbor
+                </span> Dashboard
               </h3>
               <nav aria-label="breadcrumb">
                 <ul class="breadcrumb mb-0">
                   <li class="breadcrumb-item active" aria-current="page">
-                    <span></span>Ringkasan <i class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                    <span></span>Ringkasan
                   </li>
                 </ul>
               </nav>
             </div>
             <div class="row">
               <div class="col-md-4 stretch-card grid-margin">
-                <div class="card bg-gradient-danger card-img-holder text-white">
-                  <div class="card-body">
-                    <img src="{{ asset('PurpleAdmin/assets/images/dashboard/circle.svg') }}" class="card-img-absolute" alt="circle-image" />
-                    <h4 class="font-weight-normal mb-3">Penjualan Mingguan <i class="mdi mdi-chart-line mdi-24px float-end"></i>
-                    </h4>
-                    <h2 class="mb-5">Rp 15.000.000</h2>
-                    <h6 class="card-text">Meningkat sebesar 60%</h6>
+                <div class="card stat-card stat-card-coral border-0 text-white">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon">
+                      <i class="mdi mdi-chart-line"></i>
+                    </div>
+                    <div>
+                      <p class="stat-label mb-0">Penjualan Mingguan</p>
+                      <h3 class="stat-value">Rp 15.000.000</h3>
+                      <p class="stat-change mb-0">Meningkat sebesar 60%</p>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 stretch-card grid-margin">
-                <div class="card bg-gradient-info card-img-holder text-white">
-                  <div class="card-body">
-                    <img src="{{ asset('PurpleAdmin/assets/images/dashboard/circle.svg') }}" class="card-img-absolute" alt="circle-image" />
-                    <h4 class="font-weight-normal mb-3">Pesanan Mingguan <i class="mdi mdi-bookmark-outline mdi-24px float-end"></i>
-                    </h4>
-                    <h2 class="mb-5">45,6334</h2>
-                    <h6 class="card-text">Menurun sebesar 10%</h6>
+                <div class="card stat-card stat-card-indigo border-0 text-white">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon">
+                      <i class="mdi mdi-bookmark-outline"></i>
+                    </div>
+                    <div>
+                      <p class="stat-label mb-0">Pesanan Mingguan</p>
+                      <h3 class="stat-value">45,6334</h3>
+                      <p class="stat-change mb-0">Menurun sebesar 10%</p>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="col-md-4 stretch-card grid-margin">
-                <div class="card bg-gradient-success card-img-holder text-white">
-                  <div class="card-body">
-                    <img src="{{ asset('PurpleAdmin/assets/images/dashboard/circle.svg') }}" class="card-img-absolute" alt="circle-image" />
-                    <h4 class="font-weight-normal mb-3">Pengunjung Online <i class="mdi mdi-diamond mdi-24px float-end"></i>
-                    </h4>
-                    <h2 class="mb-5">95,5741</h2>
-                    <h6 class="card-text">Meningkat sebesar 5%</h6>
+                <div class="card stat-card stat-card-teal border-0 text-white">
+                  <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon">
+                      <i class="mdi mdi-diamond"></i>
+                    </div>
+                    <div>
+                      <p class="stat-label mb-0">Pengunjung Online</p>
+                      <h3 class="stat-value">95,5741</h3>
+                      <p class="stat-change mb-0">Meningkat sebesar 5%</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -98,7 +109,7 @@
                             </td>
                             <td> Dana tidak diterima </td>
                             <td>
-                              <label class="badge badge-gradient-success">SELESAI</label>
+                              <label class="badge badge-soft-success">SELESAI</label>
                             </td>
                             <td> Des 5, 2017 </td>
                             <td> WD-12345 </td>
@@ -109,7 +120,7 @@
                             </td>
                             <td> Waktu muat lama </td>
                             <td>
-                              <label class="badge badge-gradient-warning">DALAM PROSES</label>
+                              <label class="badge badge-soft-warning">DALAM PROSES</label>
                             </td>
                             <td> Des 12, 2017 </td>
                             <td> WD-12346 </td>
@@ -120,7 +131,7 @@
                             </td>
                             <td> Website down selama satu minggu </td>
                             <td>
-                              <label class="badge badge-gradient-info">DITANGGUHKAN</label>
+                              <label class="badge badge-soft-info">DITANGGUHKAN</label>
                             </td>
                             <td> Des 16, 2017 </td>
                             <td> WD-12347 </td>
@@ -131,7 +142,7 @@
                             </td>
                             <td> Kehilangan kontrol pada server </td>
                             <td>
-                              <label class="badge badge-gradient-danger">DITOLAK</label>
+                              <label class="badge badge-soft-danger">DITOLAK</label>
                             </td>
                             <td> Des 3, 2017 </td>
                             <td> WD-12348 </td>

@@ -61,30 +61,23 @@
     <!-- Product Grid -->
     <div class="row" id="product-grid">
         @forelse($products as $product)
-        <div class="col-6 col-md-4 col-lg-3 grid-margin stretch-card mb-4">
-            <div class="card border-0 shadow-sm product-card w-100" style="border-radius: 8px; position: relative; overflow: hidden;">
+        <div class="col-6 col-sm-6 col-md-4 col-lg-3 grid-margin stretch-card mb-3">
+            <div class="card border-0 shadow-sm product-card w-100" style="border-radius: 12px; position: relative; overflow: hidden;">
                 <div class="card-body p-0 d-flex flex-column">
-                    <div class="image-wrapper w-100" style="position: relative; overflow: hidden; height: 180px;">
+                    <div class="image-wrapper w-100" style="position: relative; overflow: hidden; height: 160px;">
                         @if($product->foto_1)
                             <img src="{{ asset('storage/' . $product->foto_1) }}" class="w-100 h-100" style="object-fit: cover;">
                         @else
                             <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">No Image</div>
                         @endif
-                        <div class="product-overlay w-100 h-100" style="position: absolute; top:0; left:0; background: rgba(0,0,0,0.5); display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s;">
-                            <button class="btn btn-primary btn-sm mb-2" onclick="addToCart({{ $product->id_produk }}, '{{ $product->nama_produk }}', {{ $product->harga }}, '{{ $product->foto_1 ? asset('storage/'.$product->foto_1) : '' }}')">Tambah</button>
-                            <button class="btn btn-light btn-sm" onclick="removeFromCart({{ $product->id_produk }})">Kurang</button>
+                        <div class="product-overlay w-100 h-100" style="position: absolute; top:0; left:0; background: rgba(30,39,83,0.6); display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s;">
+                            <button class="btn btn-light btn-sm mb-2 px-3" onclick="addToCart({{ $product->id_produk }}, '{{ $product->nama_produk }}', {{ $product->harga }}, '{{ $product->foto_1 ? asset('storage/'.$product->foto_1) : '' }}')"><i class="mdi mdi-plus me-1"></i>Tambah</button>
+                            <button class="btn btn-outline-light btn-sm px-3" onclick="removeFromCart({{ $product->id_produk }})"><i class="mdi mdi-minus me-1"></i>Kurang</button>
                         </div>
                     </div>
-                    <div class="p-3 flex-grow-1 d-flex flex-column">
+                    <div class="p-2 px-3 pb-3 flex-grow-1 d-flex flex-column">
                         <h6 class="text-muted mb-1" style="font-size: 13px;">{{ $product->nama_produk }}</h6>
-                        <p class="mb-2 font-weight-bold" style="font-size: 14px;">Rp. {{ number_format($product->harga, 0, ',', '.') }}</p>
-                        <div class="d-flex text-warning mt-auto" style="font-size: 12px;">
-                            <i class="mdi mdi-star"></i>
-                            <i class="mdi mdi-star"></i>
-                            <i class="mdi mdi-star"></i>
-                            <i class="mdi mdi-star"></i>
-                            <i class="mdi mdi-star-half"></i>
-                        </div>
+                        <p class="mb-0 font-weight-bold" style="font-size: 14px;">Rp. {{ number_format($product->harga, 0, ',', '.') }}</p>
                     </div>
                 </div>
             </div>
@@ -130,17 +123,17 @@
             <span class="text-muted" style="font-size:14px;"><span id="cart-total-items-bottom">0</span> Product</span>
             <strong id="cart-total-price-bottom">Rp. 0</strong>
         </div>
-        <button class="btn btn-primary w-100 mb-2" onclick="showCheckout()" style="border-radius: 20px;">Checkout</button>
-        <button class="btn btn-light w-100" onclick="toggleCart()" style="border-radius: 20px; background: #f4f6f8;">Back</button>
+        <button class="btn btn-gradient-primary w-100 mb-2" onclick="showCheckout()" style="border-radius: 8px;">Checkout</button>
+        <button class="btn btn-outline-secondary w-100" onclick="toggleCart()" style="border-radius: 8px;">Kembali</button>
     </div>
 </div>
 
 <!-- Checkout View (Initially Hidden) -->
-<div id="checkout-view" class="content-wrapper" style="display: none; position: absolute; top:0; left:0; width:100%; min-height:100vh; background: #f2edf3; z-index: 1000; padding: 2.75rem 2.25rem;">
+<div id="checkout-view" class="content-wrapper" style="display: none; position: absolute; top:0; left:0; width:100%; min-height:100vh; background: #F8F9FC; z-index: 1000; padding: 2.75rem 2.25rem;">
     <div class="d-flex align-items-center mb-4">
-        <a href="#" class="text-decoration-none text-muted me-2" onclick="hideCheckout()"><i class="mdi mdi-arrow-left"></i> Back</a>
+        <a href="#" class="text-decoration-none text-muted me-2" onclick="hideCheckout()"><i class="mdi mdi-arrow-left me-1"></i>Kembali</a>
     </div>
-    <h3 class="page-title font-weight-bold text-dark mb-4" style="font-size: 24px;">checkout</h3>
+    <h3 class="page-title font-weight-bold text-dark mb-4" style="font-size: 22px;">Checkout</h3>
     
     <div class="row">
         <div class="col-lg-8">
@@ -195,8 +188,8 @@
                         <span class="text-muted" style="font-size:14px;">Total:</span>
                         <strong id="checkout-total">Rp. 0</strong>
                     </div>
-                    <button class="btn btn-primary w-100 mb-3" onclick="processCheckout()" style="border-radius: 20px;">Proceed to checkout</button>
-                    <button class="btn btn-outline-primary w-100 bg-white" onclick="hideCheckout()" style="border-radius: 20px;">Back to Cassier</button>
+                    <button class="btn btn-gradient-primary w-100 mb-3" onclick="processCheckout()" style="border-radius: 8px;">Proses Checkout</button>
+                    <button class="btn btn-outline-secondary w-100" onclick="hideCheckout()" style="border-radius: 8px;">Kembali ke Kasir</button>
                 </div>
             </div>
         </div>
@@ -204,6 +197,9 @@
 </div>
 
 <style>
+.product-card .card-body {
+    padding: 0 !important;
+}
 .product-card:hover .product-overlay {
     opacity: 1 !important;
 }

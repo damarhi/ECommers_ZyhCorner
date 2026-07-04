@@ -114,4 +114,37 @@ class PesananController extends Controller
         $sales = $query->latest()->paginate(10);
         return view('admin.all_sales', compact('sales'));
     }
+
+    public function printInvoice($id)
+    {
+        $order = Pesanan::findOrFail($id);
+        
+        $items = [];
+        $orderItems = $order->items;
+
+        if (is_array($orderItems) && count($orderItems) > 0) {
+            foreach ($orderItems as $item) {
+                $product = \App\Models\Produk::find($item['id'] ?? null);
+                if (!$product) {
+                    $product = new \App\Models\Produk();
+                    $product->id_produk = $item['id'] ?? 0;
+                    $product->nama_produk = $item['name'] ?? 'Product Removed';
+                    $product->harga = $item['price'] ?? 0;
+                    $product->foto_1 = null;
+                }
+                
+                $qty = isset($item['qty']) ? intval($item['qty']) : (isset($item['quantity']) ? intval($item['quantity']) : 1);
+                $price = isset($item['price']) ? floatval($item['price']) : floatval($product->harga);
+                
+                $items[] = [
+                    'name' => $item['name'] ?? $product->nama_produk,
+                    'qty' => $qty,
+                    'price' => $price,
+                    'subtotal' => $price * $qty,
+                ];
+            }
+        }
+        
+        return view('admin.invoice', compact('order', 'items'));
+    }
 }

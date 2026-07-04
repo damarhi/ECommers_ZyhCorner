@@ -5,8 +5,10 @@
 @section('content')
 <div class="content-wrapper">
     <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-        <h3 class="page-title font-weight-bold text-dark m-0 text-center text-md-start" style="font-size: 24px;">
-            Retur Produk
+        <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
+            <span class="page-title-icon bg-gradient-primary text-white me-2">
+                <i class="mdi mdi-keyboard-return"></i>
+            </span>Retur Produk
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
             <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addReturModal">
@@ -107,7 +109,7 @@
                                 <tr>
                                     <td style="padding: 15px 10px;">
                                         <div class="d-flex align-items-center">
-                                            <div class="d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px; border-radius: 50%; background-color: #a8aebc; font-weight: bold; font-size: 18px; margin-right: 12px;">
+                                            <div class="avatar-placeholder" style="width: 40px; height: 40px; font-size: 16px; margin-right: 12px;">
                                                 {{ strtoupper(substr($retur->customer_name, 0, 1)) }}
                                             </div>
                                             <span style="font-size: 14px; font-weight: 600; color: #2c2c2c;">{{ $retur->customer_name }}</span>

@@ -14,590 +14,17 @@
 <link rel="stylesheet" href="{{ asset('PurpleAdmin/assets/vendors/css/vendor.bundle.base.css') }}">
 <link rel="stylesheet" href="{{ asset('PurpleAdmin/assets/css/style.css') }}">
 
-<style>
-    /* Reset clashing Bootstrap styles back to Zyh Corner custom styling */
-    .breadcrumb-wrapper {
-        background-color: white !important;
-        padding: 20px 0 0 0 !important;
-        display: block !important;
-    }
-    
-    .breadcrumb-area {
-        background: linear-gradient(rgba(45, 78, 55, 0.7), rgba(45, 78, 55, 0.7)), url('https://images.unsplash.com/photo-1518843875459-f738682238a6?q=80&w=2042&auto=format&fit=crop') center/cover !important;
-        height: 120px !important;
-        display: flex !important;
-        align-items: center !important;
-        color: white !important;
-        border-radius: 8px !important;
-        margin: 0 auto !important;
-        max-width: 1200px !important;
-        position: relative !important;
-        overflow: hidden !important;
-        padding: 0 !important;
-    }
-
-    .breadcrumb {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        font-size: 14px !important;
-        padding-left: 40px !important;
-        z-index: 1 !important;
-        background: transparent !important;
-        margin-bottom: 0 !important;
-        border: none !important;
-        border-radius: 0 !important;
-    }
-
-    .breadcrumb a {
-        color: #e0e0e0 !important;
-        text-decoration: none !important;
-    }
-    
-    .breadcrumb span {
-        color: #00b207 !important;
-    }
-
-    .breadcrumb i {
-        color: #999 !important;
-    }
-
-    body {
-        background-color: #ffffff !important;
-        font-family: 'Poppins', sans-serif !important;
-        color: #1a1a1a !important;
-    }
-    
-    header, nav.navigation, footer.footer, .cart-sidebar {
-        font-family: 'Poppins', sans-serif !important;
-    }
-    
-    header a, nav.navigation a, footer.footer a, .cart-sidebar a {
-        text-decoration: none !important;
-    }
-    
-    nav.navigation a {
-        color: #cccccc !important;
-    }
-    nav.navigation a:hover, nav.navigation a.active {
-        color: white !important;
-    }
-    
-    footer.footer {
-        background-color: #1a1a1a !important;
-        color: white !important;
-        padding-top: 70px !important;
-        margin-top: 0 !important;
-        height: auto !important;
-    }
-    
-    footer.footer h3 {
-        color: white !important;
-        font-size: 18px !important;
-        font-weight: 500 !important;
-    }
-    
-    footer.footer a {
-        color: #999 !important;
-    }
-    footer.footer a:hover {
-        color: white !important;
-    }
-    
-    .search-bar button {
-        background-color: #00b207 !important;
-        color: white !important;
-    }
-    
-    .search-bar input {
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-
-    /* Dashboard layout */
-    .dashboard-wrapper {
-        max-width: 1200px;
-        margin: 50px auto 80px;
-        padding: 0 15px;
-    }
-
-    /* Custom Navigation Sidebar Card */
-    .sidebar-navigation {
-        background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 24px 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-
-    .sidebar-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
-        padding: 0 24px 15px;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #f2f2f2;
-    }
-
-    .nav-menu-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .nav-menu-item a {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 24px;
-        color: #666;
-        font-size: 15px;
-        transition: all 0.3s;
-        text-decoration: none;
-    }
-
-    .nav-menu-item a:hover {
-        background-color: #f8f9fa;
-        color: #00b207;
-    }
-
-    .nav-menu-item.active {
-        background-color: #edf2ee;
-    }
-
-    .nav-menu-item.active a {
-        color: #1a1a1a;
-        font-weight: 600;
-    }
-
-    .nav-menu-item a i {
-        font-size: 18px;
-        width: 20px;
-        text-align: center;
-        color: #555;
-    }
-    
-    .nav-menu-item.active a i {
-        color: #00b207;
-    }
-
-    /* Profile and Address Cards */
-    .dashboard-card {
-        background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 30px;
-        height: 100%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-
-    .profile-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        justify-content: center;
-    }
-
-    .profile-img-container {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        overflow: hidden;
-        margin-bottom: 15px;
-        border: 3px solid #f2f8f4;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-
-    .profile-img-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .profile-name {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 4px;
-    }
-
-    .profile-role {
-        font-size: 14px;
-        color: #888;
-        margin-bottom: 15px;
-    }
-
-    .green-link {
-        color: #00b207 !important;
-        font-weight: 500;
-        text-decoration: none !important;
-        transition: color 0.3s;
-        cursor: pointer;
-        font-size: 14px;
-        display: inline-block;
-    }
-
-    .green-link:hover {
-        color: #009906 !important;
-    }
-
-    .billing-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #999;
-        letter-spacing: 1px;
-        margin-bottom: 18px;
-        text-transform: uppercase;
-    }
-
-    .billing-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 8px;
-    }
-
-    .billing-address {
-        font-size: 14px;
-        color: #666;
-        line-height: 1.6;
-        margin-bottom: 18px;
-        min-height: 45px;
-    }
-
-    .billing-contact {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 8px;
-    }
-    
-    .billing-contact span {
-        color: #666;
-    }
-
-    /* Recent Order History Table styling */
-    .order-history-card {
-        background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 30px;
-        margin-top: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-
-    .card-header-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #f2f2f2;
-    }
-
-    .card-header-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin: 0;
-    }
-
-    .order-row-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 0;
-        border-bottom: 1px solid #f2f2f2;
-    }
-    
-    .order-row-item:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .order-product-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .order-img-wrapper {
-        width: 65px;
-        height: 65px;
-        border-radius: 6px;
-        overflow: hidden;
-        border: 1px solid #e6e6e6;
-        background: #f9f9f9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 4px;
-        position: relative;
-        flex-shrink: 0;
-    }
-
-    .order-img-wrapper img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .extra-badge {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #edf2ee;
-        color: #00b207;
-        font-size: 10px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1.5px solid white;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .extra-badge-inline {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: #f0f0f0;
-        color: #1a1a1a;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: 10px;
-        border: 1px solid #e6e6e6;
-    }
-
-    .order-details-meta {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .order-date {
-        font-size: 14px;
-        font-weight: 500;
-        color: #1a1a1a;
-    }
-
-    .order-summary {
-        font-size: 13px;
-        color: #666;
-        margin-top: 4px;
-    }
-
-    .order-status-badge {
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: capitalize;
-    }
-    
-    .status-processing {
-        color: #00b207;
-    }
-    
-    .status-completed {
-        color: #00b207;
-    }
-    
-    .status-pending {
-        color: #ff8a00;
-    }
-    
-    .status-cancelled {
-        color: #ea4b48;
-    }
-
-    .order-actions-flex {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .btn-cancel-outline {
-        border: 1px solid #e6e6e6;
-        background: white;
-        color: #666;
-        padding: 8px 18px;
-        border-radius: 50px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-decoration: none !important;
-    }
-
-    .btn-cancel-outline:hover {
-        background: #f8f9fa;
-        color: #ea4b48;
-        border-color: #ea4b48;
-    }
-
-    .btn-tracking-solid {
-        background: #00b207;
-        color: white;
-        padding: 8px 20px;
-        border-radius: 50px;
-        font-size: 13px;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        transition: background 0.3s;
-        text-decoration: none !important;
-    }
-
-    .btn-tracking-solid:hover {
-        background: #009906;
-        color: white;
-    }
-
-    /* Edit Dialog Modal Styles */
-    .edit-modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    .edit-modal {
-        background: white;
-        border-radius: 10px;
-        width: 480px;
-        max-width: 90%;
-        padding: 30px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-    
-    .edit-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #f2f2f2;
-        padding-bottom: 12px;
-    }
-    
-    .edit-modal-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin: 0;
-    }
-    
-    .edit-modal-close {
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        color: #999;
-        transition: color 0.3s;
-    }
-    
-    .edit-modal-close:hover {
-        color: #ea4b48;
-    }
-    
-    .form-group-modal {
-        margin-bottom: 15px;
-    }
-    
-    .form-group-modal label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: #4d4d4d;
-        margin-bottom: 8px;
-    }
-    
-    .form-control-modal {
-        width: 100%;
-        padding: 10px 14px;
-        border: 1px solid #e6e6e6;
-        border-radius: 6px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.3s;
-    }
-    
-    .form-control-modal:focus {
-        border-color: #00b207;
-    }
-    
-    .btn-save-modal {
-        background-color: #00b207;
-        color: white;
-        border: none;
-        padding: 11px 24px;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        width: 100%;
-        margin-top: 10px;
-        transition: background 0.3s;
-    }
-    
-    .btn-save-modal:hover {
-        background-color: #009906;
-    }
-
-    @media (max-width: 768px) {
-        .dashboard-wrapper {
-            margin: 20px auto 40px;
-        }
-        .dashboard-card {
-            padding: 20px;
-        }
-        .order-history-card {
-            padding: 20px;
-        }
-        .order-row-item {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 15px;
-            padding: 15px 0;
-        }
-        .order-status-badge {
-            align-self: flex-start;
-        }
-        .order-actions-flex {
-            width: 100%;
-            justify-content: flex-start;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .order-actions-flex button, .order-actions-flex a {
-            flex: 1;
-            text-align: center;
-            padding: 8px 10px;
-            font-size: 12px;
-            white-space: nowrap;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .edit-modal {
-            padding: 20px 15px;
-            width: 95%;
-        }
-    }
-</style>
+@vite(['resources/css/dashboard.css'])
 @endsection
 
 @section('content')
+    @php
+        $isProduction = config('services.midtrans.is_production', false);
+        $snapUrl = $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+        $clientKey = config('services.midtrans.client_key');
+    @endphp
+    <script type="text/javascript" src="{{ $snapUrl }}" data-client-key="{{ $clientKey }}"></script>
+
 <div class="dashboard-wrapper">
     <div class="row">
         
@@ -642,13 +69,20 @@
                 <!-- Profile Card -->
                 <div class="col-md-6 mb-4">
                     <div class="dashboard-card profile-card">
-                        <div class="profile-img-container">
-                            <!-- Cute cat photo matching the screenshot -->
-                            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=400&auto=format&fit=crop" alt="Profile Picture">
+                        <div class="profile-img-container" style="position: relative; cursor: pointer;" onclick="document.getElementById('dashboardAvatarInput').click()">
+                            <img src="{{ $user->avatar ? asset($user->avatar) : asset('image/default-avatar.svg') }}" alt="Profile Picture" id="dashboardAvatar">
+                            <div class="avatar-hover-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; color: white;">
+                                <i class="fa-solid fa-camera" style="font-size: 24px;"></i>
+                            </div>
+                            <input type="file" id="dashboardAvatarInput" accept="image/*" style="display: none;" onchange="uploadDashboardAvatar(this)">
                         </div>
                         <div class="profile-name" id="displayProfileName">{{ $user->nama }}</div>
                         <div class="profile-role">Customer</div>
-                        <a onclick="openEditProfile()" class="green-link">Edit Profile</a>
+                        <div style="display: flex; justify-content: center; gap: 15px;">
+                            <a onclick="openEditProfile()" class="green-link" style="cursor: pointer;">Edit Name</a>
+                            <span style="color: #ccc;">|</span>
+                            <a onclick="document.getElementById('dashboardAvatarInput').click()" class="green-link" style="cursor: pointer;">Change Photo</a>
+                        </div>
                     </div>
                 </div>
                 
@@ -680,42 +114,91 @@
                 <div class="order-rows-list">
                     @forelse($recentOrders as $order)
                         @php
-                            // Format status
+                            // Normalize status for design matching
                             $statusClass = 'pending';
                             $statusLabel = $order->order_status;
                             
                             if (Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered'])) {
                                 $statusClass = 'completed';
+                                $statusLabel = 'Completed';
+                            } elseif (Str::contains(strtolower($order->order_status), ['otw', 'way', 'kirim', 'sedang dikirim'])) {
+                                $statusClass = 'on_the_way';
+                                $statusLabel = 'On the Way';
                             } elseif (Str::contains(strtolower($order->order_status), ['proses', 'processing', 'ready'])) {
                                 $statusClass = 'processing';
+                                $statusLabel = 'Processing';
                             } elseif (Str::contains(strtolower($order->order_status), ['batal', 'cancel', 'failed'])) {
                                 $statusClass = 'cancelled';
+                                $statusLabel = 'Canceled';
+                            } elseif (Str::contains(strtolower($order->order_status), ['menunggu'])) {
+                                $statusClass = 'pending';
+                                $statusLabel = 'Processing';
+                            }
+
+                            $firstItem = null;
+                            $itemCount = 0;
+                            $totalQty = 0;
+                            $orderItems = $order->items;
+                            
+                            if (is_array($orderItems) && count($orderItems) > 0) {
+                                $firstItem = $orderItems[0];
+                                $itemCount = count($orderItems);
+                                foreach ($orderItems as $item) {
+                                    $totalQty += isset($item['qty']) ? intval($item['qty']) : 1;
+                                }
+                            }
+                            
+                            $displayImg = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop';
+                            if ($firstItem && isset($firstItem['img'])) {
+                                $displayImg = $firstItem['img'];
                             }
                         @endphp
                         <div class="order-row-item">
                             <div class="order-product-info" style="cursor: pointer;" onclick="window.location.href='{{ route('order.detail', $order->id) }}'">
                                 <div class="order-img-wrapper">
-                                    <!-- Fallback image of a beautiful dessert -->
-                                    <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop" alt="Cake">
-                                    <div class="extra-badge">+4</div>
+                                    <img src="{{ $displayImg }}" alt="Product Image">
+                                    @if ($itemCount > 1)
+                                        <div class="extra-badge">+{{ $itemCount - 1 }}</div>
+                                    @endif
                                 </div>
                                 <div class="order-details-meta">
                                     <div class="order-date">{{ $order->created_at->format('j M, Y') }}</div>
                                     <div class="order-summary">
-                                        Total: <strong>Rp. {{ number_format($order->total, 0, ',', '.') }}</strong> (5 Products)
+                                        Total: <strong>Rp. {{ number_format($order->total, 0, ',', '.') }}</strong> 
+                                        @if ($totalQty > 1)
+                                            ({{ $totalQty }} Products)
+                                        @else
+                                            (1 Product)
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="order-status-badge status-{{ $statusClass }}">
-                                {{ $statusLabel }}
-                            </div>
-                            
                             <div class="order-actions-flex">
-                                @if(Str::contains(strtolower($order->order_status), ['menunggu', 'pending']))
-                                    <button onclick="cancelOrder('{{ $order->id }}', '{{ $order->order_number }}')" class="btn-cancel-outline">Cancel Order</button>
+                                @if (Str::contains(strtolower($order->order_status), ['menunggu', 'pending']))
+                                    @if (strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
+                                        <button
+                                            onclick="payOrderNow('{{ $order->id }}')"
+                                            class="btn-pay-now-solid"><i class="fa-solid fa-credit-card"></i> Pay Now</button>
+                                    @endif
+                                    <button
+                                        onclick="cancelOrder('{{ $order->id }}', '{{ $order->order_number }}')"
+                                        class="btn-cancel-outline">Cancel Order</button>
                                 @endif
-                                <button onclick="trackOrder('{{ $order->order_number }}')" class="btn-tracking-solid">Tracking Order</button>
+                                @if (Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
+                                    <a href="{{ route('order.return', $order->id) }}"
+                                        class="btn-return-outline"><i class="fa-solid fa-rotate-left"
+                                            style="margin-right: 4px;"></i>Return</a>
+                                @endif
+                                <div class="tracking-action-wrapper">
+                                    @if (!(Str::contains(strtolower($order->order_status), ['menunggu', 'pending']) && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid'))
+                                    <div class="order-status-badge status-{{ $statusClass }}">
+                                        {{ $statusLabel }}
+                                    </div>
+                                    @endif
+                                    <button onclick="trackOrder('{{ $order->order_number }}')"
+                                        class="btn-tracking-solid">Tracking Order</button>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -734,13 +217,14 @@
                                 </div>
                             </div>
                             
-                            <div class="order-status-badge status-processing">
-                                Processing
-                            </div>
-                            
                             <div class="order-actions-flex">
                                 <button onclick="cancelDummyOrder()" class="btn-cancel-outline" id="dummyCancelBtn">Cancel Order</button>
-                                <button onclick="trackOrder('#DUMMY')" class="btn-tracking-solid">Tracking Order</button>
+                                <div class="tracking-action-wrapper">
+                                    <div class="order-status-badge status-processing">
+                                        Processing
+                                    </div>
+                                    <button onclick="trackOrder('#DUMMY')" class="btn-tracking-solid">Tracking Order</button>
+                                </div>
                             </div>
                         </div>
                     @endforelse
@@ -795,173 +279,90 @@
 </div>
 
 <script>
-    // Load persisted address details from localStorage on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const storedName = localStorage.getItem('zyh_cust_name') || "{{ $user->nama }}";
-        const storedAddress = localStorage.getItem('zyh_cust_address') || "pekanbaru, Rumbai, Umban Sari";
-        const storedEmail = localStorage.getItem('zyh_cust_email') || "{{ $user->email }}";
-        const storedPhone = localStorage.getItem('zyh_cust_phone') || "(+62) {{ $user->no_hp }}";
-        
-        document.getElementById('displayProfileName').textContent = storedName;
-        document.getElementById('displayBillingName').textContent = storedName;
-        document.getElementById('displayBillingAddress').textContent = storedAddress;
-        document.getElementById('displayBillingEmail').textContent = storedEmail;
-        document.getElementById('displayBillingPhone').textContent = storedPhone;
-        
-        // Sync values to form inputs
-        document.getElementById('inputProfileName').value = storedName;
-        document.getElementById('inputBillingAddress').value = storedAddress;
-        document.getElementById('inputBillingEmail').value = storedEmail;
-        document.getElementById('inputBillingPhone').value = storedPhone;
-    });
+    window.dashboardConfig = {
+        userNama: @json($user->nama),
+        userEmail: @json($user->email),
+        userPhone: @json($user->no_hp)
+    };
 
-    // Profile modal toggles
-    function openEditProfile() {
-        document.getElementById('modalEditProfile').style.display = 'flex';
-    }
-    
-    function closeEditProfile() {
-        document.getElementById('modalEditProfile').style.display = 'none';
-    }
-    
-    function saveProfile(e) {
-        e.preventDefault();
-        const newName = document.getElementById('inputProfileName').value;
-        localStorage.setItem('zyh_cust_name', newName);
-        
-        document.getElementById('displayProfileName').textContent = newName;
-        document.getElementById('displayBillingName').textContent = newName;
-        
-        closeEditProfile();
-        
-        Swal.fire({
-            title: 'Berhasil!',
-            text: 'Profil berhasil diperbarui.',
-            icon: 'success',
-            confirmButtonColor: '#00b207',
-            customClass: { popup: 'rounded-4' }
-        });
-    }
-
-    // Address modal toggles
-    function openEditAddress() {
-        document.getElementById('modalEditAddress').style.display = 'flex';
-    }
-    
-    function closeEditAddress() {
-        document.getElementById('modalEditAddress').style.display = 'none';
-    }
-    
-    function saveAddress(e) {
-        e.preventDefault();
-        const address = document.getElementById('inputBillingAddress').value;
-        const email = document.getElementById('inputBillingEmail').value;
-        const phone = document.getElementById('inputBillingPhone').value;
-        
-        localStorage.setItem('zyh_cust_address', address);
-        localStorage.setItem('zyh_cust_email', email);
-        localStorage.setItem('zyh_cust_phone', phone);
-        
-        document.getElementById('displayBillingAddress').textContent = address;
-        document.getElementById('displayBillingEmail').textContent = email;
-        document.getElementById('displayBillingPhone').textContent = phone;
-        
-        closeEditAddress();
-        
-        Swal.fire({
-            title: 'Berhasil!',
-            text: 'Alamat tagihan berhasil diperbarui.',
-            icon: 'success',
-            confirmButtonColor: '#00b207',
-            customClass: { popup: 'rounded-4' }
-        });
-    }
-
-    // Tab Alerts
-    function showTabAlert(tabName) {
-        Swal.fire({
-            title: tabName,
-            text: `Halaman ${tabName} pelanggan akan segera hadir!`,
-            icon: 'info',
-            confirmButtonColor: '#00b207',
-            customClass: { popup: 'rounded-4' }
-        });
-    }
-
-    // Cancel Order Handler
-    function cancelOrder(id, orderNumber) {
-        Swal.fire({
-            title: 'Batalkan Pesanan?',
-            text: `Apakah Anda yakin ingin membatalkan pesanan ${orderNumber}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ea4b48',
-            cancelButtonColor: '#c3cdd6',
-            confirmButtonText: 'Ya, Batalkan',
-            cancelButtonText: 'Batal',
-            customClass: { popup: 'rounded-4' }
-        }).then((result) => {
-            if (result.isConfirmed) {
+    function uploadDashboardAvatar(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validation
+            if (!file.type.match('image.*')) {
                 Swal.fire({
-                    title: 'Memproses...',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    didOpen: () => { Swal.showLoading(); }
+                    title: 'Gagal!',
+                    text: 'File harus berupa gambar.',
+                    icon: 'error',
+                    confirmButtonColor: '#00b207'
                 });
-                
-                // POST request to cancel order (mocking logic or endpoint if exists, otherwise display success)
-                setTimeout(() => {
-                    Swal.close();
+                return;
+            }
+            
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    title: 'Gagal!',
+                    text: 'Ukuran file maksimal adalah 2MB.',
+                    icon: 'error',
+                    confirmButtonColor: '#00b207'
+                });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Mengunggah...',
+                text: 'Mohon tunggu.',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const formData = new FormData();
+            formData.append('avatar', file);
+            
+            fetch("{{ route('settings.avatar') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
+                if (data.success) {
                     Swal.fire({
-                        title: 'Dibatalkan!',
-                        text: 'Pesanan Anda telah berhasil dibatalkan.',
+                        title: 'Berhasil!',
+                        text: 'Foto profil berhasil diperbarui.',
                         icon: 'success',
-                        confirmButtonColor: '#00b207',
-                        customClass: { popup: 'rounded-4' }
+                        confirmButtonColor: '#00b207'
                     }).then(() => {
                         window.location.reload();
                     });
-                }, 1000);
-            }
-        });
-    }
-
-    // Tracking Order Handler
-    function trackOrder(orderNumber) {
-        Swal.fire({
-            title: 'Pelacakan Pesanan',
-            text: `Pesanan Anda ${orderNumber} saat ini sedang dalam proses pengiriman.`,
-            icon: 'success',
-            confirmButtonColor: '#00b207',
-            customClass: { popup: 'rounded-4' }
-        });
-    }
-
-    // Dummy Row Cancellation
-    function cancelDummyOrder() {
-        Swal.fire({
-            title: 'Batalkan Pesanan?',
-            text: 'Apakah Anda yakin ingin membatalkan pesanan #DUMMY ini?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ea4b48',
-            cancelButtonColor: '#c3cdd6',
-            confirmButtonText: 'Ya, Batalkan',
-            cancelButtonText: 'Batal',
-            customClass: { popup: 'rounded-4' }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('dummyOrderRow').style.opacity = '0.5';
-                document.getElementById('dummyCancelBtn').style.display = 'none';
+                } else {
+                    Swal.fire({
+                        title: 'Gagal!',
+                        text: data.message || 'Gagal memperbarui foto profil.',
+                        icon: 'error',
+                        confirmButtonColor: '#00b207'
+                    });
+                }
+            })
+            .catch(err => {
+                Swal.close();
                 Swal.fire({
-                    title: 'Dibatalkan!',
-                    text: 'Pesanan dummy berhasil dibatalkan.',
-                    icon: 'success',
-                    confirmButtonColor: '#00b207',
-                    customClass: { popup: 'rounded-4' }
+                    title: 'Error!',
+                    text: 'Terjadi kesalahan saat mengunggah.',
+                    icon: 'error',
+                    confirmButtonColor: '#00b207'
                 });
-            }
-        });
+                console.error(err);
+            });
+        }
     }
 </script>
+@vite(['resources/js/dashboard.js'])
 @endsection

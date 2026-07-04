@@ -19,6 +19,8 @@ class User extends Authenticatable
         'password',
         'role',
         'google_id',
+        'alamat',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -31,5 +33,10 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+
+    public function customer()
+    {
+        return $this->hasOne(Customer::class, 'user_id');
     }
 }

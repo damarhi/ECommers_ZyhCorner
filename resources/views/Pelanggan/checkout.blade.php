@@ -13,358 +13,15 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<style>
-    /* Checkout Page Structure */
-    .checkout-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 60px 15px 80px;
-    }
-    
-    .checkout-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 40px;
-        align-items: start;
-    }
+<!-- Midtrans Snap JS -->
+@php
+    $isProduction = config('services.midtrans.is_production', false);
+    $snapUrl = $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+    $clientKey = config('services.midtrans.client_key');
+@endphp
+<script type="text/javascript" src="{{ $snapUrl }}" data-client-key="{{ $clientKey }}"></script>
 
-    .checkout-card {
-        background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 30px;
-        margin-bottom: 30px;
-    }
 
-    .checkout-section-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 24px;
-        border-bottom: 1px solid #f2f2f2;
-        padding-bottom: 12px;
-    }
-
-    /* Form Fields */
-    .form-row-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-    .form-group-custom {
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .form-group-custom label {
-        font-size: 14px;
-        font-weight: 500;
-        color: #333;
-    }
-    .form-group-custom label span {
-        color: #999;
-        font-weight: 400;
-        font-size: 12px;
-    }
-    .form-input-custom {
-        padding: 12px 16px;
-        border: 1px solid #e6e6e6;
-        border-radius: 6px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.3s;
-        width: 100%;
-        background: #fdfdfd;
-    }
-    .form-input-custom:focus {
-        border-color: #00b207;
-        background: white;
-    }
-    .form-textarea-custom {
-        padding: 12px 16px;
-        border: 1px solid #e6e6e6;
-        border-radius: 6px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.3s;
-        width: 100%;
-        min-height: 100px;
-        resize: vertical;
-        background: #fdfdfd;
-    }
-    .form-textarea-custom:focus {
-        border-color: #00b207;
-        background: white;
-    }
-
-    /* Map styling */
-    #map {
-        width: 100%;
-        height: 250px;
-        border-radius: 8px;
-        border: 1px solid #e6e6e6;
-        margin-top: 5px;
-        z-index: 10;
-    }
-    .map-note {
-        font-size: 12px;
-        color: #666;
-        margin-top: 8px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    /* Checkbox option */
-    .checkbox-option {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        color: #4d4d4d;
-        cursor: pointer;
-        margin-top: 15px;
-        user-select: none;
-    }
-    .checkbox-option input {
-        accent-color: #00b207;
-        width: 16px;
-        height: 16px;
-    }
-
-    /* Right Column Cards */
-    .summary-card {
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        background: white;
-        padding: 24px;
-        margin-bottom: 25px;
-    }
-    .summary-card-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #f2f2f2;
-        padding-bottom: 10px;
-    }
-
-    /* Order Summary Items list */
-    .order-items-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-    .order-item-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 14px;
-        color: #333;
-    }
-    .order-item-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .order-item-img {
-        width: 48px;
-        height: 48px;
-        border-radius: 4px;
-        overflow: hidden;
-        border: 1px solid #f2f2f2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2px;
-        background: #f9f9f9;
-        flex-shrink: 0;
-    }
-    .order-item-img img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-    .order-item-info {
-        display: flex;
-        flex-direction: column;
-    }
-    .order-item-name {
-        font-weight: 500;
-        max-width: 160px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .order-item-qty {
-        color: #999;
-        font-size: 12px;
-        margin-top: 2px;
-    }
-    .order-item-price {
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-
-    /* Summary Totals */
-    .summary-totals {
-        border-top: 1px solid #f2f2f2;
-        padding-top: 15px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        font-size: 14px;
-        color: #666;
-    }
-    .summary-total-row {
-        display: flex;
-        justify-content: space-between;
-    }
-    .summary-total-row span:last-child {
-        color: #1a1a1a;
-        font-weight: 600;
-    }
-    .summary-total-row.grand-total {
-        font-size: 16px;
-        color: #1a1a1a;
-        font-weight: 600;
-        border-top: 1px solid #f2f2f2;
-        padding-top: 15px;
-    }
-    .summary-total-row.grand-total span:last-child {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1a1a1a;
-    }
-
-    /* Payment Methods Options */
-    .payment-options {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 15px;
-    }
-    .payment-option-item {
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    .payment-option-item.active {
-        border-color: #00b207;
-        background: #f2f9f3;
-    }
-    .payment-option-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-    .payment-option-header input {
-        accent-color: #00b207;
-        width: 16px;
-        height: 16px;
-    }
-    .payment-sub-options {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-left: 26px;
-        margin-top: 10px;
-        padding-left: 10px;
-        border-left: 2px solid #e6e6e6;
-    }
-    .payment-sub-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: #4d4d4d;
-        cursor: pointer;
-    }
-    .payment-sub-item input {
-        accent-color: #00b207;
-        width: 14px;
-        height: 14px;
-    }
-
-    /* Select Shipping Box */
-    .shipping-options {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 15px;
-    }
-    .shipping-option-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        font-weight: 500;
-        color: #333;
-        cursor: pointer;
-        padding: 8px 0;
-    }
-    .shipping-option-item input {
-        accent-color: #00b207;
-        width: 16px;
-        height: 16px;
-    }
-
-    .btn-place-order {
-        display: flex;
-        width: 100%;
-        background-color: #00b207;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 15px 0;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        justify-content: center;
-        align-items: center;
-        transition: background 0.3s;
-        margin-top: 25px;
-    }
-    .btn-place-order:hover {
-        background-color: #009906;
-    }
-
-    @media (max-width: 991px) {
-        .checkout-grid {
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .checkout-container {
-            padding: 30px 15px 40px;
-        }
-        .checkout-card, .summary-card {
-            padding: 20px;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .form-row-2 {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-        #map {
-            height: 200px;
-        }
-        .order-item-name {
-            max-width: 120px;
-        }
-    }
-</style>
 
 
 <div class="checkout-container">
@@ -523,136 +180,25 @@
     </div>
 </div>
 
+
 <script>
-    let map, marker;
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        renderOrderSummary();
-        initCheckoutMap();
-    });
-
-    // Initialize Leaflet Map
-    function initCheckoutMap() {
-        // Del Institute coordinates as starting point
-        const initialCoords = [2.3833, 99.1500];
-        
-        map = L.map('map', {
-            scrollWheelZoom: false
-        }).setView(initialCoords, 15);
-
-        // Add premium styling layer from OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Create draggable marker
-        marker = L.marker(initialCoords, {
-            draggable: true
-        }).addTo(map);
-
-        // Set initial coordinates values
-        updateCoordsInputs(initialCoords[0], initialCoords[1]);
-
-        // Dragend event on marker
-        marker.on('dragend', function (e) {
-            let latlng = marker.getLatLng();
-            updateCoordsInputs(latlng.lat, latlng.lng);
-        });
-
-        // Click event on map
-        map.on('click', function (e) {
-            let latlng = e.latlng;
-            marker.setLatLng(latlng);
-            updateCoordsInputs(latlng.lat, latlng.lng);
-        });
-    }
-
-    function updateCoordsInputs(lat, lng) {
-        document.getElementById('latitude').value = lat;
-        document.getElementById('longitude').value = lng;
-        document.getElementById('coordsDisplay').innerHTML = `Lokasi Terpilih: (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
-    }
-
-    // Render summary products
-    function renderOrderSummary() {
-        const orderSummaryDiv = document.getElementById('orderItemsSummary');
-        let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
-        
-        if (localCart.length === 0) {
-            orderSummaryDiv.innerHTML = '<p style="color:#999; font-style:italic;">Keranjang kosong</p>';
-            window.location.href = "{{ route('userChart') }}";
-            return;
-        }
-
-        let summaryRowsHtml = localCart.map(item => {
-            let priceSub = item.price * item.qty;
-            let priceSubFormatted = 'Rp. ' + new Intl.NumberFormat('id-ID').format(priceSub);
-            
-            return `
-                <div class="order-item-row">
-                    <div class="order-item-left">
-                        <div class="order-item-img">
-                            <img src="${item.img}" alt="${item.name}">
-                        </div>
-                        <div class="order-item-info">
-                            <span class="order-item-name" title="${item.name}">${item.name}</span>
-                            <span class="order-item-qty">Qty: ${item.qty}</span>
-                        </div>
-                    </div>
-                    <span class="order-item-price">${priceSubFormatted}</span>
-                </div>
-            `;
-        }).join('');
-
-        orderSummaryDiv.innerHTML = summaryRowsHtml;
-
-        // Subtotals
-        let subtotalVal = localCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        let subtotalValFormatted = 'Rp. ' + new Intl.NumberFormat('id-ID').format(subtotalVal);
-        
-        document.getElementById('summarySubtotal').innerHTML = subtotalValFormatted;
-        document.getElementById('summaryTotal').innerHTML = subtotalValFormatted;
-    }
-
-    // Select payment method visually & reveal options
-    window.selectPaymentMethod = function(method) {
-        // Toggle active style
-        document.querySelectorAll('.payment-option-item').forEach(item => item.classList.remove('active'));
-        
-        const codRadio = document.getElementById('payCod');
-        const transferRadio = document.getElementById('payTransfer');
-        const ewalletRadio = document.getElementById('payEwallet');
-
-        const transferSub = document.getElementById('transferSubOptions');
-        const ewalletSub = document.getElementById('ewalletSubOptions');
-
-        transferSub.style.display = 'none';
-        ewalletSub.style.display = 'none';
-
-        if (method === 'cod') {
-            codRadio.checked = true;
-            codRadio.closest('.payment-option-item').classList.add('active');
-        } else if (method === 'transfer') {
-            transferRadio.checked = true;
-            transferRadio.closest('.payment-option-item').classList.add('active');
-            transferSub.style.display = 'flex';
-        } else if (method === 'ewallet') {
-            ewalletRadio.checked = true;
-            ewalletRadio.closest('.payment-option-item').classList.add('active');
-            ewalletSub.style.display = 'flex';
-        }
+    window.checkoutConfig = {
+        userChartRoute: "{{ route('userChart') }}",
+        checkoutPostRoute: "{{ route('checkout.post') }}",
+        orderSuccessRoute: "{{ route('order.success') }}",
+        csrfToken: "{{ csrf_token() }}"
     };
 
-    // Submit Order action
+    // Override window.submitOrder to integrate Midtrans Snap
     window.submitOrder = function() {
         const form = document.getElementById('checkoutForm');
-        if (!form.checkValidity()) {
+        if (form && !form.checkValidity()) {
             form.reportValidity();
             return;
         }
 
         let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
-        if(localCart.length === 0) {
+        if (localCart.length === 0) {
             Swal.fire({
                 title: 'Error',
                 text: 'Keranjang belanja kosong!',
@@ -662,14 +208,16 @@
             return;
         }
 
-        // Gather details
-        let streetAddress = document.getElementById('streetAddress').value;
-        let notes = document.getElementById('orderNotes').value;
+        const addrEl = document.getElementById('streetAddress');
+        const notesEl = document.getElementById('orderNotes');
+        let streetAddress = addrEl ? addrEl.value : '';
+        let notes = notesEl ? notesEl.value : '';
         
-        let paymentVal = document.querySelector('input[name="paymentGroup"]:checked').value;
-        let shippingVal = document.querySelector('input[name="shippingGroup"]:checked').value;
+        const payRadio = document.querySelector('input[name="paymentGroup"]:checked');
+        const shipRadio = document.querySelector('input[name="shippingGroup"]:checked');
+        let paymentVal = payRadio ? payRadio.value : 'COD';
+        let shippingVal = shipRadio ? shipRadio.value : 'Maxim';
 
-        // Show premium processing spinner
         Swal.fire({
             title: 'Memproses Pesanan...',
             text: 'Harap tunggu sementara kami memverifikasi pesanan Anda.',
@@ -680,12 +228,14 @@
             }
         });
 
-        // Send AJAX request
-        fetch("{{ route('checkout.post') }}", {
+        const routeUrl = window.checkoutConfig.checkoutPostRoute;
+        const token = window.checkoutConfig.csrfToken;
+
+        fetch(routeUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': token
             },
             body: JSON.stringify({
                 items: localCart,
@@ -699,13 +249,18 @@
         .then(data => {
             Swal.close();
             if (data.success) {
-                // Clear the cart on successful database entry
+                // Save cart to zyh_last_order for order success display
+                localStorage.setItem('zyh_last_order', JSON.stringify(localCart));
+
+                // Clear the cart locally immediately since order is created
                 localStorage.removeItem('zyh_cart');
-                if (typeof updateHeaderCart === 'function') {
-                    cart = [];
-                    updateHeaderCart();
+                if (typeof window.updateHeaderCart === 'function') {
+                    window.cart = [];
+                    window.updateHeaderCart();
                 }
-                window.location.href = "{{ route('order.success') }}";
+
+                // Redirect directly to the order success page (the customer can complete payment there)
+                window.location.href = window.checkoutConfig.orderSuccessRoute + '?order_id=' + data.order.id;
             } else {
                 Swal.fire({
                     title: 'Kesalahan!',

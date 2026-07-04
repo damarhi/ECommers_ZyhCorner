@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -18,242 +19,332 @@
     <!-- Layout styles -->
     <link rel="stylesheet" href="{{ asset('PurpleAdmin/assets/css/style.css') }}">
     <!-- End layout styles -->
-    <link rel="shortcut icon" href="{{ asset('PurpleAdmin/assets/images/favicon.png') }}" />
+    <link rel="shortcut icon" href="{{ asset('image/logo_circle.png') }}" type="image/png" />
     <!-- Custom Styles -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
-  </head>
-  <body>
+    @yield('styles')
+</head>
+
+<body>
     <div class="container-scroller">
-      <!-- partial:../../partials/_navbar.html -->
-      <nav class="navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-        <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
-          <a class="navbar-brand brand-logo custom-brand-logo" href="{{ url('admin/dashboard') }}">
-            <img src="{{ asset('image/logo.jpg') }}" alt="logo" class="custom-logo-img" />
-            Zyh Corner
-          </a>
-          <a class="navbar-brand brand-logo-mini" href="{{ url('admin/dashboard') }}">
-            <img src="{{ asset('image/logo.jpg') }}" alt="logo" class="custom-logo-img" />
-          </a>
-        </div>
-        <div class="navbar-menu-wrapper d-flex align-items-stretch">
-          <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
-            <span class="mdi mdi-menu"></span>
-          </button>
-          <div class="search-field d-none d-md-block">
-            <form class="d-flex align-items-center h-100" action="#">
-              <div class="input-group">
-                <div class="input-group-prepend bg-transparent">
-                  <i class="input-group-text border-0 mdi mdi-magnify"></i>
+        <!-- partial:../../partials/_navbar.html -->
+        <nav class="navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+            <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
+                <a class="navbar-brand brand-logo custom-brand-logo" href="{{ url('admin/dashboard') }}">
+                    <img src="{{ asset('image/logo.jpg') }}" alt="logo" class="custom-logo-img" />
+                    Zyh Corner
+                </a>
+                <a class="navbar-brand brand-logo-mini" href="{{ url('admin/dashboard') }}">
+                    <img src="{{ asset('image/logo.jpg') }}" alt="logo" class="custom-logo-img" />
+                </a>
+            </div>
+            <div class="navbar-menu-wrapper d-flex align-items-stretch">
+                <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
+                    <span class="mdi mdi-menu"></span>
+                </button>
+                <div class="search-field d-none d-md-block">
+                    <form class="d-flex align-items-center h-100" action="#">
+                        <div class="input-group">
+                            <div class="input-group-prepend bg-transparent">
+                                <i class="input-group-text border-0 mdi mdi-magnify"></i>
+                            </div>
+                            <input type="text" class="form-control bg-transparent border-0" placeholder="Cari...">
+                        </div>
+                    </form>
                 </div>
-                <input type="text" class="form-control bg-transparent border-0" placeholder="Cari...">
-              </div>
-            </form>
-          </div>
-          <ul class="navbar-nav navbar-nav-right">
-            
-            <li class="nav-item d-none d-lg-block full-screen-link">
-              <a class="nav-link">
-                <i class="mdi mdi-fullscreen" id="fullscreen-button"></i>
-              </a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="mdi mdi-email-outline"></i>
-                <span class="count-symbol bg-warning"></span>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list" aria-labelledby="messageDropdown">
-                <h6 class="p-3 mb-0">Pesan</h6>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face4.jpg') }}" alt="image" class="profile-pic">
-                  </div>
-                  <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Mark send you a message</h6>
-                    <p class="text-gray mb-0"> 1 Minutes ago </p>
-                  </div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face2.jpg') }}" alt="image" class="profile-pic">
-                  </div>
-                  <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Cregh send you a message</h6>
-                    <p class="text-gray mb-0"> 15 Minutes ago </p>
-                  </div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face3.jpg') }}" alt="image" class="profile-pic">
-                  </div>
-                  <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Profile picture updated</h6>
-                    <p class="text-gray mb-0"> 18 Minutes ago </p>
-                  </div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <h6 class="p-3 mb-0 text-center">4 pesan baru</h6>
-              </div>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-bs-toggle="dropdown">
-                <i class="mdi mdi-bell-outline"></i>
-                <span class="count-symbol bg-danger"></span>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
-                <h6 class="p-3 mb-0">Notifikasi</h6>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <div class="preview-icon bg-success">
-                      <i class="mdi mdi-calendar"></i>
-                    </div>
-                  </div>
-                  <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="preview-subject font-weight-normal mb-1">Event today</h6>
-                    <p class="text-gray ellipsis mb-0"> Just a reminder that you have an event today </p>
-                  </div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <div class="preview-icon bg-warning">
-                      <i class="mdi mdi-cog"></i>
-                    </div>
-                  </div>
-                  <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="preview-subject font-weight-normal mb-1">Settings</h6>
-                    <p class="text-gray ellipsis mb-0"> Update dashboard </p>
-                  </div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item preview-item">
-                  <div class="preview-thumbnail">
-                    <div class="preview-icon bg-info">
-                      <i class="mdi mdi-link-variant"></i>
-                    </div>
-                  </div>
-                  <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="preview-subject font-weight-normal mb-1">Launch Admin</h6>
-                    <p class="text-gray ellipsis mb-0"> New admin wow! </p>
-                  </div>
-                </a>
-                <div class="dropdown-divider"></div>
-                <h6 class="p-3 mb-0 text-center">Lihat semua notifikasi</h6>
-              </div>
-            </li>
-          
-           <li class="nav-item nav-profile dropdown">
-              <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                <div class="nav-profile-img d-flex align-items-center justify-content-center bg-gradient-primary rounded-circle text-white me-2" style="width: 32px; height: 32px; min-width: 32px;">
-                  <i class="mdi mdi-account" style="font-size: 18px;"></i>
-                </div>
-                <div class="nav-profile-text">
-                  <p class="mb-1 text-black font-weight-bold">{{ auth()->user()->nama ?? 'Admin' }}</p>
-                </div>
-              </a>
-              <div class="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">
-                <a class="dropdown-item" href="#">
-                  <i class="mdi mdi-cached me-2 text-success"></i> Log Aktivitas </a>
-                <div class="dropdown-divider"></div>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-                <a class="dropdown-item" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
-                  <i class="mdi mdi-logout me-2 text-primary"></i> Keluar </a>
-              </div>
-            </li>
-          </ul>
-          <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
-            <span class="mdi mdi-menu"></span>
-          </button>
-        </div>
-      </nav>
-      <!-- partial -->
-      <div class="container-fluid page-body-wrapper">
-        <!-- partial:../../partials/_sidebar.html -->
-        <nav class="sidebar sidebar-offcanvas" id="sidebar">
-          <ul class="nav">
-            <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
-              <a class="nav-link" href="{{ url('admin/dashboard') }}">
-                <span class="menu-title">Dashboard</span>
-                <i class="mdi mdi-home menu-icon"></i>
-              </a>
-            </li>
+                <ul class="navbar-nav navbar-nav-right">
 
-            <li class="nav-item {{ Request::is('admin/orders*') || Request::is('admin/pos*') || Request::is('admin/all-sales*') ? 'active' : '' }}">
-              <a class="nav-link" data-bs-toggle="collapse" href="#kelola-penjualan" aria-expanded="{{ Request::is('admin/orders*') || Request::is('admin/pos*') || Request::is('admin/all-sales*') ? 'true' : 'false' }}" aria-controls="kelola-penjualan">
-                <span class="menu-title">Kelola Penjualan</span>
-                <i class="menu-arrow"></i>
-                <i class="mdi mdi-format-list-bulleted menu-icon"></i>
-              </a>
-              <div class="collapse {{ Request::is('admin/orders*') || Request::is('admin/pos*') || Request::is('admin/all-sales*') ? 'show' : '' }}" id="kelola-penjualan">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
-                    <a class="nav-link {{ Request::is('admin/orders*') ? 'text-primary' : '' }}" href="{{ url('admin/orders') }}">Pesanan Online</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link {{ Request::is('admin/pos*') ? 'text-primary' : '' }}" href="{{ url('admin/pos') }}">Kasir Offline</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link {{ Request::is('admin/all-sales*') ? 'text-primary' : '' }}" href="{{ url('admin/all-sales') }}">Data Seluruh Penjualan</a>
-                  </li>
-                </ul>
-              </div>
-            </li>
-            <li class="nav-item {{ Request::is('admin/products') || Request::is('admin/products/*') ? 'active' : '' }}">
-              <a class="nav-link" href="{{ url('admin/products') }}">
-                <span class="menu-title">Produk</span>
-                <i class="mdi mdi-cube-outline menu-icon"></i>
-              </a>
-            </li>
-            <li class="nav-item {{ Request::is('admin/categories') || Request::is('admin/categories/*') ? 'active' : '' }}">
-              <a class="nav-link" href="{{ url('admin/categories') }}">
-                <span class="menu-title">Kategori</span>
-                <i class="mdi mdi-folder-outline menu-icon"></i>
-              </a>
-            </li>
-            <li class="nav-item {{ Request::is('admin/customers*') || Request::is('admin/cassiers*') ? 'active' : '' }}">
-              <a class="nav-link" data-bs-toggle="collapse" href="#manage-account" aria-expanded="{{ Request::is('admin/customers*') || Request::is('admin/cassiers*') ? 'true' : 'false' }}" aria-controls="manage-account">
-                <span class="menu-title">Kelola Akun</span>
-                <i class="menu-arrow"></i>
-                <i class="mdi mdi-account-multiple-outline menu-icon"></i>
-              </a>
-              <div class="collapse {{ Request::is('admin/customers*') || Request::is('admin/cassiers*') ? 'show' : '' }}" id="manage-account">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
-                    <a class="nav-link {{ Request::is('admin/customers*') ? 'text-primary' : '' }}" href="{{ url('admin/customers') }}">Pelanggan</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link {{ Request::is('admin/cassiers*') ? 'text-primary' : '' }}" href="{{ url('admin/cassiers') }}">Kasir</a>
-                  </li>
-                </ul>
-              </div>
-            </li>
-            <li class="nav-item {{ Request::is('admin/returs') || Request::is('admin/returs/*') ? 'active' : '' }}">
-              <a class="nav-link" href="{{ url('admin/returs') }}">
-                <span class="menu-title">Retur</span>
-                <i class="mdi mdi-keyboard-return menu-icon"></i>
-              </a>
-            </li>
+                    <li class="nav-item d-none d-lg-block full-screen-link">
+                        <a class="nav-link">
+                            <i class="mdi mdi-fullscreen" id="fullscreen-button"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="mdi mdi-email-outline"></i>
+                            <span class="count-symbol bg-warning"></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list"
+                            aria-labelledby="messageDropdown">
+                            <h6 class="p-3 mb-0">Pesan</h6>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item preview-item">
+                                <div class="preview-thumbnail">
+                                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face4.jpg') }}" alt="image"
+                                        class="profile-pic">
+                                </div>
+                                <div
+                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Mark send you a message
+                                    </h6>
+                                    <p class="text-gray mb-0"> 1 Minutes ago </p>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item preview-item">
+                                <div class="preview-thumbnail">
+                                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face2.jpg') }}" alt="image"
+                                        class="profile-pic">
+                                </div>
+                                <div
+                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Cregh send you a
+                                        message</h6>
+                                    <p class="text-gray mb-0"> 15 Minutes ago </p>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item preview-item">
+                                <div class="preview-thumbnail">
+                                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face3.jpg') }}" alt="image"
+                                        class="profile-pic">
+                                </div>
+                                <div
+                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Profile picture updated
+                                    </h6>
+                                    <p class="text-gray mb-0"> 18 Minutes ago </p>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="p-3 mb-0 text-center">4 pesan baru</h6>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
+                            data-bs-toggle="dropdown">
+                            <i class="mdi mdi-bell-outline"></i>
+                            <span class="count-symbol bg-danger"></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list"
+                            aria-labelledby="notificationDropdown">
+                            <h6 class="p-3 mb-0">Notifikasi</h6>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item preview-item">
+                                <div class="preview-thumbnail">
+                                    <div class="preview-icon bg-success">
+                                        <i class="mdi mdi-calendar"></i>
+                                    </div>
+                                </div>
+                                <div
+                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                    <h6 class="preview-subject font-weight-normal mb-1">Event today</h6>
+                                    <p class="text-gray ellipsis mb-0"> Just a reminder that you have an event today
+                                    </p>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item preview-item">
+                                <div class="preview-thumbnail">
+                                    <div class="preview-icon bg-warning">
+                                        <i class="mdi mdi-cog"></i>
+                                    </div>
+                                </div>
+                                <div
+                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                    <h6 class="preview-subject font-weight-normal mb-1">Settings</h6>
+                                    <p class="text-gray ellipsis mb-0"> Update dashboard </p>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item preview-item">
+                                <div class="preview-thumbnail">
+                                    <div class="preview-icon bg-info">
+                                        <i class="mdi mdi-link-variant"></i>
+                                    </div>
+                                </div>
+                                <div
+                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                    <h6 class="preview-subject font-weight-normal mb-1">Launch Admin</h6>
+                                    <p class="text-gray ellipsis mb-0"> New admin wow! </p>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="p-3 mb-0 text-center">Lihat semua notifikasi</h6>
+                        </div>
+                    </li>
 
-          </ul>
+                    <li class="nav-item nav-profile dropdown">
+                        <a class="nav-link dropdown-toggle" id="profileDropdown" href="#"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="nav-profile-img d-flex align-items-center justify-content-center rounded-circle text-white me-2"
+                                style="width: 34px; height: 34px; min-width: 34px; background: #4F46E5;">
+                                <i class="mdi mdi-account" style="font-size: 17px;"></i>
+                            </div>
+                            <div class="nav-profile-text">
+                                <p class="mb-1 text-black font-weight-bold">{{ auth()->user()->nama ?? 'Admin' }}</p>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">
+                            <a class="dropdown-item" href="#">
+                                <i class="mdi mdi-cached me-2 text-success"></i> Log Aktivitas </a>
+                            <div class="dropdown-divider"></div>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                style="display: none;">
+                                @csrf
+                            </form>
+                            <a class="dropdown-item" href="#"
+                                onclick="event.preventDefault(); confirmAdminLogout();">
+                                <i class="mdi mdi-logout me-2 text-primary"></i> Keluar </a>
+                        </div>
+                    </li>
+                </ul>
+                <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"
+                    data-toggle="offcanvas">
+                    <span class="mdi mdi-menu"></span>
+                </button>
+            </div>
         </nav>
         <!-- partial -->
-        <div class="main-panel">
-          <div class="content-wrapper">
-            @yield('content')
-          </div>
-          <!-- content-wrapper ends -->
-          <!-- partial:../../partials/_footer.html -->
-          
-          <!-- partial -->
+        <div class="container-fluid page-body-wrapper">
+            <!-- partial:../../partials/_sidebar.html -->
+            <nav class="sidebar sidebar-offcanvas" id="sidebar">
+                <ul class="nav">
+                    @if(auth()->user()->role !== 'kasir')
+                    <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/dashboard') }}">
+                            <span class="menu-title">Dashboard</span>
+                            <i class="mdi mdi-view-dashboard menu-icon"></i>
+                        </a>
+                    </li>
+                    @endif
+
+                    <!-- Kelola Penjualan -->
+                    <li class="nav-category-header">Kelola Penjualan</li>
+
+                    <li class="nav-item {{ Request::is('admin/orders*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/orders') }}">
+                            <span class="menu-title">Pesanan Online</span>
+                            <i class="mdi mdi-shopping menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/pos*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/pos') }}">
+                            <span class="menu-title">Kasir Offline</span>
+                            <i class="mdi mdi-cash-register menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/returs*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/returs') }}">
+                            <span class="menu-title">Return Produk</span>
+                            <i class="mdi mdi-keyboard-backspace menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/all-sales*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/all-sales') }}">
+                            <span class="menu-title">Data Seluruh Penjualan</span>
+                            <i class="mdi mdi-chart-line menu-icon"></i>
+                        </a>
+                    </li>
+
+                    @if(auth()->user()->role !== 'kasir')
+                    <!-- Kelola Data Produk -->
+                    <li class="nav-category-header">Kelola Data Produk</li>
+
+                    <li class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/products/custom*') && !Request::is('admin/products/discounts*') && !Request::is('admin/products/expired*')) ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/products') }}">
+                            <span class="menu-title">Produk Showcase</span>
+                            <i class="mdi mdi-cube-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/products/custom*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Produk Kustom sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Produk Kustom</span>
+                            <i class="mdi mdi-pencil-box-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/categories*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/categories') }}">
+                            <span class="menu-title">Kategori</span>
+                            <i class="mdi mdi-tag-multiple-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/products/discounts*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Diskon sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Diskon</span>
+                            <i class="mdi mdi-sale menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/products/expired*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Produk Kadaluarsa sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Produk Kadaluarsa</span>
+                            <i class="mdi mdi-calendar-remove menu-icon"></i>
+                        </a>
+                    </li>
+
+                    <!-- Kelola Akun -->
+                    <li class="nav-category-header">Kelola Akun</li>
+
+                    <li class="nav-item {{ Request::is('admin/customers*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/customers') }}">
+                            <span class="menu-title">Akun Pelanggan</span>
+                            <i class="mdi mdi-account-group-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/cassiers*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/cassiers') }}">
+                            <span class="menu-title">Akun Kasir</span>
+                            <i class="mdi mdi-account-tie-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/settings*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Akun sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Pengaturan</span>
+                            <i class="mdi mdi-cog-outline menu-icon"></i>
+                        </a>
+                    </li>
+
+                    <!-- Kelola Carousel -->
+                    <li class="nav-category-header">Kelola Carousel</li>
+
+                    <li class="nav-item {{ Request::is('admin/carousel/banner*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Banner sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Banner</span>
+                            <i class="mdi mdi-image-multiple-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/carousel/about-us*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan About Us sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">About Us</span>
+                            <i class="mdi mdi-information-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/carousel/faq*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan FAQ sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">FAQ</span>
+                            <i class="mdi mdi-help-circle-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/carousel/contact-us*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Contact Us sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Contact Us</span>
+                            <i class="mdi mdi-email-outline menu-icon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('admin/carousel/footer*') ? 'active' : '' }}">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Footer sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                            <span class="menu-title">Footer</span>
+                            <i class="mdi mdi-dock-bottom menu-icon"></i>
+                        </a>
+                    </li>
+                    @endif
+
+                </ul>
+            </nav>
+            <!-- partial -->
+            <div class="main-panel">
+                <div class="content-wrapper">
+                    @yield('content')
+                </div>
+                <!-- content-wrapper ends -->
+                <!-- partial:../../partials/_footer.html -->
+
+                <!-- partial -->
+            </div>
+            <!-- main-panel ends -->
         </div>
-        <!-- main-panel ends -->
-      </div>
-      <!-- page-body-wrapper ends -->
+        <!-- page-body-wrapper ends -->
     </div>
     <!-- container-scroller -->
     <!-- plugins:js -->
@@ -264,7 +355,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Global Success Alert
-            @if(session('success'))
+            @if (session('success'))
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
@@ -278,9 +369,9 @@
             @endif
 
             // Global Error Alert
-            @if($errors->any())
+            @if ($errors->any())
                 let errorMessages = '';
-                @foreach($errors->all() as $error)
+                @foreach ($errors->all() as $error)
                     errorMessages += '{{ $error }}\n';
                 @endforeach
                 Swal.fire({
@@ -303,8 +394,8 @@
                         text: "Data yang dihapus tidak dapat dikembalikan!",
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#fe7c96',
-                        cancelButtonColor: '#c3cdd6',
+                        confirmButtonColor: '#EF4444',
+                        cancelButtonColor: '#9CA3AF',
                         confirmButtonText: 'Ya, Hapus!',
                         cancelButtonText: 'Batal',
                         customClass: {
@@ -330,8 +421,8 @@
                         text: "Apakah Anda yakin ingin memperbarui data ini?",
                         icon: 'question',
                         showCancelButton: true,
-                        confirmButtonColor: '#b66dff',
-                        cancelButtonColor: '#c3cdd6',
+                        confirmButtonColor: '#4F46E5',
+                        cancelButtonColor: '#9CA3AF',
                         confirmButtonText: 'Ya, Simpan!',
                         cancelButtonText: 'Batal',
                         customClass: {
@@ -355,8 +446,8 @@
                 text: 'Apakah Anda yakin ingin keluar dari halaman Admin?',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#b66dff',
-                cancelButtonColor: '#c3cdd6',
+                confirmButtonColor: '#4F46E5',
+                cancelButtonColor: '#9CA3AF',
                 confirmButtonText: 'Ya, Keluar',
                 cancelButtonText: 'Batal',
                 customClass: {
@@ -382,5 +473,7 @@
     <!-- endinject -->
     <!-- Custom js for this page -->
     <!-- End custom js for this page -->
-  </body>
+    @yield('scripts')
+</body>
+
 </html>

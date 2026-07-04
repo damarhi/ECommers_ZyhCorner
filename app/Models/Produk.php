@@ -24,6 +24,20 @@ class Produk extends Model
         'foto_4',
     ];
 
+    protected $appends = ['stok'];
+
+    public function getStokAttribute()
+    {
+        $val = $this->status_produk;
+        if (is_numeric($val)) {
+            return (int)$val;
+        }
+        if ($val && strtolower($val) === 'tersedia') {
+            return 99;
+        }
+        return 0;
+    }
+
     public function kategori()
     {
         return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');

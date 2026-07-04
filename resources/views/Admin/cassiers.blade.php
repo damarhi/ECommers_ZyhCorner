@@ -5,10 +5,12 @@
 @section('content')
 <div class="content-wrapper">
     <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
-        <h3 class="page-title font-weight-bold text-dark m-0 text-center text-sm-start" style="font-size: 24px;">
-            Kasir
+        <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-sm-start">
+            <span class="page-title-icon bg-gradient-primary text-white me-2">
+                <i class="mdi mdi-account-multiple"></i>
+            </span>Kasir
         </h3>
-        <button type="button" class="btn btn-gradient-primary btn-sm d-flex align-items-center justify-content-center px-4 w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#addCassierModal">
+        <button type="button" class="btn btn-gradient-primary btn-sm px-4 ms-2" data-bs-toggle="modal" data-bs-target="#addCassierModal">
             <i class="mdi mdi-plus me-1"></i> Tambah Kasir
         </button>
     </div>
@@ -31,7 +33,7 @@
                         @endif
                         
                         <!-- Overlay Edit Button on Hover -->
-                        <div class="cassier-action-overlay d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s ease;">
+                        <div class="cassier-action-overlay d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30,39,83,0.55); opacity: 0; transition: opacity 0.3s ease;">
                             <button type="button" class="btn btn-light btn-sm px-4 py-2 text-primary shadow-sm d-flex align-items-center font-weight-bold" data-bs-toggle="modal" data-bs-target="#editCassierModal{{ $cassier->id }}">
                                 <i class="mdi mdi-pencil me-1"></i> Edit
                             </button>
@@ -73,6 +75,15 @@
                             <div class="form-group mb-3">
                                 <label class="font-weight-500 mb-2">Nama Kasir</label>
                                 <input type="text" class="form-control" name="name" value="{{ $cassier->name }}" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">Email</label>
+                                <input type="email" class="form-control" name="email" value="{{ $cassier->email }}" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">Password</label>
+                                <input type="password" class="form-control" name="password" placeholder="Kosongkan jika tidak diubah">
+                                <small class="form-text text-muted">Minimal 6 karakter. Biarkan kosong jika tidak ingin mengubah password.</small>
                             </div>
                             <div class="form-group mb-3">
                                 <label class="font-weight-500 mb-2">Status</label>
@@ -128,6 +139,15 @@
                     <div class="form-group mb-3">
                         <label class="font-weight-500 mb-2">Nama Kasir</label>
                         <input type="text" class="form-control" name="name" placeholder="Masukkan nama kasir" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-500 mb-2">Email</label>
+                        <input type="email" class="form-control" name="email" placeholder="Masukkan email kasir" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-500 mb-2">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="Masukkan password" required>
+                        <small class="form-text text-muted">Minimal 6 karakter.</small>
                     </div>
                     <div class="form-group mb-3">
                         <label class="font-weight-500 mb-2">Status</label>

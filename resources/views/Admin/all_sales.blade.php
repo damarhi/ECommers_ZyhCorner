@@ -70,35 +70,39 @@
                             <tbody>
                                 @forelse($sales as $order)
                                 <tr>
-                                    <td style="padding: 15px 10px; font-weight: 500; font-size: 14px; color: #2c2c2c;">{{ $order->order_number }}</td>
+                                    <td style="padding: 15px 10px; font-weight: 500; font-size: 14px;">
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" class="text-primary text-decoration-none font-weight-bold" title="Detail Pesanan">
+                                            {{ $order->order_number }}
+                                        </a>
+                                    </td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->created_at->format('M j, g:i A') }}</td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">
                                         @if($order->jenis_penjualan == 'Online')
-                                            <span class="badge badge-info" style="border-radius: 4px; padding: 6px 10px;">Online</span>
+                                            <span class="badge badge-soft-info">Online</span>
                                         @else
-                                            <span class="badge badge-dark" style="border-radius: 4px; padding: 6px 10px;">Offline</span>
+                                            <span class="badge badge-soft-dark">Offline</span>
                                         @endif
                                     </td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->customer_name }}</td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->email_pembeli ?? '-' }}</td>
                                     <td style="padding: 15px 10px;">
                                         @if($order->payment_status == 'Paid')
-                                            <span class="badge badge-success" style="border-radius: 4px; padding: 6px 10px;">Dibayar</span>
+                                            <span class="badge badge-soft-success">Dibayar</span>
                                         @else
-                                            <span class="badge badge-secondary" style="border-radius: 4px; padding: 6px 10px;">Tertunda</span>
+                                            <span class="badge badge-soft-warning">Tertunda</span>
                                         @endif
                                     </td>
                                     <td style="padding: 15px 10px;">
                                         @if($order->order_status == 'menunggu pembayaran')
-                                            <span class="badge badge-warning" style="border-radius: 4px; padding: 6px 10px;">Menunggu Pembayaran</span>
+                                            <span class="badge badge-soft-warning">Menunggu Pembayaran</span>
                                         @elseif($order->order_status == 'dikemas')
-                                            <span class="badge badge-info" style="border-radius: 4px; padding: 6px 10px;">Dikemas</span>
+                                            <span class="badge badge-soft-info">Dikemas</span>
                                         @elseif($order->order_status == 'dikirim')
-                                            <span class="badge badge-primary" style="border-radius: 4px; padding: 6px 10px;">Dikirim</span>
+                                            <span class="badge badge-soft-primary">Dikirim</span>
                                         @elseif($order->order_status == 'selesai')
-                                            <span class="badge badge-success" style="border-radius: 4px; padding: 6px 10px;">Selesai</span>
+                                            <span class="badge badge-soft-success">Selesai</span>
                                         @else
-                                            <span class="badge badge-secondary" style="border-radius: 4px; padding: 6px 10px;">{{ $order->order_status }}</span>
+                                            <span class="badge badge-soft-dark">{{ $order->order_status }}</span>
                                         @endif
                                     </td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
@@ -117,6 +121,11 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Modals (placed outside the table to prevent HTML rendering issues) -->
+                    @foreach($sales as $order)
+                        @include('Admin.order_detail_modal', ['order' => $order])
+                    @endforeach
 
                     <!-- Pagination -->
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">

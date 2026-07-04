@@ -1,5 +1,26 @@
 @extends('Layout.layout_pelanggan')
 
+@php
+    $statusStep = 1;
+    $isCanceled = Str::contains(strtolower($order->order_status), ['batal', 'cancel', 'failed']);
+    
+    if (!$isCanceled) {
+        if (Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered'])) {
+            $statusStep = 4;
+        } elseif (Str::contains(strtolower($order->order_status), ['otw', 'way', 'kirim', 'sedang dikirim'])) {
+            $statusStep = 3;
+        } elseif (Str::contains(strtolower($order->order_status), ['proses', 'processing', 'ready'])) {
+            $statusStep = 2;
+        }
+    }
+    
+    // Connector line width percentage
+    $connectorWidth = 0;
+    if ($statusStep == 2) $connectorWidth = 33.3;
+    elseif ($statusStep == 3) $connectorWidth = 66.6;
+    elseif ($statusStep == 4) $connectorWidth = 100;
+@endphp
+
 @section('title', 'Order Details - Zyh Corner')
 
 @section('breadcrumb')
@@ -596,10 +617,37 @@
             text-align: left;
         }
     }
+    
+    .btn-pay-now-solid {
+        background-color: #00b207 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: 0.3s !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        text-decoration: none !important;
+    }
+    .btn-pay-now-solid:hover {
+        background-color: #008f05 !important;
+        color: white !important;
+    }
 </style>
 @endsection
 
 @section('content')
+    @php
+        $isProduction = config('services.midtrans.is_production', false);
+        $snapUrl = $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js';
+        $clientKey = config('services.midtrans.client_key');
+    @endphp
+    <script type="text/javascript" src="{{ $snapUrl }}" data-client-key="{{ $clientKey }}"></script>
+
 <div class="dashboard-wrapper">
     <div class="row">
         
@@ -658,6 +706,10 @@
                         <a href="{{ route('order.history') }}" class="green-link">Back to List</a>
                         
                         @if($isPending)
+                            @if (strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
+                                <button onclick="payOrderNow('{{ $order->id }}')"
+                                    class="btn-pay-now-solid" style="margin-right: 10px;"><i class="fa-solid fa-credit-card"></i> Pay Now</button>
+                            @endif
                             <button onclick="cancelOrderDetail('{{ $order->id }}', '{{ $order->order_number }}')" class="btn-cancel-top">Cancel Order</button>
                         @elseif(Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
                             <a href="{{ route('order.return', $order->id) }}" class="btn-return-top"><i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i>Return Order</a>
@@ -666,6 +718,29 @@
                         @endif
                     </div>
                 </div>
+
+                @if ($isPending)
+                    <div class="payment-countdown-banner" style="background: linear-gradient(135deg, #fff3cd, #ffeeba); border-left: 5px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fa-solid fa-clock-rotate-left" style="font-size: 24px; color: #856404; animation: pulse 2s infinite;"></i>
+                            <div>
+                                <h4 style="margin: 0; font-size: 15px; color: #856404; font-weight: 700;">Selesaikan Pembayaran Anda</h4>
+                                <p style="margin: 3px 0 0 0; font-size: 13px; color: #665014;">Silakan lakukan pembayaran sebelum waktu habis agar pesanan tidak otomatis dibatalkan.</p>
+                            </div>
+                        </div>
+                        <div class="countdown-timer-wrapper" style="text-align: right; flex-shrink: 0;">
+                            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #856404; font-weight: 600; display: block; margin-bottom: 2px;">Sisa Waktu</span>
+                            <span id="paymentCountdown" class="countdown-timer-clock" style="font-size: 20px; font-weight: 800; color: #721c24; font-family: monospace; background: rgba(255,255,255,0.7); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.05); display: inline-block;">00:00:00</span>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes pulse {
+                            0% { transform: scale(1); }
+                            50% { transform: scale(1.1); }
+                            100% { transform: scale(1); }
+                        }
+                    </style>
+                @endif
                 
                 <div class="row">
                     <!-- Address Card -->
@@ -1119,5 +1194,120 @@
         el.classList.add('selected');
         el.querySelector('input[type="radio"]').checked = true;
     }
+
+    // Pay order now
+    function payOrderNow(orderId) {
+        Swal.fire({
+            title: 'Mendapatkan Token Pembayaran...',
+            text: 'Harap tunggu.',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch(`/order-history/${orderId}/pay`)
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
+                if (data.success && data.snap_token) {
+                    snap.pay(data.snap_token, {
+                        onSuccess: function(result) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: 'Pembayaran berhasil dikonfirmasi.',
+                                icon: 'success',
+                                confirmButtonColor: '#00b207'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        },
+                        onPending: function(result) {
+                            Swal.fire({
+                                title: 'Tertunda',
+                                text: 'Pembayaran sedang diproses atau tertunda.',
+                                icon: 'info',
+                                confirmButtonColor: '#00b207'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        },
+                        onError: function(result) {
+                            Swal.fire({
+                                title: 'Gagal',
+                                text: 'Pembayaran gagal dilakukan.',
+                                icon: 'error',
+                                confirmButtonColor: '#00b207'
+                            });
+                        },
+                        onClose: function() {
+                            Swal.fire({
+                                title: 'Dibatalkan',
+                                text: 'Anda menutup pop-up pembayaran.',
+                                icon: 'warning',
+                                confirmButtonColor: '#00b207'
+                            });
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Gagal!',
+                        text: data.message || 'Gagal memulai pembayaran.',
+                        icon: 'error',
+                        confirmButtonColor: '#00b207'
+                    });
+                }
+            })
+            .catch(err => {
+                Swal.close();
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Koneksi ke server gagal.',
+                    icon: 'error',
+                    confirmButtonColor: '#00b207'
+                });
+                console.error(err);
+            });
+    }
+
+    @if ($isPending && isset($expiryTimestamp))
+    (function() {
+        const expiryTime = {{ $expiryTimestamp }} * 1000;
+        const timerElement = document.getElementById('paymentCountdown');
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+
+            if (distance <= 0) {
+                if (timerElement) {
+                    timerElement.innerHTML = "00:00:00";
+                    timerElement.style.color = "#ea4b48";
+                }
+                clearInterval(timerInterval);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                return;
+            }
+
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const formattedHours = String(hours).padStart(2, '0');
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(seconds).padStart(2, '0');
+
+            if (timerElement) {
+                timerElement.innerHTML = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+            }
+        }
+
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+    })();
+    @endif
 </script>
 @endsection
