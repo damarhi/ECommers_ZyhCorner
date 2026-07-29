@@ -27,7 +27,7 @@ class ReturController extends Controller
         }
 
         $returs = $query->latest()->paginate(10);
-        return view('admin.returs', compact('returs'));
+        return view('Admin.kelola_penjualan.returs', compact('returs'));
     }
 
     public function store(Request $request)

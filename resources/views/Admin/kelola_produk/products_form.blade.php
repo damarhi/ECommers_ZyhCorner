@@ -4,6 +4,11 @@
 
 @section('content')
     <div class="content-wrapper">
+@php
+    $currentJenis = old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase'));
+    $backRoute = ($currentJenis === 'kustom') ? route('products.custom') : route('products.index');
+@endphp
+
         <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
             <h3 class="page-title m-0">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
@@ -11,13 +16,11 @@
                 </span> {{ $produk->exists ? 'Edit Produk' : 'Tambah Produk' }}
             </h3>
             <nav aria-label="breadcrumb">
-                <a href="{{ route('products.index') }}" class="btn btn-sm btn-outline-secondary w-100 w-sm-auto">
+                <a href="{{ $backRoute }}" class="btn btn-sm btn-outline-secondary w-100 w-sm-auto">
                     <i class="mdi mdi-arrow-left"></i> Kembali ke Produk
                 </a>
             </nav>
         </div>
-
-
 
         <form action="{{ $produk->exists ? route('products.update', $produk->id_produk) : route('products.store') }}"
             method="POST" enctype="multipart/form-data" class="forms-sample {{ $produk->exists ? 'edit-form' : '' }}">
@@ -49,8 +52,9 @@
                             <h4 class="card-title">Kuantitas</h4>
                             <div class="form-group mb-0">
                                 <label>Stok Produk</label>
-                                <input type="text" name="status_produk" class="form-control" placeholder="Masukkan Stok"
+                                <input type="text" name="status_produk" id="status_produk_input" class="form-control" placeholder="Masukkan Stok"
                                     value="{{ old('status_produk', $produk->status_produk) }}" required>
+                                <small id="stok_help_text" class="form-text text-muted mt-1" style="display: none; font-size: 12px;"></small>
                             </div>
                         </div>
                     </div>
@@ -103,6 +107,19 @@
                 <div class="col-lg-4">
                     <div class="card mb-2">
                         <div class="card-body">
+                            <h4 class="card-title">Jenis Produk</h4>
+                            <div class="form-group mb-0">
+                                <label>Pilih Jenis Produk</label>
+                                <select name="jenis_produk" class="form-select" required>
+                                    <option value="showcase" {{ old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase')) == 'showcase' ? 'selected' : '' }}>Produk Showcase</option>
+                                    <option value="kustom" {{ old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase')) == 'kustom' ? 'selected' : '' }}>Produk Kustom</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-2">
+                        <div class="card-body">
                             <h4 class="card-title">Kategori</h4>
                             <div class="form-group mb-0">
                                 <label>Pilih Kategori</label>
@@ -125,45 +142,45 @@
 
                     <div class="card mb-2">
                         <div class="card-body">
-                            <h4 class="card-title">Tag</h4>
-                            <div class="form-group mb-0">
-                                <label>Tambah Tag</label>
-                                <input type="text" class="form-control" placeholder="Masukkan nama tag">
-                                <div class="mt-3">
-                                    <span class="badge badge-outline-secondary me-1 mb-1">Choco <i
-                                            class="mdi mdi-close"></i></span>
-                                    <span class="badge badge-outline-secondary me-1 mb-1">Cake <i
-                                            class="mdi mdi-close"></i></span>
-                                    <span class="badge badge-outline-secondary mb-1">Wedding Cake <i
-                                            class="mdi mdi-close"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mb-2">
-                        <div class="card-body">
                             <h4 class="card-title">Harga</h4>
-                            <div class="form-group mb-0">
+                            <!-- Single Price (Showcase) -->
+                            <div id="single-harga-container" class="form-group mb-0">
                                 <label>Harga Produk</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Rp</span>
                                     </div>
-                                    <input type="number" name="harga" class="form-control"
-                                        placeholder="Masukkan harga" value="{{ old('harga', $produk->harga) }}" required
+                                    <input type="number" id="single_harga_input" name="harga" class="form-control"
+                                        placeholder="Masukkan harga" value="{{ old('harga', $produk->harga) }}"
                                         min="0">
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="card mb-2">
-                        <div class="card-body">
-                            <h4 class="card-title">Diskon</h4>
-                            <div class="form-group mb-0">
-                                <label>Diskon Produk</label>
-                                <input type="text" class="form-control" placeholder="Masukkan Diskon (Opsional)">
+                            <!-- Range Price (Kustom) -->
+                            <div id="range-harga-container" class="form-group mb-0" style="display: none;">
+                                <label>Range Harga Produk Kustom</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label style="font-size: 12px;" class="text-muted mb-1">Harga Min (Rp)</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" style="padding: 0 8px; font-size: 13px;">Rp</span>
+                                            </div>
+                                            <input type="number" id="range_harga_min_input" name="harga" class="form-control"
+                                                placeholder="Min" value="{{ old('harga', $produk->harga) }}" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label style="font-size: 12px;" class="text-muted mb-1">Harga Max (Rp)</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text" style="padding: 0 8px; font-size: 13px;">Rp</span>
+                                            </div>
+                                            <input type="number" id="range_harga_max_input" name="harga_max" class="form-control"
+                                                placeholder="Max" value="{{ old('harga_max', $produk->harga_max) }}" min="0">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -173,14 +190,15 @@
                             <h4 class="card-title">Tanggal Kedaluwarsa</h4>
                             <div class="form-group mb-0">
                                 <label>Tanggal Kedaluwarsa (Opsional)</label>
-                                <input type="date" name="tanggal_expired" class="form-control"
+                                <input type="date" name="tanggal_expired" id="tanggal_expired_input" class="form-control"
                                     value="{{ old('tanggal_expired', $produk->tanggal_expired) }}">
+                                <small id="expired_help_text" class="form-text text-muted mt-1" style="display: none; font-size: 12px;"></small>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-end mb-4">
-                        <a href="{{ route('products.index') }}" class="btn btn-light me-2">Batal</a>
+                        <a href="{{ $backRoute }}" class="btn btn-light me-2">Batal</a>
                         <button type="submit" class="btn btn-gradient-primary">Simpan Produk</button>
                     </div>
                 </div>
@@ -189,6 +207,99 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var jenisSelect = document.querySelector('select[name="jenis_produk"]');
+            var statusInput = document.getElementById('status_produk_input');
+            var stokHelp = document.getElementById('stok_help_text');
+            var singleContainer = document.getElementById('single-harga-container');
+            var rangeContainer = document.getElementById('range-harga-container');
+            var singleInput = document.getElementById('single_harga_input');
+            var minInput = document.getElementById('range_harga_min_input');
+            var maxInput = document.getElementById('range_harga_max_input');
+            var expiredInput = document.getElementById('tanggal_expired_input');
+            var expiredHelp = document.getElementById('expired_help_text');
+
+            function updateFormFields() {
+                if (!jenisSelect) return;
+                var jenis = jenisSelect.value;
+
+                if (jenis === 'kustom') {
+                    // Disable & Readonly Kuantitas / Stok
+                    if (statusInput) {
+                        statusInput.readOnly = true;
+                        statusInput.style.backgroundColor = '#e9ecef';
+                        statusInput.style.cursor = 'not-allowed';
+                        if (!statusInput.value || statusInput.value === 'Tersedia' || !isNaN(statusInput.value)) {
+                            statusInput.value = 'Berdasarkan Pesanan';
+                        }
+                    }
+                    if (stokHelp) {
+                        stokHelp.innerText = '*Kuantitas produk kustom dibuat berdasarkan pesanan (tidak dapat diisi).';
+                        stokHelp.style.display = 'block';
+                        stokHelp.style.color = '#6c757d';
+                    }
+
+                    // Price Range Setup
+                    singleContainer.style.display = 'none';
+                    singleInput.disabled = true;
+
+                    rangeContainer.style.display = 'block';
+                    minInput.disabled = false;
+                    maxInput.disabled = false;
+
+                    // Disable Tanggal Kedaluwarsa
+                    if (expiredInput) {
+                        expiredInput.readOnly = true;
+                        expiredInput.disabled = true;
+                        expiredInput.style.backgroundColor = '#e9ecef';
+                        expiredInput.style.cursor = 'not-allowed';
+                    }
+                    if (expiredHelp) {
+                        expiredHelp.innerText = '*Tanggal kedaluwarsa tidak berlaku untuk produk kustom.';
+                        expiredHelp.style.display = 'block';
+                        expiredHelp.style.color = '#6c757d';
+                    }
+                } else {
+                    // Showcase product
+                    if (statusInput) {
+                        statusInput.readOnly = false;
+                        statusInput.style.backgroundColor = '';
+                        statusInput.style.cursor = '';
+                        if (statusInput.value === 'Berdasarkan Pesanan') {
+                            statusInput.value = 'Tersedia';
+                        }
+                    }
+                    if (stokHelp) {
+                        stokHelp.style.display = 'none';
+                    }
+
+                    // Single Price Setup
+                    rangeContainer.style.display = 'none';
+                    minInput.disabled = true;
+                    maxInput.disabled = true;
+
+                    singleContainer.style.display = 'block';
+                    singleInput.disabled = false;
+
+                    // Enable Tanggal Kedaluwarsa
+                    if (expiredInput) {
+                        expiredInput.readOnly = false;
+                        expiredInput.disabled = false;
+                        expiredInput.style.backgroundColor = '';
+                        expiredInput.style.cursor = '';
+                    }
+                    if (expiredHelp) {
+                        expiredHelp.style.display = 'none';
+                    }
+                }
+            }
+
+            if (jenisSelect) {
+                jenisSelect.addEventListener('change', updateFormFields);
+                updateFormFields();
+            }
+        });
+
         function previewImage(input, previewId, iconId) {
             if (input.files && input.files[0]) {
                 var reader = new FileReader();

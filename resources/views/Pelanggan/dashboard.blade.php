@@ -91,7 +91,7 @@
                     <div class="dashboard-card billing-card">
                         <div class="billing-title">Billing Address</div>
                         <div class="billing-name" id="displayBillingName">{{ $user->nama }}</div>
-                        <div class="billing-address" id="displayBillingAddress">pekanbaru, Rumbai, Umban Sari</div>
+                        <div class="billing-address" id="displayBillingAddress">{{ $user->alamat ?? 'pekanbaru, Rumbai, Umban Sari' }}</div>
                         <div class="billing-contact">
                             <span>Email:</span> <span id="displayBillingEmail">{{ $user->email }}</span>
                         </div>

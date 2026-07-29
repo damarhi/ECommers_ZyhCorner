@@ -21,6 +21,7 @@ class CustomProductsTest extends TestCase
 
         $produk = Produk::create([
             'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'kustom',
             'nama_produk' => 'Nastar Premium',
             'harga' => 85000,
             'status_produk' => 'tersedia',
@@ -48,6 +49,7 @@ class CustomProductsTest extends TestCase
 
         $produk = Produk::create([
             'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'kustom',
             'nama_produk' => 'Lapis Legit',
             'harga' => 150000,
             'status_produk' => 'tersedia',

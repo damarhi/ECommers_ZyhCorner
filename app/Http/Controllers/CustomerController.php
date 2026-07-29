@@ -26,7 +26,7 @@ class CustomerController extends Controller
         }
 
         $customers = $query->latest()->paginate(10);
-        return view('admin.customers', compact('customers'));
+        return view('Admin.kelola_akun.customers', compact('customers'));
     }
 
     public function store(Request $request)

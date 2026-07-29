@@ -42,6 +42,9 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,        // Data customer (admin panel)
             PesananSeeder::class,         // Pesanan & penjualan
             ReturSeeder::class,           // Data return
+            DiskonSeeder::class,          // Data diskon promo
+            BannerSeeder::class,          // Data banner promo
+            AboutSettingSeeder::class,    // Data pengaturan About Us
         ]);
     }
 }

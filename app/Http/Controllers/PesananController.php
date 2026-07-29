@@ -25,7 +25,7 @@ class PesananController extends Controller
         }
 
         $orders = $query->latest()->paginate(10);
-        return view('admin.orders', compact('orders'));
+        return view('Admin.kelola_penjualan.orders', compact('orders'));
     }
 
     public function store(Request $request)
@@ -111,8 +111,12 @@ class PesananController extends Controller
             });
         }
 
-        $sales = $query->latest()->paginate(10);
-        return view('admin.all_sales', compact('sales'));
+        $totalPendapatan = (clone $query)->sum('total');
+        $totalOnlineCount = (clone $query)->where('jenis_penjualan', 'Online')->count();
+        $totalOfflineCount = (clone $query)->where('jenis_penjualan', 'Offline')->count();
+
+        $sales = $query->latest()->paginate(10)->withQueryString();
+        return view('Admin.kelola_penjualan.all_sales', compact('sales', 'totalPendapatan', 'totalOnlineCount', 'totalOfflineCount'));
     }
 
     public function printInvoice($id)
@@ -145,6 +149,6 @@ class PesananController extends Controller
             }
         }
         
-        return view('admin.invoice', compact('order', 'items'));
+        return view('Admin.kelola_penjualan.invoice', compact('order', 'items'));
     }
 }

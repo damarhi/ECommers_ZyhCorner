@@ -11,12 +11,12 @@ class KategoriController extends Controller
     public function index()
     {
         $kategoris = Kategori::withCount('produks')->get();
-        return view('admin.categories', compact('kategoris'));
+        return view('Admin.kelola_produk.categories', compact('kategoris'));
     }
 
     public function create()
     {
-        return view('admin.categories_form');
+        return view('Admin.kelola_produk.categories');
     }
 
     public function store(Request $request)
@@ -44,7 +44,7 @@ class KategoriController extends Controller
     public function edit($id)
     {
         $kategori = Kategori::findOrFail($id);
-        return view('admin.categories_form', compact('kategori'));
+        return view('Admin.kelola_produk.categories', compact('kategori'));
     }
 
     public function update(Request $request, $id)

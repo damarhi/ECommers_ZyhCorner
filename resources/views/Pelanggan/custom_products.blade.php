@@ -7,45 +7,23 @@
     <div class="shop-container">
 
         <!-- Promo Banner -->
-        <div class="shop-promo-banner">
-            <div class="spb-content">
-                <h4>Best Deals</h4>
-                <h2>Sale of the Month</h2>
-                <div class="countdown">
-                    <div class="cd-item">
-                        <span class="num">00</span>
-                        <span class="label">Days</span>
-                    </div>
-                    <span class="colon">:</span>
-                    <div class="cd-item">
-                        <span class="num">02</span>
-                        <span class="label">Hours</span>
-                    </div>
-                    <span class="colon">:</span>
-                    <div class="cd-item">
-                        <span class="num">18</span>
-                        <span class="label">Mins</span>
-                    </div>
-                    <span class="colon">:</span>
-                    <div class="cd-item">
-                        <span class="num">46</span>
-                        <span class="label">Secs</span>
-                    </div>
+        @if(isset($customBanners) && $customBanners->count() > 1)
+            @include('Pelanggan.partials.multi_banner_grid', ['banners' => $customBanners])
+        @elseif(isset($customBanner) && $customBanner && $customBanner->status === 'Aktif')
+            <div class="shop-promo-banner" @if($customBanner->gambar_banner && Storage::disk('public')->exists($customBanner->gambar_banner)) style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{{ asset('storage/' . $customBanner->gambar_banner) }}'); background-size: cover; background-position: center;" @endif>
+                <div class="spb-content">
+                    @if($customBanner->subjudul)
+                        <h4>{{ $customBanner->subjudul }}</h4>
+                    @endif
+                    <h2>{{ $customBanner->judul_banner }}</h2>
+                    @if($customBanner->link_url)
+                        <a href="{{ $customBanner->link_url }}" class="spb-btn text-decoration-none d-inline-flex align-items-center mt-3">Pesan Sekarang <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                    @else
+                        <button class="spb-btn mt-3">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></button>
+                    @endif
                 </div>
-                <button class="spb-btn">Shop Now <i class="fa-solid fa-arrow-right"></i></button>
             </div>
-
-            <div class="spb-badge">
-                <span>56%</span>
-                <span>OFF</span>
-            </div>
-
-            <div style="position: absolute; right: 10%; bottom: 0;">
-                <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=400&auto=format&fit=crop"
-                    style="max-height: 250px; background: transparent; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.3)); border-radius: 20px 20px 0 0;"
-                    alt="Cake">
-            </div>
-        </div>
+        @endif
 
         <!-- Filter Toolbar -->
         <div class="filter-toolbar">
@@ -164,9 +142,13 @@
                         <a href="{{ route('product.detail', $product->id_produk) }}?custom=1"
                             class="product-name">{{ $product->nama_produk }}</a>
                         <div class="product-price">
-                            Rp. {{ number_format($product->harga, 0, ',', '.') }}
-                            @if ($index == 3 || $index == 7)
-                                <span class="old">Rp. {{ number_format($product->harga * 2, 0, ',', '.') }}</span>
+                            @if ($product->harga_max && $product->harga_max > $product->harga)
+                                Rp. {{ number_format($product->harga, 0, ',', '.') }} - Rp. {{ number_format($product->harga_max, 0, ',', '.') }}
+                            @else
+                                Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                @if ($index == 3 || $index == 7)
+                                    <span class="old">Rp. {{ number_format($product->harga * 2, 0, ',', '.') }}</span>
+                                @endif
                             @endif
                         </div>
 

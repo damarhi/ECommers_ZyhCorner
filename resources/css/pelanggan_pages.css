@@ -3831,33 +3831,24 @@ footer.footer a:hover {
     margin-bottom: 15px;
 }
 
-.intro-image img, .delivery-image img {
+.intro-image img, .delivery-image img, .features-image img {
     width: 100%;
     height: 380px;
     object-fit: cover;
-    border-radius: 0 80px 0 80px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    transition: transform 0.3s ease;
-}
-
-.features-image img {
-    width: 100%;
-    height: 380px;
-    object-fit: cover;
-    border-radius: 80px 0 80px 0;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
     transition: transform 0.3s ease;
 }
 
 .intro-image img:hover, .features-image img:hover, .delivery-image img:hover {
-    transform: scale(1.02);
+    transform: scale(1.01);
 }
 
 /* Features Grid */
 .features-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 25px;
+    gap: 25px 20px;
     margin-top: 30px;
 }
 
@@ -3881,15 +3872,15 @@ footer.footer a:hover {
 }
 
 .feature-info h3 {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: #1a1a1a;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .feature-info p {
     font-size: 13px;
-    color: #666;
+    color: #888;
     line-height: 1.4;
     margin: 0;
 }
@@ -3908,7 +3899,7 @@ footer.footer a:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 15px;
+    font-size: 14.5px;
     color: #333;
 }
 
@@ -3922,12 +3913,12 @@ footer.footer a:hover {
     align-items: center;
     gap: 8px;
     background: #00b207;
-    color: white;
+    color: white !important;
     padding: 14px 32px;
     border-radius: 50px;
     font-weight: 600;
     font-size: 15px;
-    text-decoration: none;
+    text-decoration: none !important;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 178, 7, 0.2);
 }
@@ -3938,28 +3929,33 @@ footer.footer a:hover {
     box-shadow: 0 6px 20px rgba(0, 178, 7, 0.3);
 }
 
-/* Team Grid */
-.about-team, .about-testimonials {
+/* Team Grid & Arrows */
+.about-team {
     text-align: center;
+    position: relative;
 }
 
-.team-header, .testimonial-header {
-    max-width: 600px;
+.team-header {
+    max-width: 650px;
     margin: 0 auto 50px auto;
+}
+
+.team-grid-container {
+    position: relative;
 }
 
 .team-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 25px;
+    gap: 24px;
 }
 
 .team-card {
     background: white;
     border: 1px solid #e6e6e6;
     border-radius: 12px;
-    padding: 20px;
-    text-align: center;
+    padding: 16px;
+    text-align: left;
     transition: all 0.3s ease;
 }
 
@@ -3974,34 +3970,82 @@ footer.footer a:hover {
     aspect-ratio: 1;
     object-fit: cover;
     border-radius: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .team-card h3 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: #1a1a1a;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .team-card p {
-    font-size: 13.5px;
-    color: #999;
+    font-size: 13px;
+    color: #888;
     margin: 0;
 }
 
+/* Team Dots Pagination */
+.team-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+}
+
+.team-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #e6e6e6;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.team-dots .dot.active, .team-dots .dot:hover {
+    width: 24px;
+    border-radius: 12px;
+    background-color: #00b207;
+}
+
 /* Testimonial Section */
+.testimonial-header-row {
+    margin-bottom: 30px;
+}
+
+.testi-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e6e6e6;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.testi-arrow.active, .testi-arrow:hover {
+    background: #00b207;
+    color: white;
+    border-color: #00b207;
+}
+
 .testimonial-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 24px;
 }
 
 .testimonial-card {
     background: white;
     border: 1px solid #e6e6e6;
     border-radius: 12px;
-    padding: 30px;
+    padding: 28px;
     text-align: left;
     display: flex;
     flex-direction: column;
@@ -4011,24 +4055,23 @@ footer.footer a:hover {
 }
 
 .testimonial-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
     border-color: #00b207;
 }
 
 .quote-icon {
     color: #00b207;
-    font-size: 32px;
-    margin-bottom: 15px;
-    opacity: 0.3;
+    font-size: 28px;
+    margin-bottom: 12px;
+    opacity: 0.8;
 }
 
 .testimonial-card p {
-    font-size: 14.5px;
+    font-size: 14px;
     color: #4d4d4d;
     line-height: 1.6;
-    margin-bottom: 25px;
-    font-style: italic;
+    margin-bottom: 20px;
 }
 
 .testimonial-user {

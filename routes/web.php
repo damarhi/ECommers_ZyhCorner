@@ -59,10 +59,18 @@ Route::get('/admin/dashboard', function () {
     if (auth()->check() && auth()->user()->role === 'kasir') {
         return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman dashboard.');
     }
-    return view('admin.dashboard');
+    return view('Admin.dashboard.dashboard');
 })->middleware('auth');
 
+Route::get('admin/custom-products', [\App\Http\Controllers\ProdukController::class, 'customIndex'])->middleware('auth')->name('products.custom');
+Route::get('admin/expired-products', [\App\Http\Controllers\ExpiredProductController::class, 'index'])->middleware('auth')->name('products.expired.index');
+Route::put('admin/expired-products/{id}', [\App\Http\Controllers\ExpiredProductController::class, 'update'])->middleware('auth')->name('products.expired.update');
+Route::delete('admin/expired-products/{id}', [\App\Http\Controllers\ExpiredProductController::class, 'destroy'])->middleware('auth')->name('products.expired.destroy');
+Route::post('admin/expired-products/bulk-delete', [\App\Http\Controllers\ExpiredProductController::class, 'bulkDelete'])->middleware('auth')->name('products.expired.bulk-delete');
 Route::resource('admin/products', \App\Http\Controllers\ProdukController::class)->middleware('auth')->names('products');
+Route::resource('admin/discounts', \App\Http\Controllers\DiskonController::class)->middleware('auth')->names('discounts');
+Route::post('admin/discounts/bulk-delete', [\App\Http\Controllers\DiskonController::class, 'bulkDelete'])->middleware('auth')->name('discounts.bulk-delete');
+Route::post('admin/discounts/{discount}/toggle', [\App\Http\Controllers\DiskonController::class, 'toggleStatus'])->middleware('auth')->name('discounts.toggle');
 Route::resource('admin/returs', \App\Http\Controllers\ReturController::class)->middleware('auth')->names('returs');
 
 Route::middleware(['auth', 'blockKasir'])->group(function () {
@@ -73,7 +81,19 @@ Route::middleware(['auth', 'blockKasir'])->group(function () {
 
 Route::resource('admin/orders', \App\Http\Controllers\PesananController::class)->middleware('auth')->names('orders');
 Route::get('admin/orders/{id}/invoice', [\App\Http\Controllers\PesananController::class, 'printInvoice'])->middleware('auth')->name('orders.invoice');
-Route::get('admin/all-sales', [\App\Http\Controllers\PesananController::class, 'allSales'])->middleware('auth')->name('all-sales.index');
+Route::resource('admin/banners', \App\Http\Controllers\BannerController::class)->middleware('auth')->names('banners');
+Route::post('admin/banners/bulk-delete', [\App\Http\Controllers\BannerController::class, 'bulkDelete'])->middleware('auth')->name('banners.bulk-delete');
+Route::post('admin/banners/{banner}/toggle', [\App\Http\Controllers\BannerController::class, 'toggleStatus'])->middleware('auth')->name('banners.toggle');
+Route::get('admin/settings', [\App\Http\Controllers\AdminSettingsController::class, 'index'])->middleware('auth')->name('settings.index');
+Route::post('admin/settings/profile', [\App\Http\Controllers\AdminSettingsController::class, 'updateProfile'])->middleware('auth')->name('settings.profile.update');
+Route::post('admin/settings/password', [\App\Http\Controllers\AdminSettingsController::class, 'updatePassword'])->middleware('auth')->name('settings.password.update');
+Route::post('admin/settings/store', [\App\Http\Controllers\AdminSettingsController::class, 'updateStoreInfo'])->middleware('auth')->name('settings.store.update');
+
+Route::get('admin/about-settings', [\App\Http\Controllers\AdminAboutController::class, 'index'])->middleware('auth')->name('admin.about.index');
+Route::post('admin/about-settings', [\App\Http\Controllers\AdminAboutController::class, 'update'])->middleware('auth')->name('admin.about.update');
+Route::post('admin/about-settings/team', [\App\Http\Controllers\AdminAboutController::class, 'storeTeam'])->middleware('auth')->name('admin.about.team.store');
+Route::put('admin/about-settings/team/{id}', [\App\Http\Controllers\AdminAboutController::class, 'updateTeam'])->middleware('auth')->name('admin.about.team.update');
+Route::delete('admin/about-settings/team/{id}', [\App\Http\Controllers\AdminAboutController::class, 'destroyTeam'])->middleware('auth')->name('admin.about.team.destroy');
 
 Route::get('admin/pos', [\App\Http\Controllers\PosController::class, 'index'])->middleware('auth')->name('pos.index');
 Route::post('admin/pos/checkout', [\App\Http\Controllers\PosController::class, 'checkout'])->middleware('auth')->name('pos.checkout');

@@ -197,7 +197,7 @@
                         </div>
 
                         <!-- Detail Order Modal -->
-                        @include('Admin.order_detail_modal', ['order' => $order])
+                        @include('Admin.kelola_penjualan.order_detail_modal', ['order' => $order])
                     @endforeach
 
                     <!-- Pagination -->

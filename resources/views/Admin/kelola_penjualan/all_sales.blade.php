@@ -17,6 +17,54 @@
         </div>
     </div>
 
+    <!-- Summary KPI Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 stretch-card grid-margin">
+            <div class="card stat-card stat-card-coral border-0 text-white">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon">
+                        <i class="mdi mdi-cash-multiple"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label mb-0">Total Omset Penjualan</p>
+                        <h3 class="stat-value">Rp. {{ number_format($totalPendapatan ?? 0, 0, ',', '.') }}</h3>
+                        <p class="stat-change mb-0">Total akumulasi penjualan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 stretch-card grid-margin">
+            <div class="card stat-card stat-card-indigo border-0 text-white">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon">
+                        <i class="mdi mdi-cart-outline"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label mb-0">Penjualan Online</p>
+                        <h3 class="stat-value">{{ $totalOnlineCount ?? 0 }}</h3>
+                        <p class="stat-change mb-0">Transaksi pesanan selesai online</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 stretch-card grid-margin">
+            <div class="card stat-card stat-card-teal border-0 text-white">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon">
+                        <i class="mdi mdi-store"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label mb-0">Penjualan Kasir / Offline</p>
+                        <h3 class="stat-value">{{ $totalOfflineCount ?? 0 }}</h3>
+                        <p class="stat-change mb-0">Transaksi langsung kasir offline</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12 grid-margin stretch-card">
             <div class="card border-0 shadow-sm" style="border-radius: 8px;">
@@ -124,7 +172,7 @@
 
                     <!-- Modals (placed outside the table to prevent HTML rendering issues) -->
                     @foreach($sales as $order)
-                        @include('Admin.order_detail_modal', ['order' => $order])
+                        @include('Admin.kelola_penjualan.order_detail_modal', ['order' => $order])
                     @endforeach
 
                     <!-- Pagination -->

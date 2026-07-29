@@ -242,14 +242,14 @@
                     <!-- Kelola Data Produk -->
                     <li class="nav-category-header">Kelola Data Produk</li>
 
-                    <li class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/products/custom*') && !Request::is('admin/products/discounts*') && !Request::is('admin/products/expired*')) ? 'active' : '' }}">
+                    <li class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/custom-products*') && !Request::is('admin/discounts*') && !Request::is('admin/expired-products*')) ? 'active' : '' }}">
                         <a class="nav-link" href="{{ url('admin/products') }}">
                             <span class="menu-title">Produk Showcase</span>
                             <i class="mdi mdi-cube-outline menu-icon"></i>
                         </a>
                     </li>
-                    <li class="nav-item {{ Request::is('admin/products/custom*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Produk Kustom sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                    <li class="nav-item {{ Request::is('admin/custom-products*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('products.custom') }}">
                             <span class="menu-title">Produk Kustom</span>
                             <i class="mdi mdi-pencil-box-outline menu-icon"></i>
                         </a>
@@ -260,14 +260,14 @@
                             <i class="mdi mdi-tag-multiple-outline menu-icon"></i>
                         </a>
                     </li>
-                    <li class="nav-item {{ Request::is('admin/products/discounts*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Diskon sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                    <li class="nav-item {{ Request::is('admin/discounts*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('discounts.index') }}">
                             <span class="menu-title">Diskon</span>
                             <i class="mdi mdi-sale menu-icon"></i>
                         </a>
                     </li>
-                    <li class="nav-item {{ Request::is('admin/products/expired*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Produk Kadaluarsa sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                    <li class="nav-item {{ Request::is('admin/expired-products*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('products.expired.index') }}">
                             <span class="menu-title">Produk Kadaluarsa</span>
                             <i class="mdi mdi-calendar-remove menu-icon"></i>
                         </a>
@@ -289,7 +289,7 @@
                         </a>
                     </li>
                     <li class="nav-item {{ Request::is('admin/settings*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Akun sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                        <a class="nav-link" href="{{ route('settings.index') }}">
                             <span class="menu-title">Pengaturan</span>
                             <i class="mdi mdi-cog-outline menu-icon"></i>
                         </a>
@@ -298,14 +298,14 @@
                     <!-- Kelola Carousel -->
                     <li class="nav-category-header">Kelola Carousel</li>
 
-                    <li class="nav-item {{ Request::is('admin/carousel/banner*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Banner sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                    <li class="nav-item {{ Request::is('admin/banners*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('banners.index') }}">
                             <span class="menu-title">Banner</span>
                             <i class="mdi mdi-image-multiple-outline menu-icon"></i>
                         </a>
                     </li>
-                    <li class="nav-item {{ Request::is('admin/carousel/about-us*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan About Us sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
+                    <li class="nav-item {{ Request::is('admin/about-settings*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.about.index') }}">
                             <span class="menu-title">About Us</span>
                             <i class="mdi mdi-information-outline menu-icon"></i>
                         </a>

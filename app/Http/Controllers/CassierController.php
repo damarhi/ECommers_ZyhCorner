@@ -13,7 +13,7 @@ class CassierController extends Controller
     public function index()
     {
         $cassiers = Cassier::latest()->get();
-        return view('admin.cassiers', compact('cassiers'));
+        return view('Admin.kelola_akun.cassiers', compact('cassiers'));
     }
 
     public function store(Request $request)

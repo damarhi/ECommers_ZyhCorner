@@ -20,19 +20,30 @@ class PelangganController extends Controller
         $categories = Kategori::withCount('produks')->get();
         $newestProducts = Produk::with('kategori')->orderBy('created_at', 'desc')->limit(4)->get();
 
+        $heroBanners = \App\Models\Banner::where('status', 'Aktif')->orderBy('urutan', 'asc')->get();
+        $promoBanners = \App\Models\Banner::where('posisi_banner', 'popup_promo')->where('status', 'Aktif')->orderBy('urutan', 'asc')->get();
+        $popupBanner = $promoBanners->first();
+
         return view('Pelanggan.home', compact(
             'featuredProducts',
             'hotDeals',
             'bestSellers',
             'topRated',
             'categories',
-            'newestProducts'
+            'newestProducts',
+            'heroBanners',
+            'promoBanners',
+            'popupBanner'
         ));
     }
 
     public function shop(Request $request)
     {
-        $query = Produk::with('kategori');
+        $query = Produk::with('kategori')
+            ->where(function($q) {
+                $q->where('jenis_produk', 'showcase')
+                  ->orWhereNull('jenis_produk');
+            });
 
         // Filter by Search Query
         if ($request->filled('search')) {
@@ -79,12 +90,16 @@ class PelangganController extends Controller
         $products = $query->paginate($perPage)->withQueryString();
         $categories = Kategori::all();
 
-        return view('Pelanggan.shop', compact('products', 'categories'));
+        $shopBanners = \App\Models\Banner::where('posisi_banner', 'shop_header')->where('status', 'Aktif')->orderBy('urutan', 'asc')->get();
+        $shopBanner = $shopBanners->first();
+
+        return view('Pelanggan.shop', compact('products', 'categories', 'shopBanners', 'shopBanner'));
     }
 
     public function customProducts(Request $request)
     {
-        $query = Produk::with('kategori');
+        $query = Produk::with('kategori')
+            ->where('jenis_produk', 'kustom');
 
         // Filter by Search Query
         if ($request->filled('search')) {
@@ -130,13 +145,23 @@ class PelangganController extends Controller
 
         $products = $query->paginate($perPage)->withQueryString();
         $categories = Kategori::all();
+        $customBanners = \App\Models\Banner::where('posisi_banner', 'custom_header')->where('status', 'Aktif')->orderBy('urutan', 'asc')->get();
+        $customBanner = $customBanners->first();
 
-        return view('Pelanggan.custom_products', compact('products', 'categories'));
+        return view('Pelanggan.custom_products', compact('products', 'categories', 'customBanners', 'customBanner'));
     }
 
     public function about()
     {
-        return view('Pelanggan.about');
+        $about = null;
+        if (\Illuminate\Support\Facades\Schema::hasTable('about_settings')) {
+            $about = \App\Models\AboutSetting::first();
+        }
+        $teamMembers = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('team_members')) {
+            $teamMembers = \App\Models\TeamMember::orderBy('urutan', 'asc')->orderBy('id', 'asc')->get();
+        }
+        return view('Pelanggan.about', compact('about', 'teamMembers'));
     }
 
     public function contact()
@@ -336,16 +361,25 @@ class PelangganController extends Controller
 
         // Fallback to customer table location if user's alamat is null
         if (!$user->alamat) {
-            $customer = \App\Models\Customer::where('user_id', $user->user_id)
-                ->orWhere('contact', $user->no_hp)
-                ->orWhere('name', $user->nama)
-                ->first();
-            if ($customer) {
-                if (!$customer->user_id) {
-                    $customer->update(['user_id' => $user->user_id]);
+            $customer = \App\Models\Customer::where(function($q) use ($user) {
+                if ($user->user_id) {
+                    $q->where('user_id', $user->user_id);
                 }
-                if ($customer->location) {
-                    $user->update(['alamat' => $customer->location]);
+                if ($user->nama) {
+                    $q->orWhere('name', $user->nama);
+                }
+                if ($user->no_hp) {
+                    $rawPhone = ltrim((string)$user->no_hp, '0');
+                    $q->orWhere('contact', 'like', '%' . $rawPhone . '%');
+                }
+            })->first();
+
+            if ($customer && $customer->location) {
+                \App\Models\User::where('user_id', $user->user_id)->update(['alamat' => $customer->location]);
+                $user->alamat = $customer->location;
+                if (!$customer->user_id) {
+                    $customer->user_id = $user->user_id;
+                    $customer->save();
                 }
             }
         }

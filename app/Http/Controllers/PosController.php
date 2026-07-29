@@ -28,7 +28,7 @@ class PosController extends Controller
         $products = $query->latest()->paginate(20);
         // Since categories are needed for the filter
         $kategoris = \App\Models\Kategori::all();
-        return view('admin.pos', compact('products', 'kategoris'));
+        return view('Admin.kelola_penjualan.pos', compact('products', 'kategoris'));
     }
 
     public function checkout(Request $request)

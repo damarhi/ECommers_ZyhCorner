@@ -1,21 +1,21 @@
 @extends('Layout.layout_pAdmin')
 
-@section('title', 'Produk - Dasbor Admin')
+@section('title', 'Produk Kustom - Dasbor Admin')
 
 @section('content')
     <div class="content-wrapper">
         <div class="page-header">
             <h3 class="page-title">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
-                    <i class="mdi mdi-cube-outline"></i>
-                </span> Produk
+                    <i class="mdi mdi-pencil-box-outline"></i>
+                </span> Produk Kustom
             </h3>
             <nav aria-label="breadcrumb">
                 <ul class="breadcrumb mb-0">
                     <li class="breadcrumb-item active" aria-current="page">
                         <button class="btn btn-outline-secondary btn-sm me-2">Ekspor</button>
-                        <a href="{{ route('products.create') }}" class="btn btn-gradient-primary btn-sm">
-                            <i class="mdi mdi-plus"></i> Tambah Produk
+                        <a href="{{ route('products.create', ['jenis' => 'kustom']) }}" class="btn btn-gradient-primary btn-sm">
+                            <i class="mdi mdi-plus"></i> Tambah Produk Kustom
                         </a>
                     </li>
                 </ul>
@@ -26,7 +26,7 @@
             <div class="col-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
-                        <form method="GET" action="{{ route('products.index') }}"
+                        <form method="GET" action="{{ route('products.custom') }}"
                             class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
                             <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100 w-md-auto">
                                 <div class="dropdown">
@@ -111,7 +111,7 @@
                                             </div>
                                         </th>
                                         <th>Produk</th>
-                                        <th>Stok Produk</th>
+                                        <th>Jenis Produk</th>
                                         <th>Diskon</th>
                                         <th>Harga Asli</th>
                                         <th>Aksi</th>
@@ -147,16 +147,16 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                @if ($p->status_produk == 'Tersedia' || $p->status_produk == 'Available')
-                                                    <label
-                                                        class="badge badge-soft-success">{{ $p->status_produk }}</label>
-                                                @else
-                                                    <label
-                                                        class="badge badge-soft-warning">{{ $p->status_produk }}</label>
-                                                @endif
+                                                <label class="badge badge-soft-info">{{ ucfirst($p->jenis_produk ?? 'kustom') }}</label>
                                             </td>
                                             <td>-</td>
-                                            <td>Rp. {{ number_format($p->harga, 0, ',', '.') }}</td>
+                                            <td>
+                                                @if ($p->harga_max && $p->harga_max > $p->harga)
+                                                    Rp. {{ number_format($p->harga, 0, ',', '.') }} - Rp. {{ number_format($p->harga_max, 0, ',', '.') }}
+                                                @else
+                                                    Rp. {{ number_format($p->harga, 0, ',', '.') }}
+                                                @endif
+                                            </td>
                                             <td>
                                                 <a href="{{ route('products.edit', $p->id_produk) }}"
                                                     class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1"
@@ -179,11 +179,11 @@
                                         <tr>
                                             <td colspan="6" class="text-center py-5">
                                                 <div class="d-flex flex-column align-items-center justify-content-center">
-                                                    <i class="mdi mdi-cube-outline text-muted mb-2"
+                                                    <i class="mdi mdi-pencil-box-outline text-muted mb-2"
                                                         style="font-size: 64px;"></i>
-                                                    <h5 class="text-muted font-weight-bold">Belum Ada Produk</h5>
+                                                    <h5 class="text-muted font-weight-bold">Belum Ada Produk Kustom</h5>
                                                     <p class="text-muted mb-0" style="font-size: 14px;">Tambahkan produk
-                                                        pertama Anda sekarang!</p>
+                                                        kustom pertama Anda sekarang!</p>
                                                 </div>
                                             </td>
                                         </tr>
