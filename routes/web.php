@@ -10,6 +10,7 @@ Route::get('/shop', [PelangganController::class, 'shop'])->name('shop');
 Route::get('/custom-products', [PelangganController::class, 'customProducts'])->name('custom-products');
 Route::get('/about', [PelangganController::class, 'about'])->name('about');
 Route::get('/contact', [PelangganController::class, 'contact'])->name('contact');
+Route::get('/faq', [PelangganController::class, 'faq'])->name('faq');
 Route::get('/product/{id}', [PelangganController::class, 'detail'])->name('product.detail');
 Route::get('/cart', [PelangganController::class, 'userChart'])->name('userChart');
 
@@ -94,6 +95,15 @@ Route::post('admin/about-settings', [\App\Http\Controllers\AdminAboutController:
 Route::post('admin/about-settings/team', [\App\Http\Controllers\AdminAboutController::class, 'storeTeam'])->middleware('auth')->name('admin.about.team.store');
 Route::put('admin/about-settings/team/{id}', [\App\Http\Controllers\AdminAboutController::class, 'updateTeam'])->middleware('auth')->name('admin.about.team.update');
 Route::delete('admin/about-settings/team/{id}', [\App\Http\Controllers\AdminAboutController::class, 'destroyTeam'])->middleware('auth')->name('admin.about.team.destroy');
+
+Route::get('admin/contact-settings', [\App\Http\Controllers\AdminContactController::class, 'index'])->middleware('auth')->name('admin.contact.index');
+Route::post('admin/contact-settings', [\App\Http\Controllers\AdminContactController::class, 'update'])->middleware('auth')->name('admin.contact.update');
+
+Route::get('admin/faq-settings', [\App\Http\Controllers\AdminFaqController::class, 'index'])->middleware('auth')->name('admin.faq.index');
+Route::post('admin/faq-settings', [\App\Http\Controllers\AdminFaqController::class, 'store'])->middleware('auth')->name('admin.faq.store');
+Route::put('admin/faq-settings/{id}', [\App\Http\Controllers\AdminFaqController::class, 'update'])->middleware('auth')->name('admin.faq.update');
+Route::post('admin/faq-settings/{id}/toggle', [\App\Http\Controllers\AdminFaqController::class, 'toggleStatus'])->middleware('auth')->name('admin.faq.toggle');
+Route::delete('admin/faq-settings/{id}', [\App\Http\Controllers\AdminFaqController::class, 'destroy'])->middleware('auth')->name('admin.faq.destroy');
 
 Route::get('admin/pos', [\App\Http\Controllers\PosController::class, 'index'])->middleware('auth')->name('pos.index');
 Route::post('admin/pos/checkout', [\App\Http\Controllers\PosController::class, 'checkout'])->middleware('auth')->name('pos.checkout');

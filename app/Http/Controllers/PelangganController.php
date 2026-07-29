@@ -166,7 +166,20 @@ class PelangganController extends Controller
 
     public function contact()
     {
-        return view('Pelanggan.contact');
+        $contact = null;
+        if (\Illuminate\Support\Facades\Schema::hasTable('about_settings')) {
+            $contact = \App\Models\AboutSetting::first();
+        }
+        return view('Pelanggan.contact', compact('contact'));
+    }
+
+    public function faq()
+    {
+        $faqs = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('faqs')) {
+            $faqs = \App\Models\Faq::where('is_active', true)->orderBy('urutan', 'asc')->orderBy('id', 'asc')->get();
+        }
+        return view('Pelanggan.faq', compact('faqs'));
     }
 
     public function detail($id)

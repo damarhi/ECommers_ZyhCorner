@@ -201,13 +201,13 @@
             <!-- partial:../../partials/_sidebar.html -->
             <nav class="sidebar sidebar-offcanvas" id="sidebar">
                 <ul class="nav">
-                    @if(auth()->user()->role !== 'kasir')
-                    <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ url('admin/dashboard') }}">
-                            <span class="menu-title">Dashboard</span>
-                            <i class="mdi mdi-view-dashboard menu-icon"></i>
-                        </a>
-                    </li>
+                    @if (auth()->user()->role !== 'kasir')
+                        <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ url('admin/dashboard') }}">
+                                <span class="menu-title">Dashboard</span>
+                                <i class="mdi mdi-view-dashboard menu-icon"></i>
+                            </a>
+                        </li>
                     @endif
 
                     <!-- Kelola Penjualan -->
@@ -238,96 +238,91 @@
                         </a>
                     </li>
 
-                    @if(auth()->user()->role !== 'kasir')
-                    <!-- Kelola Data Produk -->
-                    <li class="nav-category-header">Kelola Data Produk</li>
+                    @if (auth()->user()->role !== 'kasir')
+                        <!-- Kelola Data Produk -->
+                        <li class="nav-category-header">Kelola Data Produk</li>
 
-                    <li class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/custom-products*') && !Request::is('admin/discounts*') && !Request::is('admin/expired-products*')) ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ url('admin/products') }}">
-                            <span class="menu-title">Produk Showcase</span>
-                            <i class="mdi mdi-cube-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/custom-products*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('products.custom') }}">
-                            <span class="menu-title">Produk Kustom</span>
-                            <i class="mdi mdi-pencil-box-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/categories*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ url('admin/categories') }}">
-                            <span class="menu-title">Kategori</span>
-                            <i class="mdi mdi-tag-multiple-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/discounts*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('discounts.index') }}">
-                            <span class="menu-title">Diskon</span>
-                            <i class="mdi mdi-sale menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/expired-products*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('products.expired.index') }}">
-                            <span class="menu-title">Produk Kadaluarsa</span>
-                            <i class="mdi mdi-calendar-remove menu-icon"></i>
-                        </a>
-                    </li>
+                        <li
+                            class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/custom-products*') && !Request::is('admin/discounts*') && !Request::is('admin/expired-products*')) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ url('admin/products') }}">
+                                <span class="menu-title">Produk Showcase</span>
+                                <i class="mdi mdi-cube-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/custom-products*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('products.custom') }}">
+                                <span class="menu-title">Produk Kustom</span>
+                                <i class="mdi mdi-pencil-box-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/categories*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ url('admin/categories') }}">
+                                <span class="menu-title">Kategori</span>
+                                <i class="mdi mdi-tag-multiple-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/discounts*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('discounts.index') }}">
+                                <span class="menu-title">Diskon</span>
+                                <i class="mdi mdi-sale menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/expired-products*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('products.expired.index') }}">
+                                <span class="menu-title">Produk Kadaluarsa</span>
+                                <i class="mdi mdi-calendar-remove menu-icon"></i>
+                            </a>
+                        </li>
 
-                    <!-- Kelola Akun -->
-                    <li class="nav-category-header">Kelola Akun</li>
+                        <!-- Kelola Akun -->
+                        <li class="nav-category-header">Kelola Akun</li>
 
-                    <li class="nav-item {{ Request::is('admin/customers*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ url('admin/customers') }}">
-                            <span class="menu-title">Akun Pelanggan</span>
-                            <i class="mdi mdi-account-group-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/cassiers*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ url('admin/cassiers') }}">
-                            <span class="menu-title">Akun Kasir</span>
-                            <i class="mdi mdi-account-tie-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/settings*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('settings.index') }}">
-                            <span class="menu-title">Pengaturan</span>
-                            <i class="mdi mdi-cog-outline menu-icon"></i>
-                        </a>
-                    </li>
+                        <li class="nav-item {{ Request::is('admin/customers*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ url('admin/customers') }}">
+                                <span class="menu-title">Akun Pelanggan</span>
+                                <i class="mdi mdi-account-group-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/cassiers*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ url('admin/cassiers') }}">
+                                <span class="menu-title">Akun Kasir</span>
+                                <i class="mdi mdi-account-tie-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/settings*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('settings.index') }}">
+                                <span class="menu-title">Pengaturan</span>
+                                <i class="mdi mdi-cog-outline menu-icon"></i>
+                            </a>
+                        </li>
 
-                    <!-- Kelola Carousel -->
-                    <li class="nav-category-header">Kelola Carousel</li>
+                        <!-- Kelola Carousel -->
+                        <li class="nav-category-header">Kelola Carousel</li>
 
-                    <li class="nav-item {{ Request::is('admin/banners*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('banners.index') }}">
-                            <span class="menu-title">Banner</span>
-                            <i class="mdi mdi-image-multiple-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/about-settings*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.about.index') }}">
-                            <span class="menu-title">About Us</span>
-                            <i class="mdi mdi-information-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/carousel/faq*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan FAQ sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
-                            <span class="menu-title">FAQ</span>
-                            <i class="mdi mdi-help-circle-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/carousel/contact-us*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Contact Us sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
-                            <span class="menu-title">Contact Us</span>
-                            <i class="mdi mdi-email-outline menu-icon"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item {{ Request::is('admin/carousel/footer*') ? 'active' : '' }}">
-                        <a class="nav-link" href="#" onclick="event.preventDefault(); Swal.fire({ icon: 'info', title: 'Fitur Belum Tersedia', text: 'Halaman Pengaturan Footer sedang dalam pengembangan.', confirmButtonColor: '#4F46E5' });">
-                            <span class="menu-title">Footer</span>
-                            <i class="mdi mdi-dock-bottom menu-icon"></i>
-                        </a>
-                    </li>
+                        <li class="nav-item {{ Request::is('admin/banners*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('banners.index') }}">
+                                <span class="menu-title">Banner</span>
+                                <i class="mdi mdi-image-multiple-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/about-settings*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.about.index') }}">
+                                <span class="menu-title">About Us</span>
+                                <i class="mdi mdi-information-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/faq-settings*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.faq.index') }}">
+                                <span class="menu-title">FAQ</span>
+                                <i class="mdi mdi-help-circle-outline menu-icon"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item {{ Request::is('admin/contact-settings*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('admin.contact.index') }}">
+                                <span class="menu-title">Contact Us</span>
+                                <i class="mdi mdi-email-outline menu-icon"></i>
+                            </a>
+                        </li>
                     @endif
 
                 </ul>

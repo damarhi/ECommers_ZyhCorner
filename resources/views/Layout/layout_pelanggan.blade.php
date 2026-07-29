@@ -91,6 +91,7 @@
                 <a href="{{ route('custom-products') }}" class="{{ request()->routeIs('custom-products') ? 'active' : '' }}">Custom Products </a>
                 <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">About Us</a>
                 <a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact Us</a>
+                <a href="{{ route('faq') }}" class="{{ request()->routeIs('faq') ? 'active' : '' }}">FAQ</a>
             </div>
             <div class="nav-phone">
                 <i class="fa-solid fa-phone-volume"></i>
