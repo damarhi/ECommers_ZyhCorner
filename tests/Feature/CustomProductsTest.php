@@ -36,8 +36,8 @@ class CustomProductsTest extends TestCase
         $response->assertSee('Rp. 85.000');
         // Assert breadcrumbs wrapper is not rendered
         $response->assertDontSee('breadcrumb-wrapper');
-        // Assert we see the WhatsApp link for Nastar Premium
-        $response->assertSee('https://wa.me/628123456789');
+        // Assert we see the link to product detail for Nastar Premium
+        $response->assertSee(route('product.detail', $produk->id_produk));
     }
 
     public function test_custom_product_detail_page_renders_whatsapp_button(): void

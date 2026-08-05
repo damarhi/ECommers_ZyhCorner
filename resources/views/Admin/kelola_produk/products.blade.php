@@ -4,28 +4,26 @@
 
 @section('content')
     <div class="content-wrapper">
-        <div class="page-header">
-            <h3 class="page-title">
+        <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                     <i class="mdi mdi-cube-outline"></i>
-                </span> Produk
+                </span> Produk Showcase
             </h3>
-            <nav aria-label="breadcrumb">
-                <ul class="breadcrumb mb-0">
-                    <li class="breadcrumb-item active" aria-current="page">
-                        <button class="btn btn-outline-secondary btn-sm me-2">Ekspor</button>
-                        <a href="{{ route('products.create', ['jenis' => 'showcase']) }}" class="btn btn-gradient-primary btn-sm">
-                            <i class="mdi mdi-plus"></i> Tambah Produk
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+            <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
+                <a href="{{ route('export.products', ['jenis' => 'showcase']) }}" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white d-inline-flex align-items-center">
+                    <i class="mdi mdi-download me-1"></i> Ekspor CSV
+                </a>
+                <a href="{{ route('products.create', ['jenis' => 'showcase']) }}" class="btn btn-gradient-primary btn-sm px-4">
+                    <i class="mdi mdi-plus me-1"></i> Tambah Produk
+                </a>
+            </div>
         </div>
 
         <div class="row">
             <div class="col-12 grid-margin stretch-card">
-                <div class="card">
-                    <div class="card-body">
+                <div class="card border-0 shadow-sm" style="border-radius: 8px;">
+                    <div class="card-body p-4">
                         <form method="GET" action="{{ route('products.index') }}"
                             class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
                             <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100 w-md-auto">
@@ -81,15 +79,11 @@
                                             Filter</button>
                                     </div>
                                 </div>
-                                <div class="input-group w-100 w-sm-auto" style="max-width: 250px; height: 32px;">
-                                    <div class="input-group-prepend" style="height: 32px;">
-                                        <span class="input-group-text bg-transparent border-right-0"
-                                            style="padding: 0 10px; height: 32px;"><i
-                                                class="mdi mdi-magnify text-muted"></i></span>
-                                    </div>
+                                <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
                                     <input type="text" name="search" value="{{ request('search') }}"
-                                        class="form-control border-left-0" placeholder="Cari..."
-                                        style="height: 32px; padding-left: 0;">
+                                        class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama produk..."
+                                        style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                    <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                                 </div>
                             </div>
                             <button type="button"
@@ -100,21 +94,21 @@
                         </form>
 
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table" style="border-bottom: 1px solid #e4e4e4;">
                                 <thead>
-                                    <tr>
-                                        <th width="40">
-                                            <div class="form-check">
+                                    <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
+                                        <th style="padding: 15px 10px; width: 40px;">
+                                            <div class="form-check m-0">
                                                 <label class="form-check-label">
                                                     <input type="checkbox" class="form-check-input">
-                                                </label>
+                                                <i class="input-helper"></i></label>
                                             </div>
                                         </th>
-                                        <th>Produk</th>
-                                        <th>Stok Produk</th>
-                                        <th>Diskon</th>
-                                        <th>Harga Asli</th>
-                                        <th>Aksi</th>
+                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Produk</th>
+                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Stok Produk</th>
+                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Diskon</th>
+                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Harga Asli</th>
+                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>

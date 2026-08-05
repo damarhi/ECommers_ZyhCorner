@@ -4,18 +4,18 @@
 
 @section('content')
     <div class="content-wrapper">
-        <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-            <h3 class="page-title m-0">
+        <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                     <i class="mdi mdi-cog-outline"></i>
                 </span> Pengaturan Admin & Toko
             </h3>
         </div>
 
-        <div class="row mt-4">
+        <div class="row">
             <!-- Left Column: Admin Profile Card Overview -->
             <div class="col-md-4 grid-margin stretch-card">
-                <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 12px; background: #ffffff;">
+                <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 8px; background: #ffffff;">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
                         <div class="position-relative mb-3">
                             @if($admin->foto)

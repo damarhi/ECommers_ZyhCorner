@@ -4,63 +4,17 @@
 
 @section('content')
     <div class="content-wrapper">
-        <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-            <h3 class="page-title m-0">
+        <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                     <i class="mdi mdi-image-multiple"></i>
                 </span> Kelola Banner Pelanggan
             </h3>
-            <button type="button" class="btn btn-gradient-primary btn-sm d-flex align-items-center justify-content-center px-3 py-2"
-                data-bs-toggle="modal" data-bs-target="#addBannerModal">
-                <i class="mdi mdi-plus me-1 font-size-16"></i> Tambah Banner Baru
-            </button>
-        </div>
-
-        <!-- Summary KPI Cards -->
-        <div class="row mt-4">
-            <div class="col-md-4 stretch-card grid-margin">
-                <div class="card stat-card stat-card-coral border-0 text-white">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        <div class="stat-icon">
-                            <i class="mdi mdi-image"></i>
-                        </div>
-                        <div>
-                            <p class="stat-label mb-0">Total Banner</p>
-                            <h3 class="stat-value">{{ $totalBanners }}</h3>
-                            <p class="stat-change mb-0">Banner terdaftar di sistem</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4 stretch-card grid-margin">
-                <div class="card stat-card stat-card-indigo border-0 text-white">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        <div class="stat-icon">
-                            <i class="mdi mdi-eye"></i>
-                        </div>
-                        <div>
-                            <p class="stat-label mb-0">Banner Aktif</p>
-                            <h3 class="stat-value">{{ $totalAktif }}</h3>
-                            <p class="stat-change mb-0">Tampil pada halaman pelanggan</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4 stretch-card grid-margin">
-                <div class="card stat-card stat-card-teal border-0 text-white">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        <div class="stat-icon">
-                            <i class="mdi mdi-view-dashboard"></i>
-                        </div>
-                        <div>
-                            <p class="stat-label mb-0">Posisi Berbeda</p>
-                            <h3 class="stat-value">{{ $totalPosisi }}</h3>
-                            <p class="stat-change mb-0">Area penempatan promo</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
+                <button type="button" class="btn btn-gradient-primary btn-sm px-4"
+                    data-bs-toggle="modal" data-bs-target="#addBannerModal">
+                    <i class="mdi mdi-plus me-1"></i> Tambah Banner Baru
+                </button>
             </div>
         </div>
 
@@ -126,14 +80,11 @@
                         </div>
 
                         <!-- Search Input -->
-                        <div class="input-group w-100 w-sm-auto" style="max-width: 300px; height: 38px;">
-                            <div class="input-group-prepend" style="height: 38px;">
-                                <span class="input-group-text bg-transparent border-right-0" style="padding: 0 12px; height: 38px;">
-                                    <i class="mdi mdi-magnify text-muted"></i>
-                                </span>
-                            </div>
+                        <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
                             <input type="text" name="search" value="{{ request('search') }}"
-                                class="form-control border-left-0" placeholder="Cari judul banner..." style="height: 38px; padding-left: 0; border-radius: 0 8px 8px 0;">
+                                class="form-control form-control-sm ps-5 pe-3" placeholder="Cari judul banner..." 
+                                style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                            <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                         </div>
                     </div>
 

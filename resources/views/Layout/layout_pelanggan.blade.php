@@ -11,8 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet"
         href="{{ asset('css/pelanggan.css') }}?v={{ file_exists(public_path('css/pelanggan.css')) ? filemtime(public_path('css/pelanggan.css')) : time() }}">
-    <!-- SweetAlert2 -->
     <link rel="shortcut icon" href="{{ asset('image/logo_circle.png') }}" type="image/png" />
+    <!-- GSAP & SweetAlert2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('styles')
     @vite(['resources/css/pelanggan_pages.css', 'resources/js/pelanggan_pages.js'])
@@ -124,91 +125,62 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-top">
+            <div class="footer-top" style="grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 30px;">
                 <div class="footer-col-1">
                     <div class="logo" style="color: white;">
                         <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo"
                             style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                         <div class="logo-text">Zyh Corner</div>
                     </div>
-                    <p>Morbi cursus porttitor enim lobortis molestie. Duis gravida turpis dui, eget bibendum magna
-                        congue nec.</p>
-                    <div class="footer-contact">
-                        <a href="tel:2195550114">(219) 555-0114</a>
-                        <span>or</span>
-                        <a href="mailto:Proxy@gmail.com">Proxy@gmail.com</a>
-                    </div>
-                </div>
-
-                <div class="footer-col">
-                    <h3>My Account</h3>
-                    <div class="footer-links">
-                        <a href="{{ route('dashboard') }}">My Account</a>
-                        <a href="{{ route('dashboard') }}">Order History</a>
-                        <a href="{{ route('userChart') }}">Shopping Cart</a>
-                        <a href="#">Wishlist</a>
-                        <a href="{{ route('dashboard') }}">Settings</a>
-                    </div>
-                </div>
-
-                <div class="footer-col">
-                    <h3>Helps</h3>
-                    <div class="footer-links">
-                        <a href="{{ route('contact') }}">Contact</a>
-                        <a href="#">Faqs</a>
-                        <a href="#">Terms & Condition</a>
-                        <a href="#">Privacy Policy</a>
-                    </div>
-                </div>
-
-                <div class="footer-col">
-                    <h3>Proxy</h3>
-                    <div class="footer-links">
-                        <a href="{{ route('about') }}">About</a>
-                        <a href="{{ route('shop') }}">Shop</a>
-                        <a href="#">Product</a>
-                        <a href="#">Products Details</a>
-                        <a href="#">Track Order</a>
-                    </div>
-
-                    <h3 style="margin-top: 30px; margin-bottom: 15px;">Download our Mobile App</h3>
-                    <div class="app-buttons">
-                        <a href="#" class="app-btn">
-                            <i class="fa-brands fa-apple"></i>
-                            <div>
-                                <span>Download on the</span>
-                                <span>App Store</span>
-                            </div>
+                    <p style="margin: 15px 0; color: #999; font-size: 14px; line-height: 1.6; max-width: 320px;">Toko Pastry & Bakery pilihan terbaik di Pekanbaru. Menyediakan aneka cake, kue ulang tahun, dessert, dan pesanan kue kustom berkualitas tinggi.</p>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                        <a href="tel:+628123456789" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                            <i class="fa-solid fa-phone-volume" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
+                            <span>(+62) 812-3456-789</span>
                         </a>
-                        <a href="#" class="app-btn">
-                            <i class="fa-brands fa-google-play"></i>
-                            <div>
-                                <span>Download on the</span>
-                                <span>Google Play</span>
-                            </div>
+                        <a href="mailto:zyhcorner@gmail.com" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                            <i class="fa-regular fa-envelope" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
+                            <span>zyhcorner@gmail.com</span>
                         </a>
+                        <a href="https://www.instagram.com/zyh_corner/?hl=en" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                            <i class="fa-brands fa-instagram" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
+                            <span>@zyh_corner</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Akun Saya</h3>
+                    <div class="footer-links">
+                        <a href="{{ route('dashboard') }}">Akun Saya</a>
+                        <a href="{{ route('dashboard') }}">Riwayat Pesanan</a>
+                        <a href="{{ route('userChart') }}">Keranjang Belanja</a>
+                        <a href="{{ route('dashboard') }}">Pengaturan Profil</a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Bantuan</h3>
+                    <div class="footer-links">
+                        <a href="{{ route('contact') }}">Kontak Kami</a>
+                        <a href="{{ route('faq') }}">FAQ / Tanya Jawab</a>
+                        <a href="{{ route('contact') }}">Lokasi Toko</a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h3>Zyh Corner</h3>
+                    <div class="footer-links">
+                        <a href="{{ route('about') }}">Tentang Kami</a>
+                        <a href="{{ route('shop') }}">Katalog Produk</a>
+                        <a href="{{ route('custom-products') }}">Produk Kustom</a>
                     </div>
                 </div>
             </div>
 
-            <div class="footer-bottom">
-                <div class="social-icons">
-                    <a href="#" class="social-icon active"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" class="social-icon"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#" class="social-icon"><i class="fa-brands fa-pinterest-p"></i></a>
-                    <a href="#" class="social-icon"><i class="fa-brands fa-instagram"></i></a>
-                </div>
-                <div>
-                    ZyhCorner eCommerce © 2021. All Rights Reserved
-                </div>
-                <div class="payment-icons">
-                    <div class="payment-icon"><i class="fa-brands fa-apple-pay"></i></div>
-                    <div class="payment-icon"><i class="fa-brands fa-cc-visa"></i></div>
-                    <div class="payment-icon"><i class="fa-brands fa-cc-discover"></i></div>
-                    <div class="payment-icon"><i class="fa-brands fa-cc-mastercard"></i></div>
-                    <div class="payment-icon" style="font-size: 10px; display: flex; align-items: center; gap: 4px;">
-                        <i class="fa-solid fa-lock" style="font-size: 12px;"></i> Secure<br>Payment
-                    </div>
+            <div class="footer-bottom" style="justify-content: center; text-align: center; border-top: 1px solid #262626; padding: 20px 0;">
+                <div style="color: #888; font-size: 13.5px;">
+                    Zyh Corner eCommerce © {{ date('Y') }}. All Rights Reserved
                 </div>
             </div>
         </div>
@@ -341,6 +313,7 @@
             successMessage: "{{ session('success') }}"
         };
     </script>
+    @yield('scripts')
 </body>
 
 </html>

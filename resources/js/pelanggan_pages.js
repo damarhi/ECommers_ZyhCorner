@@ -1187,8 +1187,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+window.selectedReturnFile = null;
+
+window.triggerPhotoSelect = function() {
+    const photoInput = document.getElementById('returnPhotoInput');
+    if (photoInput) photoInput.click();
+};
+
 window.handlePhotoUpload = function(input) {
-    if (input.files && input.files[0]) {
+    if (input && input.files && input.files[0]) {
+        const file = input.files[0];
+        window.selectedReturnFile = file;
         const reader = new FileReader();
         reader.onload = function(e) {
             const preview = document.getElementById('uploadPreview');
@@ -1196,6 +1205,8 @@ window.handlePhotoUpload = function(input) {
             const title = document.getElementById('uploadTitle');
             const hint = document.getElementById('uploadHint');
             const area = document.getElementById('uploadArea');
+            const fileInfo = document.getElementById('fileInfoArea');
+            const fileNameBadge = document.getElementById('fileNameBadge');
 
             if (preview) {
                 preview.src = e.target.result;
@@ -1205,10 +1216,85 @@ window.handlePhotoUpload = function(input) {
             if (title) title.style.display = 'none';
             if (hint) hint.style.display = 'none';
             if (area) area.classList.add('has-preview');
+
+            if (fileInfo && fileNameBadge) {
+                fileNameBadge.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+                fileInfo.style.display = 'block';
+            }
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
     }
 };
+
+window.removeSelectedPhoto = function(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    window.selectedReturnFile = null;
+    const photoInput = document.getElementById('returnPhotoInput');
+    if (photoInput) photoInput.value = '';
+
+    const preview = document.getElementById('uploadPreview');
+    const icon = document.getElementById('uploadIcon');
+    const title = document.getElementById('uploadTitle');
+    const hint = document.getElementById('uploadHint');
+    const area = document.getElementById('uploadArea');
+    const fileInfo = document.getElementById('fileInfoArea');
+
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+    if (icon) icon.style.display = 'block';
+    if (title) title.style.display = 'block';
+    if (hint) hint.style.display = 'block';
+    if (area) {
+        area.classList.remove('has-preview');
+        area.classList.remove('dragover');
+    }
+    if (fileInfo) fileInfo.style.display = 'none';
+};
+
+// Drag and Drop Event Listeners for Return Photo Upload Area
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+            }, false);
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                const photoInput = document.getElementById('returnPhotoInput');
+                if (photoInput) {
+                    try {
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(files[0]);
+                        photoInput.files = dataTransfer.files;
+                    } catch (err) {
+                        console.warn('DataTransfer fallback:', err);
+                    }
+                    window.handlePhotoUpload(photoInput);
+                }
+            }
+        }, false);
+    }
+});
 
 window.saveDraft = function() {
     if (!window.returnOrderConfig) return;
@@ -1283,17 +1369,25 @@ window.submitReturnOrder = function(e) {
                 }
             });
 
+            const formData = new FormData();
+            formData.append('reason', reason);
+            formData.append('description', description);
+            formData.append('return_method', method);
+
+            const photoInput = document.getElementById('returnPhotoInput');
+            const fileToSend = window.selectedReturnFile || (photoInput && photoInput.files && photoInput.files.length > 0 ? photoInput.files[0] : null);
+
+            if (fileToSend) {
+                formData.append('photo', fileToSend, fileToSend.name || 'retur.jpg');
+                formData.append('foto_retur', fileToSend, fileToSend.name || 'retur.jpg');
+            }
+
             fetch(window.returnOrderConfig.returnSubmitRoute, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': window.returnOrderConfig.csrfToken
                     },
-                    body: JSON.stringify({
-                        reason: reason,
-                        description: description,
-                        return_method: method
-                    })
+                    body: formData
                 })
                 .then(response => response.json())
                 .then(data => {

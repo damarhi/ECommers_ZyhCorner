@@ -277,17 +277,9 @@
     }
 
     // Pay Now function utilizing Midtrans Snap
-    function payNowSuccessPage() {
-        if (!snapToken) {
-            Swal.fire({
-                title: 'Gagal!',
-                text: 'Token pembayaran tidak ditemukan. Harap hubungi dukungan pelanggan.',
-                icon: 'error',
-                confirmButtonColor: '#00b207'
-            });
-            return;
-        }
+    let currentSnapToken = "{{ $order->snap_token }}";
 
+    function payNowSuccessPage() {
         if (typeof snap === 'undefined') {
             Swal.fire({
                 title: 'Error!',
@@ -298,16 +290,55 @@
             return;
         }
 
-        snap.pay(snapToken, {
+        if (currentSnapToken && currentSnapToken.trim() !== '') {
+            triggerSnapPayment(currentSnapToken);
+        } else {
+            Swal.fire({
+                title: 'Mendapatkan Token Pembayaran...',
+                text: 'Harap tunggu.',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            fetch(`/order-history/{{ $order->id }}/pay`)
+                .then(res => res.json())
+                .then(data => {
+                    Swal.close();
+                    if (data.success && data.snap_token) {
+                        currentSnapToken = data.snap_token;
+                        triggerSnapPayment(currentSnapToken);
+                    } else {
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: data.message || 'Token pembayaran tidak ditemukan. Harap hubungi dukungan pelanggan.',
+                            icon: 'error',
+                            confirmButtonColor: '#00b207'
+                        });
+                    }
+                })
+                .catch(err => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Gagal!',
+                        text: 'Terjadi kesalahan saat memproses token pembayaran.',
+                        icon: 'error',
+                        confirmButtonColor: '#00b207'
+                    });
+                });
+        }
+    }
+
+    function triggerSnapPayment(token) {
+        snap.pay(token, {
             onSuccess: function(result) {
-                clearInterval(timerInterval);
+                if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
                 Swal.fire({
                     title: 'Pembayaran Berhasil!',
                     text: 'Terima kasih, pembayaran Anda telah berhasil kami terima.',
                     icon: 'success',
                     confirmButtonColor: '#00b207'
                 }).then(() => {
-                    // Update layout to success state dynamically
                     updateUIPaymentSuccess();
                 });
             },

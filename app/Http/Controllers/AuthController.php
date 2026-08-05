@@ -98,7 +98,7 @@ class AuthController extends Controller
         ]);
 
         try {
-            BrevoMailService::sendOtp($request->email, $otp);
+            BrevoMailService::sendOtp($request->email, $otp, 'Kode Verifikasi Pendaftaran Zyh Corner');
             
             return redirect()->route('register.verify')->with('success', 'Kode verifikasi telah dikirim ke email Anda.');
         } catch (\Exception $e) {
@@ -465,7 +465,7 @@ class AuthController extends Controller
         );
 
         try {
-            BrevoMailService::sendOtp($pending['email'], $otp);
+            BrevoMailService::sendOtp($pending['email'], $otp, 'Kode Verifikasi Pendaftaran Zyh Corner');
             
             return response()->json([
                 'success' => true,

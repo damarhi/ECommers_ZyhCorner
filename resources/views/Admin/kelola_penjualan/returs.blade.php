@@ -11,16 +11,14 @@
             </span>Retur Produk
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
+            <a href="{{ route('export.returs') }}" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white d-inline-flex align-items-center">
+                <i class="mdi mdi-download me-1"></i> Ekspor CSV
+            </a>
             <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addReturModal">
-                Ekspor
-            </button>
-            <button type="button" class="btn btn-gradient-primary btn-sm px-4 ms-2" data-bs-toggle="modal" data-bs-target="#addReturModal">
                 <i class="mdi mdi-plus me-1"></i> Tambah Retur
             </button>
         </div>
     </div>
-
-
 
     <div class="row">
         <div class="col-12 grid-margin stretch-card">
@@ -81,11 +79,11 @@
                                     <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
                                 </div>
                             </div>
-                            <div class="input-group w-100 w-sm-auto" style="max-width: 250px; height: 32px;">
-                                <div class="input-group-prepend" style="height: 32px;">
-                                    <span class="input-group-text bg-transparent border-right-0" style="padding: 0 10px; height: 32px;"><i class="mdi mdi-magnify text-muted"></i></span>
-                                </div>
-                                <input type="text" name="search" value="{{ request('search') }}" class="form-control border-left-0" placeholder="Cari..." style="height: 32px; padding-left: 0;">
+                            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    class="form-control form-control-sm ps-5 pe-3" placeholder="Cari retur produk..."
+                                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
                         </div>
                     </form>
@@ -101,7 +99,7 @@
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Tanggal</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Produk</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status</th>
-                                    <th style="padding: 15px 10px; width: 100px;"></th>
+                                    <th style="padding: 15px 10px; width: 100px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -124,71 +122,22 @@
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $retur->status }}</td>
                                     <td style="padding: 15px 10px;">
                                         <div class="d-flex">
-                                            <button type="button" class="btn btn-sm btn-outline-info bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#editReturModal{{ $retur->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
+                                            <button type="button" class="btn btn-sm btn-outline-success bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#detailReturModal{{ $retur->id }}" title="Detail Retur" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
+                                                <i class="mdi mdi-eye-outline" style="font-size: 16px; margin: 0;"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#editReturModal{{ $retur->id }}" title="Edit Retur" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
                                                 <i class="mdi mdi-pencil" style="font-size: 16px; margin: 0;"></i>
                                             </button>
                                             <form action="{{ route('returs.destroy', $retur->id) }}" method="POST" class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-primary bg-white d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary bg-white d-inline-flex align-items-center justify-content-center" title="Hapus Retur" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
                                                     <i class="mdi mdi-delete-outline" style="font-size: 16px; margin: 0;"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
-
-                                <!-- Edit Retur Modal -->
-                                <div class="modal fade" id="editReturModal{{ $retur->id }}" tabindex="-1" aria-labelledby="editReturModalLabel{{ $retur->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content" style="border-radius: 8px;">
-                                            <div class="modal-header border-0 pb-0">
-                                                <h5 class="modal-title font-weight-bold" id="editReturModalLabel{{ $retur->id }}">Edit Retur</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <form action="{{ route('returs.update', $retur->id) }}" method="POST" class="edit-form">
-                                                @csrf
-                                                @method('PUT')
-                                                <div class="modal-body">
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Nama Pelanggan</label>
-                                                        <input type="text" class="form-control" name="customer_name" value="{{ $retur->customer_name }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">ID Pesanan</label>
-                                                        <input type="text" class="form-control" name="order_id" value="{{ $retur->order_id }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Alasan</label>
-                                                        <input type="text" class="form-control" name="reason" value="{{ $retur->reason }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Nama Produk</label>
-                                                        <input type="text" class="form-control" name="product_name" value="{{ $retur->product_name }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Tanggal Retur</label>
-                                                        <input type="date" class="form-control" name="return_date" value="{{ $retur->return_date }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-0">
-                                                        <label class="font-weight-500 mb-2">Status</label>
-                                                        <select class="form-control form-select" name="status" required>
-                                                            <option value="New" {{ $retur->status == 'New' ? 'selected' : '' }}>Baru</option>
-                                                            <option value="Processed" {{ $retur->status == 'Processed' ? 'selected' : '' }}>Diproses</option>
-                                                            <option value="Accepted" {{ $retur->status == 'Accepted' ? 'selected' : '' }}>Diterima</option>
-                                                            <option value="rejected" {{ $retur->status == 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                                                            <option value="Done" {{ $retur->status == 'Done' ? 'selected' : '' }}>Selesai</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer border-0 pt-0">
-                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-gradient-primary">Perbarui Retur</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                                 @empty
                                 <tr>
                                     <td colspan="7" class="text-center py-5">
@@ -220,6 +169,136 @@
     </div>
 </div>
 
+<!-- Modals outside table element -->
+@foreach($returs as $retur)
+    <!-- Detail Retur Modal (Two-Column: Details Left, Photo Right) -->
+    <div class="modal fade" id="detailReturModal{{ $retur->id }}" tabindex="-1" aria-labelledby="detailReturModalLabel{{ $retur->id }}" aria-hidden="true">
+        <div class="modal-dialog" style="max-width: 680px;">
+            <div class="modal-content" style="border-radius: 8px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title font-weight-bold" id="detailReturModalLabel{{ $retur->id }}">Detail Retur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Left Column: Detail Fields -->
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">Nama Pelanggan</label>
+                                <input type="text" class="form-control" value="{{ $retur->customer_name }}" readonly>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">ID Pesanan</label>
+                                <input type="text" class="form-control" value="{{ $retur->order_id }}" readonly>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">Alasan</label>
+                                <input type="text" class="form-control" value="{{ $retur->reason }}" readonly>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">Nama Produk</label>
+                                <input type="text" class="form-control" value="{{ $retur->product_name }}" readonly>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="font-weight-500 mb-2">Tanggal Retur</label>
+                                <input type="text" class="form-control" value="{{ $retur->return_date }}" readonly>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="font-weight-500 mb-2">Status</label>
+                                <input type="text" class="form-control" value="{{ $retur->status }}" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Proof Photo -->
+                        <div class="col-md-6 d-flex flex-column">
+                            <label class="font-weight-500 mb-2">Foto Bukti Retur</label>
+                            @if($retur->foto_retur)
+                                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center bg-light p-3 rounded border" style="min-height: 220px;">
+                                    <a href="{{ asset($retur->foto_retur) }}" target="_blank" title="Klik untuk membuka ukuran penuh">
+                                        <img src="{{ asset($retur->foto_retur) }}" alt="Foto Bukti Retur" style="max-height: 260px; max-width: 100%; object-fit: contain; border-radius: 6px;">
+                                    </a>
+                                </div>
+                                <a href="{{ asset($retur->foto_retur) }}" target="_blank" class="btn btn-sm btn-outline-success w-100 mt-2">
+                                    <i class="mdi mdi-open-in-new me-1"></i> Buka Foto Ukuran Penuh
+                                </a>
+                            @else
+                                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center bg-light text-muted border rounded" style="min-height: 220px;">
+                                    <i class="mdi mdi-image-off-outline" style="font-size: 48px; opacity: 0.4;"></i>
+                                    <span class="mt-2" style="font-size: 13px;">Pelanggan tidak melampirkan foto bukti.</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Retur Modal -->
+    <div class="modal fade" id="editReturModal{{ $retur->id }}" tabindex="-1" aria-labelledby="editReturModalLabel{{ $retur->id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 8px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title font-weight-bold" id="editReturModalLabel{{ $retur->id }}">Edit Retur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('returs.update', $retur->id) }}" method="POST" enctype="multipart/form-data" class="edit-form">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label class="font-weight-500 mb-2">Nama Pelanggan</label>
+                            <input type="text" class="form-control" name="customer_name" value="{{ $retur->customer_name }}" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-500 mb-2">ID Pesanan</label>
+                            <input type="text" class="form-control" name="order_id" value="{{ $retur->order_id }}" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-500 mb-2">Alasan</label>
+                            <input type="text" class="form-control" name="reason" value="{{ $retur->reason }}" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-500 mb-2">Nama Produk</label>
+                            <input type="text" class="form-control" name="product_name" value="{{ $retur->product_name }}" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-500 mb-2">Tanggal Retur</label>
+                            <input type="date" class="form-control" name="return_date" value="{{ $retur->return_date }}" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-500 mb-2">Foto Bukti (Opsional)</label>
+                            @if($retur->foto_retur)
+                                <div class="mb-2 text-center bg-light p-2 rounded border">
+                                    <img src="{{ asset($retur->foto_retur) }}" alt="Pratinjau Foto" style="max-height: 100px; max-width: 100%; object-fit: contain; border-radius: 6px;">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control" name="foto_retur" accept="image/*">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-500 mb-2">Status</label>
+                            <select class="form-control form-select" name="status" required>
+                                <option value="New" {{ $retur->status == 'New' ? 'selected' : '' }}>Baru</option>
+                                <option value="Processed" {{ $retur->status == 'Processed' ? 'selected' : '' }}>Diproses</option>
+                                <option value="Accepted" {{ $retur->status == 'Accepted' ? 'selected' : '' }}>Diterima</option>
+                                <option value="rejected" {{ $retur->status == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                                <option value="Done" {{ $retur->status == 'Done' ? 'selected' : '' }}>Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-gradient-primary">Perbarui Retur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endforeach
+
 <!-- Add Retur Modal -->
 <div class="modal fade" id="addReturModal" tabindex="-1" aria-labelledby="addReturModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -228,7 +307,7 @@
                 <h5 class="modal-title font-weight-bold" id="addReturModalLabel">Tambah Retur</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('returs.store') }}" method="POST">
+            <form action="{{ route('returs.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="form-group mb-3">
@@ -251,6 +330,10 @@
                         <label class="font-weight-500 mb-2">Tanggal Retur</label>
                         <input type="date" class="form-control" name="return_date" required>
                     </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-500 mb-2">Foto Bukti (Opsional)</label>
+                        <input type="file" class="form-control" name="foto_retur" accept="image/*">
+                    </div>
                     <div class="form-group mb-0">
                         <label class="font-weight-500 mb-2">Status</label>
                         <select class="form-control form-select" name="status" required>
@@ -270,8 +353,6 @@
         </div>
     </div>
 </div>
-
-
 
 @if($errors->any())
 <script>

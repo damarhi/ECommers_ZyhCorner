@@ -26,8 +26,6 @@ class Produk extends Model
         'foto_4',
     ];
 
-    protected $appends = ['stok'];
-
     public function getStokAttribute()
     {
         $val = $this->status_produk;
@@ -38,6 +36,45 @@ class Produk extends Model
             return 99;
         }
         return 0;
+    }
+
+    /**
+     * Reduce product stock quantity by specified amount.
+     *
+     * @param int $qty
+     * @return void
+     */
+    public function reduceStock(int $qty = 1)
+    {
+        $currentStok = $this->stok;
+        $newStok = max(0, $currentStok - $qty);
+        $this->status_produk = (string) $newStok;
+        $this->save();
+    }
+
+    /**
+     * Reduce stock for all items in an order.
+     *
+     * @param \App\Models\Pesanan $pesanan
+     * @return void
+     */
+    public static function reduceStockForOrder($pesanan)
+    {
+        if (!$pesanan || empty($pesanan->items) || !is_array($pesanan->items)) {
+            return;
+        }
+
+        foreach ($pesanan->items as $item) {
+            $productId = $item['id'] ?? $item['id_produk'] ?? null;
+            $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
+
+            if ($productId && $qty > 0) {
+                $produk = self::find($productId);
+                if ($produk) {
+                    $produk->reduceStock($qty);
+                }
+            }
+        }
     }
 
     public function kategori()
@@ -66,7 +103,7 @@ class Produk extends Model
             $stokAwal = $produk->status_produk ?? 'Tersedia';
 
             // Record in dataset table produk_kadaluarsas
-            ProdukKadaluarsa::firstOrCreate(
+            $expiredRecord = ProdukKadaluarsa::firstOrCreate(
                 ['id_produk' => $produk->id_produk],
                 [
                     'tanggal_expired' => $produk->tanggal_expired,
@@ -75,6 +112,10 @@ class Produk extends Model
                     'catatan' => 'Otomatis masuk dataset produk kadaluarsa & stok dikosongkan.',
                 ]
             );
+
+            if ($expiredRecord->wasRecentlyCreated) {
+                \App\Services\NotificationService::sendToKasir(new \App\Mail\ProdukKadaluarsaKasirMail($expiredRecord));
+            }
 
             // Empty the stock on the showcase product
             if ($produk->status_produk !== '0' && strtolower((string)$produk->status_produk) !== 'habis') {

@@ -2,6 +2,10 @@
 
 @section('title', 'Home - Zyh Corner')
 
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ file_exists(public_path('css/home.css')) ? filemtime(public_path('css/home.css')) : time() }}">
+@endsection
+
 
 
 @section('content')
@@ -64,218 +68,6 @@
                 </div>
             @endif
         </div>
-
-        <style>
-            .hero-slider-wrapper {
-                position: relative;
-            }
-            .hero-slide-item {
-                display: none !important;
-                opacity: 0;
-                visibility: hidden;
-                transform: scale(0.97) translateX(15px);
-                transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s ease-out;
-            }
-            .hero-slide-item.active {
-                display: block !important;
-                opacity: 1;
-                visibility: visible;
-                transform: scale(1) translateX(0);
-            }
-
-            /* Dynamic Slide Animation Effects */
-            .hero-slide-item.active .hero-text h4 {
-                animation: heroSlideRight 0.5s cubic-bezier(0.25, 1, 0.5, 1) 0.05s forwards;
-            }
-            .hero-slide-item.active .hero-text h1 {
-                animation: heroSlideRight 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.15s forwards;
-            }
-            .hero-slide-item.active .hero-text .hero-btn {
-                animation: heroPopZoom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s forwards;
-            }
-            .hero-slide-item.active .hero-image {
-                animation: heroZoomRotate 0.65s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
-            }
-
-            @keyframes heroSlideRight {
-                from {
-                    opacity: 0;
-                    transform: translateX(-35px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-
-            @keyframes heroPopZoom {
-                from {
-                    opacity: 0;
-                    transform: scale(0.82);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-            }
-
-            @keyframes heroZoomRotate {
-                from {
-                    opacity: 0;
-                    transform: scale(0.88) rotate(-2deg);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1) rotate(0deg);
-                }
-            }
-
-            /* Slider Arrows */
-            .hero-slider-arrow {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 44px;
-                height: 44px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.85);
-                backdrop-filter: blur(4px);
-                border: 1px solid rgba(0, 0, 0, 0.08);
-                color: #1e293b;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                z-index: 10;
-                transition: all 0.25s ease;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            }
-            .hero-slider-arrow:hover {
-                background: #00b207;
-                color: #ffffff;
-                border-color: #00b207;
-                transform: translateY(-50%) scale(1.08);
-            }
-            .hero-slider-prev { left: 15px; }
-            .hero-slider-next { right: 15px; }
-
-            /* Indicator Dots */
-            .hero-slider-dots {
-                position: absolute;
-                bottom: 15px;
-                left: 50%;
-                transform: translateX(-50%);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                z-index: 10;
-                background: rgba(0, 0, 0, 0.25);
-                backdrop-filter: blur(4px);
-                padding: 6px 14px;
-                border-radius: 20px;
-            }
-            .hero-dot {
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.5);
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-            .hero-dot.active {
-                width: 26px;
-                border-radius: 10px;
-                background: #ffffff;
-            }
-        </style>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const slides = document.querySelectorAll('.hero-slide-item');
-                const dots = document.querySelectorAll('.hero-dot');
-                const prevBtn = document.querySelector('.hero-slider-prev');
-                const nextBtn = document.querySelector('.hero-slider-next');
-                const wrapper = document.querySelector('.hero-slider-wrapper');
-
-                if (slides.length <= 1) return;
-
-                let currentSlide = 0;
-                let slideInterval;
-                let touchStartX = 0;
-                let touchEndX = 0;
-
-                function goToSlide(index) {
-                    slides[currentSlide].classList.remove('active');
-                    if (dots[currentSlide]) dots[currentSlide].classList.remove('active');
-
-                    currentSlide = (index + slides.length) % slides.length;
-
-                    slides[currentSlide].classList.add('active');
-                    if (dots[currentSlide]) dots[currentSlide].classList.add('active');
-                }
-
-                function nextSlide() {
-                    goToSlide(currentSlide + 1);
-                }
-
-                function prevSlide() {
-                    goToSlide(currentSlide - 1);
-                }
-
-                function startAutoplay() {
-                    stopAutoplay();
-                    slideInterval = setInterval(nextSlide, 4500);
-                }
-
-                function stopAutoplay() {
-                    if (slideInterval) clearInterval(slideInterval);
-                }
-
-                function manualSwitch(action) {
-                    stopAutoplay();
-                    action();
-                    startAutoplay();
-                }
-
-                if (prevBtn) prevBtn.addEventListener('click', function() { manualSwitch(prevSlide); });
-                if (nextBtn) nextBtn.addEventListener('click', function() { manualSwitch(nextSlide); });
-
-                dots.forEach(dot => {
-                    dot.addEventListener('click', function() {
-                        const targetSlide = parseInt(this.getAttribute('data-slide-to'));
-                        manualSwitch(() => goToSlide(targetSlide));
-                    });
-                });
-
-                if (wrapper) {
-                    wrapper.addEventListener('mouseenter', stopAutoplay);
-                    wrapper.addEventListener('mouseleave', startAutoplay);
-
-                    // Touch Swipe Manual Control
-                    wrapper.addEventListener('touchstart', function(e) {
-                        touchStartX = e.changedTouches[0].screenX;
-                    }, { passive: true });
-
-                    wrapper.addEventListener('touchend', function(e) {
-                        touchEndX = e.changedTouches[0].screenX;
-                        handleSwipe();
-                    }, { passive: true });
-
-                    function handleSwipe() {
-                        const swipeDistance = touchEndX - touchStartX;
-                        if (Math.abs(swipeDistance) > 40) {
-                            if (swipeDistance < 0) {
-                                manualSwitch(nextSlide); // Swipe Left -> Next Banner
-                            } else {
-                                manualSwitch(prevSlide); // Swipe Right -> Prev Banner
-                            }
-                        }
-                    }
-                }
-
-                startAutoplay();
-            });
-        </script>
 
         <!-- Featured Products -->
         <div class="section-title">
@@ -600,45 +392,43 @@
                     </div>
                 </div>
 
-                <div style="position: relative;">
+                <div class="category-slider-wrapper">
                     <!-- Left Arrow -->
-                    <div class="nav-arrow"
-                        style="position: absolute; left: -20px; top: 50%; transform: translateY(-50%); z-index: 2;">
+                    <button type="button" class="category-nav-arrow cat-prev" aria-label="Previous Categories">
                         <i class="fa-solid fa-arrow-left"></i>
-                    </div>
+                    </button>
 
                     <div class="category-grid">
-                        @foreach ($categories as $kategori)
-                            <div class="category-card">
+                        @forelse ($categories as $kategori)
+                            <div class="category-card" onclick="window.location.href='{{ route('shop', ['category' => $kategori->id_kategori]) }}'">
                                 <div class="cat-icon">
-                                    @if ($kategori->gambar_kategori)
+                                    @if ($kategori->gambar_kategori && Storage::disk('public')->exists($kategori->gambar_kategori))
                                         <img src="{{ asset('storage/' . $kategori->gambar_kategori) }}"
                                             alt="{{ $kategori->nama_kategori }}">
                                     @else
-                                        <i class="fa-solid fa-cake-candles" style="font-size: 40px; color: #00b207;"></i>
+                                        <i class="fa-solid fa-cake-candles" style="font-size: 38px; color: #00b207;"></i>
                                     @endif
                                 </div>
                                 <div class="cat-name">{{ $kategori->nama_kategori }}</div>
                                 <div class="cat-count">{{ $kategori->produks_count }} Products</div>
                             </div>
-                        @endforeach
-
-                        @for ($i = $categories->count(); $i < 6; $i++)
-                            <div class="category-card">
-                                <div class="cat-icon">
-                                    <i class="fa-solid fa-ice-cream" style="font-size: 40px; color: #00b207;"></i>
+                        @empty
+                            @for ($i = 0; $i < 5; $i++)
+                                <div class="category-card" onclick="window.location.href='{{ route('shop') }}'">
+                                    <div class="cat-icon">
+                                        <i class="fa-solid fa-ice-cream" style="font-size: 38px; color: #00b207;"></i>
+                                    </div>
+                                    <div class="cat-name">Category {{ $i + 1 }}</div>
+                                    <div class="cat-count">0 Products</div>
                                 </div>
-                                <div class="cat-name">Category {{ $i + 1 }}</div>
-                                <div class="cat-count">10 Products</div>
-                            </div>
-                        @endfor
+                            @endfor
+                        @endforelse
                     </div>
 
                     <!-- Right Arrow -->
-                    <div class="nav-arrow"
-                        style="position: absolute; right: -20px; top: 50%; transform: translateY(-50%); z-index: 2;">
+                    <button type="button" class="category-nav-arrow cat-next" aria-label="Next Categories">
                         <i class="fa-solid fa-arrow-right"></i>
-                    </div>
+                    </button>
                 </div>
 
                 <!-- Newest Products -->
@@ -725,3 +515,7 @@
 
             </div>
         @endsection
+
+@section('scripts')
+    <script src="{{ asset('js/home.js') }}?v={{ file_exists(public_path('js/home.js')) ? filemtime(public_path('js/home.js')) : time() }}"></script>
+@endsection

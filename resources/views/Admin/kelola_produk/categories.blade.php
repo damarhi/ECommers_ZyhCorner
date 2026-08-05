@@ -5,10 +5,11 @@
 @section('content')
 <div class="content-wrapper">
     <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-        <h3 class="page-title m-0">
+        <h3 class="page-title d-inline-flex align-items-center m-0">
             <span class="page-title-icon bg-gradient-primary text-white me-2">
                 <i class="mdi mdi-folder-outline"></i>
-            </span> Kategori
+            </span>
+            <span class="text-nowrap">Kategori Produk</span>
         </h3>
         <button type="button" class="btn btn-gradient-primary btn-sm d-flex align-items-center w-10 w-sm-auto justify-content-center" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
             <i class="mdi mdi-plus"></i> Tambah Kategori

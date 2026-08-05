@@ -5,10 +5,11 @@
 @section('content')
 <div class="content-wrapper" style="position: relative; overflow-x: hidden;">
     <div class="d-flex justify-content-between mb-4">
-        <h3 class="page-title">
+        <h3 class="page-title d-inline-flex align-items-center m-0">
             <span class="page-title-icon bg-gradient-primary text-white me-2">
-                <i class="mdi mdi-format-list-bulleted"></i>
-            </span>Cassier
+                <i class="mdi mdi-cash-register"></i>
+            </span>
+            <span class="text-nowrap">Kasir Offline</span>
         </h3>
         <div class="d-flex align-items-center">
             <button class="btn btn-primary btn-sm px-4">List Orders</button>
@@ -38,11 +39,11 @@
                     <button type="submit" class="btn btn-sm btn-gradient-primary w-100 mt-2">Terapkan Filter</button>
                 </div>
             </div>
-            <div class="input-group w-100 w-sm-auto" style="max-width: 250px; height: 32px;">
-                <div class="input-group-prepend" style="height: 32px;">
-                    <span class="input-group-text bg-transparent border-right-0" style="padding: 0 10px; height: 32px;"><i class="mdi mdi-magnify text-muted"></i></span>
-                </div>
-                <input type="text" name="search" value="{{ request('search') }}" class="form-control border-left-0" placeholder="Cari..." style="height: 32px; padding-left: 0;">
+            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                <input type="text" name="search" value="{{ request('search') }}"
+                    class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama / kode produk..."
+                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
             </div>
         </div>
         <div class="d-flex align-items-center w-100 w-md-auto justify-content-end" style="cursor: pointer;" onclick="toggleCart()">

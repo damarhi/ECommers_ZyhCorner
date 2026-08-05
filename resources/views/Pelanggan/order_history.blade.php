@@ -208,9 +208,23 @@
                                                     class="btn-cancel-outline">Cancel Order</button>
                                             @endif
                                             @if (Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
-                                                <a href="{{ route('order.return', $order->id) }}"
-                                                    class="btn-return-outline"><i class="fa-solid fa-rotate-left"
-                                                        style="margin-right: 4px;"></i>Return</a>
+                                                @php
+                                                    $alreadyReturned = \App\Models\Retur::where('order_id', $order->order_number)->exists();
+                                                    $returnExpired = $order->updated_at && \Carbon\Carbon::parse($order->updated_at)->addDay()->isPast();
+                                                @endphp
+                                                @if (!$alreadyReturned && !$returnExpired)
+                                                    <a href="{{ route('order.return', $order->id) }}"
+                                                        class="btn-return-outline"><i class="fa-solid fa-rotate-left"
+                                                            style="margin-right: 4px;"></i>Return</a>
+                                                @elseif ($alreadyReturned)
+                                                    <span class="btn-return-outline" style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">
+                                                        <i class="fa-solid fa-check" style="margin-right: 4px;"></i>Sudah Diretur
+                                                    </span>
+                                                @else
+                                                    <span class="btn-return-outline" style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">
+                                                        <i class="fa-solid fa-clock" style="margin-right: 4px;"></i>Retur Kadaluarsa
+                                                    </span>
+                                                @endif
                                             @endif
                                             <div class="tracking-action-wrapper">
                                                 @if (!(Str::contains(strtolower($order->order_status), ['menunggu', 'pending']) && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid'))

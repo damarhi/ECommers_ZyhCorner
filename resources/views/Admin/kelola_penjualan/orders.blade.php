@@ -5,15 +5,16 @@
 @section('content')
 <div class="content-wrapper">
     <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-        <h3 class="page-title">
+        <h3 class="page-title d-inline-flex align-items-center m-0">
             <span class="page-title-icon bg-gradient-primary text-white me-2">
                 <i class="mdi mdi-format-list-bulleted"></i>
-            </span>Pesanan Online
+            </span>
+            <span class="text-nowrap">Pesanan Online</span>
         </h3>
-        <div class="d-flex justify-content-center justify-content-md-end w-10 w-md-auto">
-            <button type="button" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white">
-                Ekspor
-            </button>
+        <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
+            <a href="{{ route('export.orders') }}" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white d-inline-flex align-items-center">
+                <i class="mdi mdi-download me-1"></i> Ekspor CSV
+            </a>
             <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addOrderModal">
                 <i class="mdi mdi-plus me-1"></i> Tambah Pesanan
             </button>
@@ -48,11 +49,11 @@
                                     <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
                                 </div>
                             </div>
-                            <div class="input-group w-100 w-sm-auto" style="max-width: 250px; height: 32px;">
-                                <div class="input-group-prepend" style="height: 32px;">
-                                    <span class="input-group-text bg-transparent border-right-0" style="padding: 0 10px; height: 32px;"><i class="mdi mdi-magnify text-muted"></i></span>
-                                </div>
-                                <input type="text" name="search" value="{{ request('search') }}" class="form-control border-left-0" placeholder="Cari..." style="height: 32px; padding-left: 0;">
+                            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nomor pesanan / pelanggan..."
+                                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
                         </div>
                         <button type="button" class="btn btn-sm btn-inverse-danger d-inline-flex align-items-center justify-content-center align-self-end align-self-md-center" style="width: 32px; height: 32px; padding: 0;" title="Hapus Terpilih">

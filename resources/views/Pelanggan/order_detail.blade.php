@@ -712,12 +712,48 @@
                             @endif
                             <button onclick="cancelOrderDetail('{{ $order->id }}', '{{ $order->order_number }}')" class="btn-cancel-top">Cancel Order</button>
                         @elseif(Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
-                            <a href="{{ route('order.return', $order->id) }}" class="btn-return-top"><i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i>Return Order</a>
+                            @php
+                                $existingReturRecord = \App\Models\Retur::where('order_id', $order->order_number)->first();
+                                $alreadyReturned = !is_null($existingReturRecord);
+                                $returnExpired = $order->updated_at && \Carbon\Carbon::parse($order->updated_at)->addDay()->isPast();
+                            @endphp
+                            @if (!$alreadyReturned && !$returnExpired)
+                                <a href="{{ route('order.return', $order->id) }}" class="btn-return-top"><i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i>Return Order</a>
+                            @elseif ($alreadyReturned)
+                                <span class="btn-return-top" style="opacity: 0.65; cursor: not-allowed; pointer-events: none; background: #6c757d; border-color: #6c757d;">
+                                    <i class="fa-solid fa-check" style="margin-right: 6px;"></i>Sudah Diretur
+                                </span>
+                            @else
+                                <span class="btn-return-top" style="opacity: 0.65; cursor: not-allowed; pointer-events: none; background: #6c757d; border-color: #6c757d;">
+                                    <i class="fa-solid fa-clock" style="margin-right: 6px;"></i>Retur Kadaluarsa
+                                </span>
+                            @endif
                         @else
                             <button class="btn-cancel-top disabled" disabled>Cancel Order</button>
                         @endif
                     </div>
                 </div>
+
+                @if(isset($alreadyReturned) && $alreadyReturned)
+                    <div class="return-status-banner" style="background: #e8f5e9; border-left: 5px solid #2e7d32; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fa-solid fa-circle-check" style="font-size: 24px; color: #2e7d32;"></i>
+                            <div>
+                                <h4 style="margin: 0; font-size: 15px; color: #1b5e20; font-weight: 700;">Pengajuan Retur Telah Diterima</h4>
+                                <p style="margin: 3px 0 0 0; font-size: 13px; color: #2e7d32;">Pengembalian untuk pesanan ini telah diajukan (Status: <strong>{{ $existingReturRecord->status }}</strong>). Anda dapat memantau status retur di menu Riwayat Retur.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('return.detail', $existingReturRecord->id) }}" class="btn btn-sm btn-outline-success" style="border-radius: 6px; font-weight: 600; white-space: nowrap;">Lihat Detail Retur</a>
+                    </div>
+                @elseif(isset($returnExpired) && $returnExpired && !$alreadyReturned && Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
+                    <div class="return-status-banner" style="background: #fff3cd; border-left: 5px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; color: #856404;"></i>
+                        <div>
+                            <h4 style="margin: 0; font-size: 15px; color: #856404; font-weight: 700;">Batas Waktu Retur Berakhir</h4>
+                            <p style="margin: 3px 0 0 0; font-size: 13px; color: #665014;">Batas waktu pengajuan retur (24 jam setelah pesanan selesai) telah berakhir.</p>
+                        </div>
+                    </div>
+                @endif
 
                 @if ($isPending)
                     <div class="payment-countdown-banner" style="background: linear-gradient(135deg, #fff3cd, #ffeeba); border-left: 5px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">

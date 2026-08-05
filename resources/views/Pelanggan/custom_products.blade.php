@@ -196,4 +196,37 @@
         @endif
 
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof gsap !== 'undefined') {
+                gsap.from('.shop-promo-banner, .single-banner-card, .banner-grid-card', {
+                    y: 40,
+                    opacity: 0,
+                    scale: 0.96,
+                    duration: 0.85,
+                    stagger: 0.15,
+                    ease: 'power3.out'
+                });
+
+                gsap.from('.spb-content h4, .spb-content h2, .spb-content .spb-btn', {
+                    y: 25,
+                    opacity: 0,
+                    duration: 0.65,
+                    stagger: 0.12,
+                    ease: 'back.out(1.6)',
+                    delay: 0.2
+                });
+
+                gsap.from('.product-card', {
+                    y: 35,
+                    opacity: 0,
+                    duration: 0.75,
+                    stagger: 0.08,
+                    ease: 'power3.out',
+                    delay: 0.3
+                });
+            }
+        });
+    </script>
 @endsection

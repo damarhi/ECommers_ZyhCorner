@@ -1170,4 +1170,24 @@ label {
     }
 }
 
+/* Page Title Horizontal Flex Alignment */
+.page-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+    color: #1F2937 !important;
+    font-weight: 700 !important;
+    margin-bottom: 0 !important;
+}
+
+.page-title .page-title-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    margin-right: 0.5rem !important;
+}
+
+
 

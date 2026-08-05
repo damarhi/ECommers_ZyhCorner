@@ -165,28 +165,15 @@
                         </div>
                     </li>
 
-                    <li class="nav-item nav-profile dropdown">
-                        <a class="nav-link dropdown-toggle" id="profileDropdown" href="#"
-                            data-bs-toggle="dropdown" aria-expanded="false">
+                    <li class="nav-item nav-profile">
+                        <div class="nav-link d-flex align-items-center">
                             <div class="nav-profile-img d-flex align-items-center justify-content-center rounded-circle text-white me-2"
                                 style="width: 34px; height: 34px; min-width: 34px; background: #4F46E5;">
                                 <i class="mdi mdi-account" style="font-size: 17px;"></i>
                             </div>
                             <div class="nav-profile-text">
-                                <p class="mb-1 text-black font-weight-bold">{{ auth()->user()->nama ?? 'Admin' }}</p>
+                                <p class="mb-0 text-black font-weight-bold">{{ auth()->user()->nama ?? 'Admin' }}</p>
                             </div>
-                        </a>
-                        <div class="dropdown-menu navbar-dropdown" aria-labelledby="profileDropdown">
-                            <a class="dropdown-item" href="#">
-                                <i class="mdi mdi-cached me-2 text-success"></i> Log Aktivitas </a>
-                            <div class="dropdown-divider"></div>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                style="display: none;">
-                                @csrf
-                            </form>
-                            <a class="dropdown-item" href="#"
-                                onclick="event.preventDefault(); confirmAdminLogout();">
-                                <i class="mdi mdi-logout me-2 text-primary"></i> Keluar </a>
                         </div>
                     </li>
                 </ul>
@@ -305,25 +292,27 @@
                                 <i class="mdi mdi-image-multiple-outline menu-icon"></i>
                             </a>
                         </li>
-                        <li class="nav-item {{ Request::is('admin/about-settings*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.about.index') }}">
-                                <span class="menu-title">About Us</span>
-                                <i class="mdi mdi-information-outline menu-icon"></i>
+
+                        <!-- Tombol Keluar (Logout) -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
+                                <span class="menu-title text-danger">Keluar</span>
+                                <i class="mdi mdi-logout menu-icon text-danger"></i>
                             </a>
                         </li>
-                        <li class="nav-item {{ Request::is('admin/faq-settings*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.faq.index') }}">
-                                <span class="menu-title">FAQ</span>
-                                <i class="mdi mdi-help-circle-outline menu-icon"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item {{ Request::is('admin/contact-settings*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('admin.contact.index') }}">
-                                <span class="menu-title">Contact Us</span>
-                                <i class="mdi mdi-email-outline menu-icon"></i>
+                    @else
+                        <!-- Tombol Keluar untuk Role Kasir -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
+                                <span class="menu-title text-danger">Keluar</span>
+                                <i class="mdi mdi-logout menu-icon text-danger"></i>
                             </a>
                         </li>
                     @endif
+
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        @csrf
+                    </form>
 
                 </ul>
             </nav>
@@ -334,7 +323,12 @@
                 </div>
                 <!-- content-wrapper ends -->
                 <!-- partial:../../partials/_footer.html -->
-
+                <footer class="footer bg-white border-top py-3 px-4">
+                    <div class="d-sm-flex justify-content-between align-items-center">
+                        <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © {{ date('Y') }} <a href="{{ route('home') }}" target="_blank" class="text-primary font-weight-bold">Zyh Corner</a>. All rights reserved.</span>
+                        <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center text-muted">Dasbor Kelola Toko Zyh Corner</span>
+                    </div>
+                </footer>
                 <!-- partial -->
             </div>
             <!-- main-panel ends -->

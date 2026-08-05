@@ -62,18 +62,25 @@
                     <div class="section-header">UPLOAD PHOTO</div>
 
                     <div class="upload-section">
-                        <div class="upload-area" id="uploadArea"
-                            onclick="document.getElementById('returnPhotoInput').click()">
+                        <label class="upload-area" id="uploadArea" for="returnPhotoInput" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                             <i class="fa-solid fa-cloud-arrow-up upload-icon" id="uploadIcon"></i>
                             <div class="upload-title" id="uploadTitle">Upload Photo</div>
                             <div class="upload-hint" id="uploadHint">Drag and drop or browse to upload a photo of the item
                                 you are returning.</div>
-                            <img id="uploadPreview" class="upload-preview" style="display: none;" alt="Preview">
-                        </div>
+                            <img id="uploadPreview" class="upload-preview" style="display: none; max-width: 100%; max-height: 180px; object-fit: contain;" alt="Preview">
+                        </label>
+
                         <input type="file" id="returnPhotoInput" name="photo" accept="image/*" style="display: none;"
                             onchange="handlePhotoUpload(this)">
-                        <button type="button" class="btn-choose-photo"
-                            onclick="document.getElementById('returnPhotoInput').click()">Choose Photo</button>
+
+                        <div id="fileInfoArea" class="mt-2 text-center" style="display: none;">
+                            <span id="fileNameBadge" class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 500;"></span>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 12px; border-radius: 6px;" onclick="removeSelectedPhoto(event)">
+                                <i class="fa-solid fa-trash-can me-1"></i> Hapus Foto
+                            </button>
+                        </div>
+
+                        <label for="returnPhotoInput" class="btn-choose-photo text-center d-inline-block" id="btnChoosePhoto" style="margin-top: 10px; cursor: pointer;">Choose Photo</label>
                     </div>
                 </div>
 

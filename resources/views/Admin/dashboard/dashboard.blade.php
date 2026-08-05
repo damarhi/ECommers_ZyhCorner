@@ -5,10 +5,11 @@
 @section('content')
           <div class="content-wrapper">
             <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-              <h3 class="page-title m-0">
+              <h3 class="page-title d-inline-flex align-items-center m-0">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                   <i class="mdi mdi-home"></i>
-                </span> Dashboard
+                </span>
+                <span class="text-nowrap">Dashboard</span>
               </h3>
               <nav aria-label="breadcrumb">
                 <ul class="breadcrumb mb-0">

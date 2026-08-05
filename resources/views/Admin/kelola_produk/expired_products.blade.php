@@ -5,10 +5,11 @@
 @section('content')
     <div class="content-wrapper">
         <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-            <h3 class="page-title m-0">
+            <h3 class="page-title d-inline-flex align-items-center m-0">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                     <i class="mdi mdi-calendar-remove"></i>
-                </span> Produk Kadaluarsa
+                </span>
+                <span class="text-nowrap">Produk Kadaluarsa</span>
             </h3>
             <span class="badge bg-soft-primary text-primary px-3 py-2 font-weight-500" style="font-size: 13px; border-radius: 20px;">
                 <i class="mdi mdi-sync me-1"></i> Terdeteksi Otomatis dari Produk Showcase
@@ -116,14 +117,11 @@
                                         <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
                                     </div>
                                 </div>
-                                <div class="input-group w-100 w-sm-auto" style="max-width: 280px; height: 36px;">
-                                    <div class="input-group-prepend" style="height: 36px;">
-                                        <span class="input-group-text bg-transparent border-right-0" style="padding: 0 10px; height: 36px;">
-                                            <i class="mdi mdi-magnify text-muted"></i>
-                                        </span>
-                                    </div>
+                                <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
                                     <input type="text" name="search" value="{{ request('search') }}"
-                                        class="form-control border-left-0" placeholder="Cari nama produk..." style="height: 36px; padding-left: 0;">
+                                        class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama produk..." 
+                                        style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                    <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                                 </div>
                                 <button type="button" id="btnBulkDelete" class="btn btn-gradient-danger btn-sm d-none align-items-center justify-content-center ms-auto" style="height: 36px;">
                                     <i class="mdi mdi-delete me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)

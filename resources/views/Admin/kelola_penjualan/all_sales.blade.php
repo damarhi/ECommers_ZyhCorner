@@ -11,9 +11,9 @@
             </span> Data Seluruh Penjualan
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
-            <button type="button" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white">
-                Ekspor
-            </button>
+            <a href="{{ route('export.all-sales') }}" class="btn btn-outline-secondary btn-sm px-4 bg-white d-inline-flex align-items-center">
+                <i class="mdi mdi-download me-1"></i> Ekspor CSV
+            </a>
         </div>
     </div>
 
@@ -91,11 +91,11 @@
                                     <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
                                 </div>
                             </div>
-                            <div class="input-group w-100 w-sm-auto" style="max-width: 250px; height: 32px;">
-                                <div class="input-group-prepend" style="height: 32px;">
-                                    <span class="input-group-text bg-transparent border-right-0" style="padding: 0 10px; height: 32px;"><i class="mdi mdi-magnify text-muted"></i></span>
-                                </div>
-                                <input type="text" name="search" value="{{ request('search') }}" class="form-control border-left-0" placeholder="Cari..." style="height: 32px; padding-left: 0;">
+                            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    class="form-control form-control-sm ps-5 pe-3" placeholder="Cari transaksi penjualan..."
+                                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
                         </div>
                     </form>

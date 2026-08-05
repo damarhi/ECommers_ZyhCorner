@@ -38,13 +38,13 @@ class DatabaseSeeder extends Seeder
 
         // ── Call Individual Seeders ────────────────────────────────
         $this->call([
+            KategoriSeeder::class,        // Data dummy kategori & pengait produk
             UserPelangganSeeder::class,  // Akun pelanggan dummy
             CustomerSeeder::class,        // Data customer (admin panel)
             PesananSeeder::class,         // Pesanan & penjualan
             ReturSeeder::class,           // Data return
             DiskonSeeder::class,          // Data diskon promo
             BannerSeeder::class,          // Data banner promo
-            AboutSettingSeeder::class,    // Data pengaturan About Us
         ]);
     }
 }
