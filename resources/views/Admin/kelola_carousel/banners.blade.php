@@ -97,9 +97,12 @@
         </div>
 
         <!-- Visual Banner Cards List View -->
-        <form action="{{ route('banners.bulk-delete') }}" method="POST" id="bulkDeleteForm">
+        <form action="{{ route('banners.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
             @csrf
-            <div class="row">
+            <div id="bulkDeleteInputs"></div>
+        </form>
+
+        <div class="row">
                 @forelse($banners as $b)
                     <div class="col-md-6 col-lg-6 col-xl-4 grid-margin stretch-card mb-4">
                         <div class="card border-0 shadow-sm overflow-hidden h-100 banner-card position-relative" style="border-radius: 14px; background: #ffffff; transition: transform 0.25s ease, box-shadow 0.25s ease;">
@@ -490,7 +493,8 @@
             if (btnBulkDelete && bulkDeleteForm) {
                 btnBulkDelete.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const count = document.querySelectorAll('.banner-row-checkbox:checked').length;
+                    const selectedCheckboxes = document.querySelectorAll('.banner-row-checkbox:checked');
+                    const count = selectedCheckboxes.length;
                     if (count === 0) return;
 
                     Swal.fire({
@@ -509,6 +513,15 @@
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
+                            const inputsContainer = document.getElementById('bulkDeleteInputs');
+                            inputsContainer.innerHTML = '';
+                            selectedCheckboxes.forEach(cb => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'ids[]';
+                                input.value = cb.value;
+                                inputsContainer.appendChild(input);
+                            });
                             bulkDeleteForm.submit();
                         }
                     });

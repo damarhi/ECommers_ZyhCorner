@@ -81,4 +81,23 @@ class KategoriController extends Controller
 
         return redirect()->route('categories.index')->with('success', 'Kategori berhasil dihapus.');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:kategoris,id_kategori',
+        ]);
+
+        $categories = Kategori::whereIn('id_kategori', $validated['ids'])->get();
+        foreach ($categories as $cat) {
+            if ($cat->gambar_kategori && Storage::disk('public')->exists($cat->gambar_kategori)) {
+                Storage::disk('public')->delete($cat->gambar_kategori);
+            }
+            $cat->delete();
+        }
+
+        $count = count($validated['ids']);
+        return redirect()->route('categories.index')->with('success', "{$count} kategori berhasil dihapus.");
+    }
 }

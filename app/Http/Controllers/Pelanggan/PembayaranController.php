@@ -32,20 +32,20 @@ class PembayaranController extends Controller
             throw new \Exception('Midtrans Server Key is not configured in .env / config.');
         }
 
-        $isProduction = config('services.midtrans.is_production', false);
+        $isProduction = filter_var(config('services.midtrans.is_production', false), FILTER_VALIDATE_BOOLEAN);
         if (str_starts_with($serverKey, 'SB-')) {
             $isProduction = false;
-        } elseif (str_starts_with($serverKey, 'Mid-server-')) {
-            $isProduction = true;
         }
 
         $url = $isProduction 
             ? 'https://app.midtrans.com/snap/v1/transactions' 
             : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
+        $cleanOrderId = preg_replace('/[^a-zA-Z0-9\-\_\~\.]/', '', $pesanan->order_number);
+
         $payload = [
             'transaction_details' => [
-                'order_id' => $pesanan->order_number,
+                'order_id' => $cleanOrderId,
                 'gross_amount' => (int) $pesanan->total,
             ],
             'customer_details' => [
@@ -66,7 +66,7 @@ class PembayaranController extends Controller
             $errMsg = isset($errBody['error_messages'][0]) ? $errBody['error_messages'][0] : $response->body();
 
             if (str_contains(strtolower($errMsg), 'order_id') || str_contains(strtolower($errMsg), 'already been taken')) {
-                $payload['transaction_details']['order_id'] = $pesanan->order_number . '-' . time();
+                $payload['transaction_details']['order_id'] = $cleanOrderId . '-' . time();
                 $retryRes = Http::withHeaders([
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
@@ -111,7 +111,14 @@ class PembayaranController extends Controller
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        $order = Pesanan::where('order_number', $request->order_id)->first();
+        $rawOrderId = $request->order_id;
+        $baseOrderId = str_contains($rawOrderId, '-') ? explode('-', $rawOrderId)[0] : $rawOrderId;
+        $order = Pesanan::where('order_number', $rawOrderId)
+            ->orWhere('order_number', '#' . $rawOrderId)
+            ->orWhere('order_number', $baseOrderId)
+            ->orWhere('order_number', '#' . $baseOrderId)
+            ->first();
+
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
@@ -192,29 +199,31 @@ class PembayaranController extends Controller
     }
 
     /**
-     * Check Midtrans Payment Status for an order manually.
+     * Verify order payment status directly with Midtrans API and update database.
      *
-     * @param  int|string  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @param  \App\Models\Pesanan  $order
+     * @return bool Returns true if order is Paid
      */
-    public function checkPaymentStatus($id)
+    public function verifyAndSyncOrderPayment($order)
     {
-        $user = Auth::user();
-        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
-
         if ($order->payment_status === 'Paid') {
-            return response()->json([
-                'success' => true,
-                'status' => 'Paid',
-                'message' => 'Pembayaran Anda telah lunas!'
-            ]);
+            return true;
         }
 
         $serverKey = config('services.midtrans.server_key');
-        $isProduction = config('services.midtrans.is_production', false);
+        if (!$serverKey) {
+            return false;
+        }
+
+        $isProduction = filter_var(config('services.midtrans.is_production', false), FILTER_VALIDATE_BOOLEAN);
+        if (str_starts_with($serverKey, 'SB-')) {
+            $isProduction = false;
+        }
+
+        $cleanOrderId = preg_replace('/[^a-zA-Z0-9\-\_\~\.]/', '', $order->order_number);
         $url = $isProduction
-            ? "https://api.midtrans.com/v2/{$order->order_number}/status"
-            : "https://api.sandbox.midtrans.com/v2/{$order->order_number}/status";
+            ? "https://api.midtrans.com/v2/{$cleanOrderId}/status"
+            : "https://api.sandbox.midtrans.com/v2/{$cleanOrderId}/status";
 
         try {
             $response = Http::withHeaders([
@@ -234,25 +243,49 @@ class PembayaranController extends Controller
                     ]);
                     Produk::reduceStockForOrder($order);
                     NotificationService::sendToKasir(new PesananBaruKasirMail($order));
-                    return response()->json([
-                        'success' => true,
-                        'status' => 'Paid',
-                        'message' => 'Pembayaran berhasil dikonfirmasi!'
-                    ]);
+                    return true;
                 } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
                     $order->update([
                         'payment_status' => 'Failed',
                         'order_status' => 'batal'
                     ]);
-                    return response()->json([
-                        'success' => false,
-                        'status' => 'Failed',
-                        'message' => 'Pembayaran gagal atau kedaluwarsa.'
-                    ]);
+                    return false;
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Check Payment Status failed: ' . $e->getMessage());
+            Log::error('Verify and Sync Order Payment failed: ' . $e->getMessage());
+        }
+
+        return false;
+    }
+
+    /**
+     * Check Midtrans Payment Status for an order manually.
+     *
+     * @param  int|string  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkPaymentStatus($id)
+    {
+        $user = Auth::user();
+        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+
+        $isPaid = $this->verifyAndSyncOrderPayment($order);
+
+        if ($isPaid || $order->fresh()->payment_status === 'Paid') {
+            return response()->json([
+                'success' => true,
+                'status' => 'Paid',
+                'message' => 'Pembayaran Anda telah lunas!'
+            ]);
+        }
+
+        if ($order->fresh()->payment_status === 'Failed' || $order->fresh()->order_status === 'batal') {
+            return response()->json([
+                'success' => false,
+                'status' => 'Failed',
+                'message' => 'Pembayaran gagal atau kedaluwarsa.'
+            ]);
         }
 
         return response()->json([

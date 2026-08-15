@@ -952,7 +952,14 @@
                                                     <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop" alt="Placeholder">
                                                 @endif
                                             </div>
-                                            <span class="product-title">{{ $item['product']->nama_produk }}</span>
+                                            <div>
+                                                <span class="product-title">{{ $item['product']->nama_produk }}</span>
+                                                @if(!empty($item['custom_text']))
+                                                    <div class="mt-1" style="font-size: 12px; color: #00b207; font-weight: 500;">
+                                                        <i class="fa-solid fa-pen-nib me-1"></i> Tulisan Kue: "{{ $item['custom_text'] }}"
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="product-price-col">Rp. {{ number_format($item['price'], 0, ',', '.') }}</td>
@@ -1250,24 +1257,42 @@
                 if (data.success && data.snap_token) {
                     snap.pay(data.snap_token, {
                         onSuccess: function(result) {
-                            Swal.fire({
-                                title: 'Berhasil!',
-                                text: 'Pembayaran berhasil dikonfirmasi.',
-                                icon: 'success',
-                                confirmButtonColor: '#00b207'
-                            }).then(() => {
-                                window.location.reload();
-                            });
+                            fetch(`/order-history/${orderId}/check-payment`)
+                                .then(() => {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: 'Pembayaran berhasil dikonfirmasi.',
+                                        icon: 'success',
+                                        confirmButtonColor: '#00b207'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                });
                         },
                         onPending: function(result) {
-                            Swal.fire({
-                                title: 'Tertunda',
-                                text: 'Pembayaran sedang diproses atau tertunda.',
-                                icon: 'info',
-                                confirmButtonColor: '#00b207'
-                            }).then(() => {
-                                window.location.reload();
-                            });
+                            fetch(`/order-history/${orderId}/check-payment`)
+                                .then(res => res.json())
+                                .then(resData => {
+                                    if (resData.success && resData.status === 'Paid') {
+                                        Swal.fire({
+                                            title: 'Berhasil!',
+                                            text: 'Pembayaran berhasil dikonfirmasi.',
+                                            icon: 'success',
+                                            confirmButtonColor: '#00b207'
+                                        }).then(() => {
+                                            window.location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Tertunda',
+                                            text: 'Pembayaran sedang diproses atau tertunda.',
+                                            icon: 'info',
+                                            confirmButtonColor: '#00b207'
+                                        }).then(() => {
+                                            window.location.reload();
+                                        });
+                                    }
+                                });
                         },
                         onError: function(result) {
                             Swal.fire({
@@ -1278,12 +1303,20 @@
                             });
                         },
                         onClose: function() {
-                            Swal.fire({
-                                title: 'Dibatalkan',
-                                text: 'Anda menutup pop-up pembayaran.',
-                                icon: 'warning',
-                                confirmButtonColor: '#00b207'
-                            });
+                            fetch(`/order-history/${orderId}/check-payment`)
+                                .then(res => res.json())
+                                .then(resData => {
+                                    if (resData.success && resData.status === 'Paid') {
+                                        Swal.fire({
+                                            title: 'Berhasil!',
+                                            text: 'Pembayaran berhasil dikonfirmasi.',
+                                            icon: 'success',
+                                            confirmButtonColor: '#00b207'
+                                        }).then(() => {
+                                            window.location.reload();
+                                        });
+                                    }
+                                });
                         }
                     });
                 } else {

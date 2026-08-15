@@ -121,10 +121,11 @@
 
                         @if ($product->stok > 0)
                             <div class="cart-btn"
-                                onclick="addToCart({
+                        onclick="addToCart({
                         id: '{{ $product->id_produk }}',
                         name: '{{ $product->nama_produk }}',
                         price: {{ $product->harga }},
+                        bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
                         img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop' }}'
                     })">
                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -202,6 +203,7 @@
                                         id: '{{ $product->id_produk }}',
                                         name: '{{ $product->nama_produk }}',
                                         price: {{ $product->harga }},
+                                        bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
                                         img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1588195538326-c5b1e9f80a1b?q=80&w=200&auto=format&fit=crop' }}'
                                     })">
                                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -276,6 +278,7 @@
                                     id: '{{ $product->id_produk }}',
                                     name: '{{ $product->nama_produk }}',
                                     price: {{ $product->harga }},
+                                    bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
                                     img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=200&auto=format&fit=crop' }}'
                                 })">
                                             <i class="fa-solid fa-bag-shopping"></i>
@@ -344,6 +347,7 @@
                                     id: '{{ $product->id_produk }}',
                                     name: '{{ $product->nama_produk }}',
                                     price: {{ $product->harga }},
+                                    bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
                                     img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?q=80&w=200&auto=format&fit=crop' }}'
                                  })">
                                             <i class="fa-solid fa-bag-shopping" style="font-size: 12px;"></i>
@@ -484,6 +488,7 @@
                         id: '{{ $product->id_produk }}',
                         name: '{{ $product->nama_produk }}',
                         price: {{ $product->harga }},
+                        bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
                         img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop' }}'
                     })">
                                         <i class="fa-solid fa-bag-shopping"></i>

@@ -10,10 +10,20 @@
                 <i class="mdi mdi-account-multiple"></i>
             </span>Kasir
         </h3>
-        <button type="button" class="btn btn-gradient-primary btn-sm px-4 ms-2" data-bs-toggle="modal" data-bs-target="#addCassierModal">
-            <i class="mdi mdi-plus me-1"></i> Tambah Kasir
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" id="btnBulkDelete" class="btn btn-gradient-danger btn-sm d-none align-items-center justify-content-center px-3" style="height: 38px;">
+                <i class="mdi mdi-delete me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+            </button>
+            <button type="button" class="btn btn-gradient-primary btn-sm px-4 ms-2" data-bs-toggle="modal" data-bs-target="#addCassierModal">
+                <i class="mdi mdi-plus me-1"></i> Tambah Kasir
+            </button>
+        </div>
     </div>
+
+    <form action="{{ route('cassiers.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
+        @csrf
+        <div id="bulkDeleteInputs"></div>
+    </form>
 
 
 
@@ -21,6 +31,9 @@
         @forelse($cassiers as $cassier)
         <div class="col-md-4 grid-margin stretch-card mb-4">
             <div class="card border-0 shadow-sm cassier-card" style="border-radius: 8px; position: relative; overflow: hidden; background: #fff;">
+                <div style="position: absolute; top: 12px; left: 12px; z-index: 10; background: rgba(255,255,255,0.85); padding: 4px; border-radius: 6px;">
+                    <input type="checkbox" name="ids[]" value="{{ $cassier->id }}" class="cassier-row-checkbox form-check-input" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
+                </div>
                 <div class="card-body p-4 d-flex flex-column">
                     <!-- Image Section -->
                     <div class="image-wrapper mx-auto mb-4" style="width: 220px; height: 220px; border-radius: 50%; position: relative; overflow: hidden; background-color: #f3f4f6;">
@@ -176,14 +189,69 @@
     }
 </style>
 
-@if($errors->any())
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        @if(old('_method') !== 'PUT')
+        const rowCheckboxes = document.querySelectorAll('.cassier-row-checkbox');
+        const btnBulkDelete = document.getElementById('btnBulkDelete');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+        function updateBulkDeleteState() {
+            const checkedCount = document.querySelectorAll('.cassier-row-checkbox:checked').length;
+            if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
+
+            if (btnBulkDelete) {
+                if (checkedCount > 0) {
+                    btnBulkDelete.classList.remove('d-none');
+                    btnBulkDelete.classList.add('d-inline-flex');
+                } else {
+                    btnBulkDelete.classList.add('d-none');
+                    btnBulkDelete.classList.remove('d-inline-flex');
+                }
+            }
+        }
+
+        rowCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateBulkDeleteState);
+        });
+
+        if (btnBulkDelete && bulkDeleteForm) {
+            btnBulkDelete.addEventListener('click', function(e) {
+                e.preventDefault();
+                const selectedCheckboxes = document.querySelectorAll('.cassier-row-checkbox:checked');
+                const count = selectedCheckboxes.length;
+                if (count === 0) return;
+
+                Swal.fire({
+                    title: 'Hapus Kasir Terpilih?',
+                    text: `Apakah Anda yakin ingin menghapus ${count} akun kasir yang dipilih?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#EF4444',
+                    cancelButtonColor: '#9CA3AF',
+                    confirmButtonText: 'Ya, Hapus Terpilih!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const inputsContainer = document.getElementById('bulkDeleteInputs');
+                        inputsContainer.innerHTML = '';
+                        selectedCheckboxes.forEach(cb => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'ids[]';
+                            input.value = cb.value;
+                            inputsContainer.appendChild(input);
+                        });
+                        bulkDeleteForm.submit();
+                    }
+                });
+            });
+        }
+
+        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any() && old('_method') !== 'PUT')
             var myModal = new bootstrap.Modal(document.getElementById('addCassierModal'));
             myModal.show();
         @endif
     });
 </script>
-@endif
 @endsection

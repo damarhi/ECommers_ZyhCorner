@@ -7,6 +7,11 @@
 @php
     $currentJenis = old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase'));
     $backRoute = ($currentJenis === 'kustom') ? route('products.custom') : route('products.index');
+    $isKustom = ($currentJenis === 'kustom');
+    $stokVal = old('status_produk', $produk->status_produk);
+    if (!$isKustom && $stokVal === 'Tersedia') {
+        $stokVal = '99';
+    }
 @endphp
 
         <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
@@ -52,8 +57,8 @@
                             <h4 class="card-title">Kuantitas</h4>
                             <div class="form-group mb-0">
                                 <label>Stok Produk</label>
-                                <input type="text" name="status_produk" id="status_produk_input" class="form-control" placeholder="Masukkan Stok"
-                                    value="{{ old('status_produk', $produk->status_produk) }}" required>
+                                <input type="{{ $isKustom ? 'text' : 'number' }}" name="status_produk" id="status_produk_input" class="form-control" placeholder="Masukkan Stok (misal: 10)"
+                                    value="{{ $stokVal }}" min="0" step="1" required>
                                 <small id="stok_help_text" class="form-text text-muted mt-1" style="display: none; font-size: 12px;"></small>
                             </div>
                         </div>
@@ -197,6 +202,24 @@
                         </div>
                     </div>
 
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4 class="card-title">Kustomisasi Tulisan Kue</h4>
+                            <div class="form-check form-switch d-flex align-items-center mb-2 p-0">
+                                <input class="form-check-input m-0 me-2" type="checkbox" name="bisa_custom_teks" id="bisa_custom_teks" value="1" {{ old('bisa_custom_teks', $produk->bisa_custom_teks) ? 'checked' : '' }} role="switch" style="cursor: pointer; width: 2.25em; height: 1.15em; float: none; opacity: 1; position: relative; top: 0; left: 0;">
+                                <label class="form-check-label font-weight-bold mb-0" for="bisa_custom_teks" style="cursor: pointer; user-select: none; margin-left: 0;">
+                                    Bisa Tambah Tulisan di Atas Kue
+                                </label>
+                            </div>
+                            <small class="form-text text-muted" style="font-size: 12px; line-height: 1.4; display: block;">
+                                Aktifkan jika produk ini dapat diberi ucapan/tulisan di atas kue oleh pembeli saat checkout.
+                            </small>
+                            <div class="alert alert-warning p-2 mt-2 mb-0" style="font-size: 11.5px; border-radius: 6px; line-height: 1.4;">
+                                <i class="mdi mdi-alert-circle-outline me-1"></i> <strong>Aturan Toko:</strong> Tidak menerima request tulisan ucapan <em>HBD, Ultah, Barakallah Fii Umrik, Anniv & angka</em> dalam bentuk apa pun.
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-end mb-4">
                         <a href="{{ $backRoute }}" class="btn btn-light me-2">Batal</a>
                         <button type="submit" class="btn btn-gradient-primary">Simpan Produk</button>
@@ -226,6 +249,7 @@
                 if (jenis === 'kustom') {
                     // Disable & Readonly Kuantitas / Stok
                     if (statusInput) {
+                        statusInput.type = 'text';
                         statusInput.readOnly = true;
                         statusInput.style.backgroundColor = '#e9ecef';
                         statusInput.style.cursor = 'not-allowed';
@@ -262,11 +286,14 @@
                 } else {
                     // Showcase product
                     if (statusInput) {
+                        statusInput.type = 'number';
+                        statusInput.min = '0';
+                        statusInput.step = '1';
                         statusInput.readOnly = false;
                         statusInput.style.backgroundColor = '';
                         statusInput.style.cursor = '';
-                        if (statusInput.value === 'Berdasarkan Pesanan') {
-                            statusInput.value = 'Tersedia';
+                        if (statusInput.value === 'Berdasarkan Pesanan' || statusInput.value === 'Tersedia') {
+                            statusInput.value = '10';
                         }
                     }
                     if (stokHelp) {

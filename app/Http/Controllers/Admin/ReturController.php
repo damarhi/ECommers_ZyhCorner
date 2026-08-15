@@ -178,4 +178,23 @@ class ReturController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:returs,id',
+        ]);
+
+        $returs = Retur::whereIn('id', $validated['ids'])->get();
+        foreach ($returs as $retur) {
+            if ($retur->foto_retur && file_exists(public_path('uploads/returs/' . $retur->foto_retur))) {
+                @unlink(public_path('uploads/returs/' . $retur->foto_retur));
+            }
+            $retur->delete();
+        }
+
+        $count = count($validated['ids']);
+        return redirect()->route('returs.index')->with('success', "{$count} data retur berhasil dihapus.");
+    }
 }

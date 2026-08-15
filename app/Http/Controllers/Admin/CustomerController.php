@@ -122,4 +122,17 @@ class CustomerController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:customers,id',
+        ]);
+
+        $count = count($validated['ids']);
+        Customer::whereIn('id', $validated['ids'])->delete();
+
+        return redirect()->route('customers.index')->with('success', "{$count} data pelanggan berhasil dihapus.");
+    }
 }

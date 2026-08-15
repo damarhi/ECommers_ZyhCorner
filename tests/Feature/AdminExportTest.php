@@ -39,8 +39,42 @@ class AdminExportTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('export.all-sales'));
 
         $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $this->assertStringContainsString('ORD-TEST-001', $response->streamedContent());
+        $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
+    }
+
+    public function test_admin_can_export_filtered_sales_csv()
+    {
+        Pesanan::create([
+            'order_number' => 'ORD-MATCH-001',
+            'customer_name' => 'Matching Customer',
+            'email_pembeli' => 'match@example.com',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'jenis_penjualan' => 'Online',
+            'created_at' => now(),
+            'total' => 300000,
+        ]);
+
+        Pesanan::create([
+            'order_number' => 'ORD-EXCLUDE-999',
+            'customer_name' => 'Excluded Customer',
+            'email_pembeli' => 'exclude@example.com',
+            'payment_status' => 'Pending',
+            'order_status' => 'selesai',
+            'jenis_penjualan' => 'Online',
+            'created_at' => now()->subYear(),
+            'total' => 50000,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('export.all-sales', [
+            'preset' => 'today',
+            'payment_status' => 'Paid',
+            'jenis_penjualan' => 'Online',
+            'search' => 'Matching'
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
     }
 
     public function test_admin_can_export_orders_csv()

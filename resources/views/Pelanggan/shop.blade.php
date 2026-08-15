@@ -72,10 +72,15 @@
         </div>
 
         <!-- Active Filters -->
-        @if (request()->filled('category') || request()->filled('price'))
+        @if (request()->filled('category') || request()->filled('price') || request()->filled('search'))
             <div class="active-filters-row">
                 <div class="active-filters">
                     <span>Active Filters:</span>
+                    @if (request()->filled('search'))
+                        <div class="filter-tag" onclick="removeShopFilter('search')">
+                            Search: "{{ request('search') }}" <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    @endif
                     @if (request()->filled('category'))
                         @php
                             $activeCat = $categories->firstWhere('id_kategori', request('category'));
@@ -111,7 +116,7 @@
 
         <!-- Product Grid -->
         <div class="product-grid">
-            @foreach ($products as $index => $product)
+            @forelse ($products as $index => $product)
                 <div class="product-card">
                     <div class="product-image">
                         @if ($product->stok == 0)
@@ -160,6 +165,7 @@
                         id: '{{ $product->id_produk }}',
                         name: '{{ $product->nama_produk }}',
                         price: {{ $product->harga }},
+                        bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
                         img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop' }}'
                     })">
                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -171,7 +177,22 @@
                         @endif
                     </div>
                 </div>
-            @endforeach
+            @empty
+                <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 42px; color: #ccc; margin-bottom: 15px;"></i>
+                    <h3 style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px;">Produk tidak ditemukan</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                        @if(request()->filled('search'))
+                            Tidak ada produk yang cocok dengan kata kunci "{{ request('search') }}".
+                        @else
+                            Belum ada produk yang tersedia untuk filter ini.
+                        @endif
+                    </p>
+                    <a href="{{ route('shop') }}" class="btn" style="background: #00b207; color: white; border-radius: 30px; padding: 10px 24px; font-weight: 500; text-decoration: none; display: inline-block;">
+                        Lihat Semua Produk
+                    </a>
+                </div>
+            @endforelse
         </div>
 
         <!-- Pagination -->

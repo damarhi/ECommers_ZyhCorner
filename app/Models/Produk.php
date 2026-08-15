@@ -20,10 +20,15 @@ class Produk extends Model
         'status_produk',
         'deskripsi',
         'tanggal_expired',
+        'bisa_custom_teks',
         'foto_1',
         'foto_2',
         'foto_3',
         'foto_4',
+    ];
+
+    protected $casts = [
+        'bisa_custom_teks' => 'boolean',
     ];
 
     public function getStokAttribute()
@@ -100,25 +105,22 @@ class Produk extends Model
             ->get();
 
         foreach ($expiredProducts as $produk) {
-            $stokAwal = $produk->status_produk ?? 'Tersedia';
+            // Check if showcase product stock is not already emptied to '0' or 'habis'
+            if ($produk->status_produk !== '0' && strtolower((string)$produk->status_produk) !== 'habis') {
+                $stokAwal = $produk->status_produk ?? 'Tersedia';
 
-            // Record in dataset table produk_kadaluarsas
-            $expiredRecord = ProdukKadaluarsa::firstOrCreate(
-                ['id_produk' => $produk->id_produk],
-                [
+                // Create a BRAND NEW record in produk_kadaluarsas table (distinct id_expired)
+                $expiredRecord = ProdukKadaluarsa::create([
+                    'id_produk' => $produk->id_produk,
                     'tanggal_expired' => $produk->tanggal_expired,
                     'jumlah_stok' => $stokAwal,
                     'status_tindakan' => 'Perlu Tindakan',
                     'catatan' => 'Otomatis masuk dataset produk kadaluarsa & stok dikosongkan.',
-                ]
-            );
+                ]);
 
-            if ($expiredRecord->wasRecentlyCreated) {
                 \App\Services\NotificationService::sendToKasir(new \App\Mail\ProdukKadaluarsaKasirMail($expiredRecord));
-            }
 
-            // Empty the stock on the showcase product
-            if ($produk->status_produk !== '0' && strtolower((string)$produk->status_produk) !== 'habis') {
+                // Empty the stock on the showcase product
                 $produk->status_produk = '0';
                 $produk->save();
             }

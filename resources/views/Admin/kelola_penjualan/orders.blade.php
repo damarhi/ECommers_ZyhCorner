@@ -12,9 +12,6 @@
             <span class="text-nowrap">Pesanan Online</span>
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
-            <a href="{{ route('export.orders') }}" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white d-inline-flex align-items-center">
-                <i class="mdi mdi-download me-1"></i> Ekspor CSV
-            </a>
             <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addOrderModal">
                 <i class="mdi mdi-plus me-1"></i> Tambah Pesanan
             </button>
@@ -56,9 +53,15 @@
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-inverse-danger d-inline-flex align-items-center justify-content-center align-self-end align-self-md-center" style="width: 32px; height: 32px; padding: 0;" title="Hapus Terpilih">
-                            <i class="mdi mdi-delete-outline" style="margin: 0; font-size: 16px;"></i>
+                        </div>
+                        <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center align-self-end align-self-md-center px-3" style="height: 38px;" title="Hapus Terpilih">
+                            <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                         </button>
+                    </form>
+
+                    <form action="{{ route('orders.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
+                        @csrf
+                        <div id="bulkDeleteInputs"></div>
                     </form>
 
                     <!-- Table -->
@@ -66,13 +69,13 @@
                         <table class="table" style="border-bottom: 1px solid #e4e4e4;">
                             <thead>
                                 <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
-                                    <th style="padding: 15px 10px; width: 40px;">
+                                     <th style="padding: 15px 10px; width: 40px;">
                                         <div class="form-check m-0">
                                             <label class="form-check-label">
-                                                <input type="checkbox" class="form-check-input">
+                                                <input type="checkbox" id="checkAllOrders" class="form-check-input" style="cursor: pointer;">
                                             <i class="input-helper"></i></label>
                                         </div>
-                                    </th>
+                                     </th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pesanan</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Tanggal</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pelanggan</th>
@@ -85,13 +88,13 @@
                             <tbody>
                                 @forelse($orders as $order)
                                 <tr>
-                                    <td style="padding: 15px 10px;">
+                                     <td style="padding: 15px 10px;">
                                         <div class="form-check m-0">
                                             <label class="form-check-label">
-                                                <input type="checkbox" class="form-check-input">
+                                                <input type="checkbox" name="ids[]" value="{{ $order->id }}" class="form-check-input order-row-checkbox" style="cursor: pointer;">
                                             <i class="input-helper"></i></label>
                                         </div>
-                                    </td>
+                                     </td>
                                     <td style="padding: 15px 10px; font-weight: 500; font-size: 14px; color: #2c2c2c;">{{ $order->order_number }}</td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->created_at->format('M j, g:i A') }}</td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->customer_name }}</td>
@@ -263,15 +266,82 @@
     </div>
 </div>
 
-@if($errors->any())
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        @if(old('_method') !== 'PUT')
+        const checkAll = document.getElementById('checkAllOrders');
+        const rowCheckboxes = document.querySelectorAll('.order-row-checkbox');
+        const btnBulkDelete = document.getElementById('btnBulkDelete');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+        function updateBulkDeleteState() {
+            const checkedCount = document.querySelectorAll('.order-row-checkbox:checked').length;
+            if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
+
+            if (btnBulkDelete) {
+                if (checkedCount > 0) {
+                    btnBulkDelete.classList.remove('d-none');
+                    btnBulkDelete.classList.add('d-inline-flex');
+                } else {
+                    btnBulkDelete.classList.add('d-none');
+                    btnBulkDelete.classList.remove('d-inline-flex');
+                }
+            }
+
+            if (checkAll) {
+                checkAll.checked = rowCheckboxes.length > 0 && checkedCount === rowCheckboxes.length;
+            }
+        }
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(cb => cb.checked = this.checked);
+                updateBulkDeleteState();
+            });
+        }
+
+        rowCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateBulkDeleteState);
+        });
+
+        if (btnBulkDelete && bulkDeleteForm) {
+            btnBulkDelete.addEventListener('click', function(e) {
+                e.preventDefault();
+                const selectedCheckboxes = document.querySelectorAll('.order-row-checkbox:checked');
+                const count = selectedCheckboxes.length;
+                if (count === 0) return;
+
+                Swal.fire({
+                    title: 'Hapus Pesanan Terpilih?',
+                    text: `Apakah Anda yakin ingin menghapus ${count} data pesanan yang dipilih?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#EF4444',
+                    cancelButtonColor: '#9CA3AF',
+                    confirmButtonText: 'Ya, Hapus Terpilih!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const inputsContainer = document.getElementById('bulkDeleteInputs');
+                        inputsContainer.innerHTML = '';
+                        selectedCheckboxes.forEach(cb => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'ids[]';
+                            input.value = cb.value;
+                            inputsContainer.appendChild(input);
+                        });
+                        bulkDeleteForm.submit();
+                    }
+                });
+            });
+        }
+
+        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any() && old('_method') !== 'PUT')
             var myModal = new bootstrap.Modal(document.getElementById('addOrderModal'));
             myModal.show();
         @endif
     });
 </script>
-@endif
 
 @endsection

@@ -118,6 +118,7 @@
                                             'qty' => $qty,
                                             'price' => $price,
                                             'subtotal' => $price * $qty,
+                                            'custom_text' => $item['custom_text'] ?? null,
                                         ];
                                     }
                                 }
@@ -125,7 +126,14 @@
 
                             @forelse($modalItems as $item)
                             <tr>
-                                <td style="padding: 8px; white-space: normal; word-wrap: break-word;">{{ $item['name'] }}</td>
+                                <td style="padding: 8px; white-space: normal; word-wrap: break-word;">
+                                    <div class="font-weight-500">{{ $item['name'] }}</div>
+                                    @if(!empty($item['custom_text']))
+                                        <div class="badge bg-soft-info text-info mt-1" style="font-size: 11px; white-space: normal; text-align: left; max-width: 100%;">
+                                            <i class="mdi mdi-lead-pencil me-1"></i> Tulisan Kue: "{{ $item['custom_text'] }}"
+                                        </div>
+                                    @endif
+                                </td>
                                 <td style="padding: 8px; text-align: center;">{{ $item['qty'] }}</td>
                                 <td style="padding: 8px; text-align: right; font-weight: 600;">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                             </tr>

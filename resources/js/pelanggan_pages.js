@@ -259,13 +259,18 @@ window.addToCart = function(product) {
     const existing = window.cart.find(item => item.id === product.id);
     if (existing) {
         existing.qty += (product.qty || 1);
+        if (product.bisa_custom_teks !== undefined) {
+            existing.bisa_custom_teks = product.bisa_custom_teks;
+        }
     } else {
         window.cart.push({
             id: product.id,
             name: product.name,
             price: product.price,
             img: product.img,
-            qty: product.qty || 1
+            qty: product.qty || 1,
+            bisa_custom_teks: product.bisa_custom_teks || false,
+            custom_text: product.custom_text || ''
         });
     }
     window.saveCart();
@@ -1597,6 +1602,7 @@ window.buyNow = function() {
             id: conf.productId,
             name: conf.productName,
             price: conf.productPrice,
+            bisa_custom_teks: conf.bisaCustomTeks || false,
             img: conf.productImg,
             qty: parseInt(document.getElementById('qtyInput')?.value || 1)
         });
@@ -2001,5 +2007,144 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('map')) {
         window.initCheckoutMap();
     }
+
+    // Live search autocomplete initialization
+    setupLiveSearch('headerSearchInput', 'headerSearchSuggestions', document.getElementById('headerSearchForm'));
+    setupLiveSearch('mobileSearchInput', 'mobileSearchSuggestions', document.getElementById('mobileSearchForm'));
 });
+
+// ==========================================================================
+// LIVE SEARCH AUTOCOMPLETE & DEBOUNCE LOGIC
+// ==========================================================================
+
+function setupLiveSearch(inputId, dropdownId, formEl) {
+    const inputEl = document.getElementById(inputId);
+    const dropdownEl = document.getElementById(dropdownId);
+    if (!inputEl || !dropdownEl) return;
+
+    let debounceTimer = null;
+
+    inputEl.addEventListener('input', function() {
+        const query = this.value.trim();
+
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+            dropdownEl.style.display = 'none';
+            dropdownEl.innerHTML = '';
+            return;
+        }
+
+        // Show loading state immediately while user stops typing
+        dropdownEl.style.display = 'block';
+        dropdownEl.innerHTML = `
+            <div class="search-suggestion-loading" style="padding: 14px; text-align: center; color: #888; font-size: 13px;">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px; color: #00b207;"></i> Mencari produk...
+            </div>
+        `;
+
+        // Debounce timer: wait 350ms after user stops typing
+        debounceTimer = setTimeout(() => {
+            fetchLiveSearchSuggestions(query, dropdownEl, formEl);
+        }, 350);
+    });
+
+    // Close on click outside or Escape
+    document.addEventListener('click', function(e) {
+        if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+            dropdownEl.style.display = 'none';
+        }
+    });
+
+    inputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            dropdownEl.style.display = 'none';
+        }
+    });
+
+    inputEl.addEventListener('focus', function() {
+        if (this.value.trim().length >= 2 && dropdownEl.children.length > 0) {
+            dropdownEl.style.display = 'block';
+        }
+    });
+}
+
+function fetchLiveSearchSuggestions(query, dropdownEl, formEl) {
+    const route = window.layoutConfig?.searchSuggestionsRoute || '/search-suggestions';
+    const targetUrl = `${route}?q=${encodeURIComponent(query)}`;
+
+    fetch(targetUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+            dropdownEl.style.display = 'block';
+            dropdownEl.innerHTML = `
+                <div style="padding: 16px; text-align: center; color: #777; font-size: 13.5px;">
+                    <i class="fa-solid fa-face-frown" style="font-size: 20px; color: #bbb; display: block; margin-bottom: 6px;"></i>
+                    Tidak ada produk yang cocok dengan "<strong>${escapeHtml(query)}</strong>"
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="search-suggestions-list" style="max-height: 360px; overflow-y: auto;">';
+
+        data.forEach(item => {
+            const stockBadge = (item.stok === '0' || String(item.stok).toLowerCase() === 'habis')
+                ? '<span style="font-size: 11px; background: #fee2e2; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Habis</span>'
+                : '';
+
+            const customBadge = item.is_kustom
+                ? '<span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-weight: 500; margin-left: 4px;">Kustom</span>'
+                : '';
+
+            html += `
+                <a href="${item.url}" class="search-suggestion-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; text-decoration: none; color: inherit; border-bottom: 1px solid #f2f2f2; transition: background 0.2s ease;">
+                    <img src="${item.image}" alt="${escapeHtml(item.name)}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #f9f9f9;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 14px; color: #1a1a1a; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            ${escapeHtml(item.name)}
+                        </div>
+                        <div style="font-size: 12px; color: #888; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                            <span>${escapeHtml(item.category)}</span>
+                            ${customBadge}
+                            ${stockBadge}
+                        </div>
+                    </div>
+                    <div style="font-weight: 600; font-size: 13.5px; color: #00b207; white-space: nowrap; flex-shrink: 0;">
+                        ${item.price}
+                    </div>
+                </a>
+            `;
+        });
+
+        html += '</div>';
+
+        const formAction = formEl ? formEl.getAttribute('action') : '/shop';
+        const searchUrl = `${formAction}?search=${encodeURIComponent(query)}`;
+
+        html += `
+            <a href="${searchUrl}" class="search-suggestion-footer" style="display: block; text-align: center; padding: 11px 14px; background: #f8faf8; color: #00b207; font-weight: 600; font-size: 13px; text-decoration: none; border-top: 1px solid #e6e6e6; transition: background 0.2s;">
+                Lihat semua hasil untuk "${escapeHtml(query)}" <i class="fa-solid fa-arrow-right" style="margin-left: 4px; font-size: 11px;"></i>
+            </a>
+        `;
+
+        dropdownEl.style.display = 'block';
+        dropdownEl.innerHTML = html;
+    })
+    .catch(err => {
+        console.error('Error fetching search suggestions:', err);
+        dropdownEl.style.display = 'none';
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
 

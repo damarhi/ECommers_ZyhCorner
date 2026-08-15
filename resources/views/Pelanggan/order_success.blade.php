@@ -333,22 +333,53 @@
         snap.pay(token, {
             onSuccess: function(result) {
                 if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
-                Swal.fire({
-                    title: 'Pembayaran Berhasil!',
-                    text: 'Terima kasih, pembayaran Anda telah berhasil kami terima.',
-                    icon: 'success',
-                    confirmButtonColor: '#00b207'
-                }).then(() => {
-                    updateUIPaymentSuccess();
-                });
+                fetch(`/order-history/{{ $order->id }}/check-payment`)
+                    .then(res => res.json())
+                    .then(() => {
+                        Swal.fire({
+                            title: 'Pembayaran Berhasil!',
+                            text: 'Terima kasih, pembayaran Anda telah berhasil kami terima.',
+                            icon: 'success',
+                            confirmButtonColor: '#00b207'
+                        }).then(() => {
+                            updateUIPaymentSuccess();
+                        });
+                    })
+                    .catch(() => {
+                        updateUIPaymentSuccess();
+                    });
             },
             onPending: function(result) {
-                Swal.fire({
-                    title: 'Pembayaran Tertunda',
-                    text: 'Harap selesaikan pembayaran sesuai instruksi yang diberikan.',
-                    icon: 'info',
-                    confirmButtonColor: '#00b207'
-                });
+                fetch(`/order-history/{{ $order->id }}/check-payment`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.status === 'Paid') {
+                            if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
+                            Swal.fire({
+                                title: 'Pembayaran Berhasil!',
+                                text: 'Terima kasih, pembayaran Anda telah berhasil kami terima.',
+                                icon: 'success',
+                                confirmButtonColor: '#00b207'
+                            }).then(() => {
+                                updateUIPaymentSuccess();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Pembayaran Tertunda',
+                                text: 'Harap selesaikan pembayaran sesuai instruksi yang diberikan.',
+                                icon: 'info',
+                                confirmButtonColor: '#00b207'
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire({
+                            title: 'Pembayaran Tertunda',
+                            text: 'Harap selesaikan pembayaran sesuai instruksi yang diberikan.',
+                            icon: 'info',
+                            confirmButtonColor: '#00b207'
+                        });
+                    });
             },
             onError: function(result) {
                 Swal.fire({
@@ -359,12 +390,21 @@
                 });
             },
             onClose: function() {
-                Swal.fire({
-                    title: 'Pembayaran Dibatalkan',
-                    text: 'Anda menutup popup pembayaran sebelum menyelesaikannya.',
-                    icon: 'warning',
-                    confirmButtonColor: '#00b207'
-                });
+                fetch(`/order-history/{{ $order->id }}/check-payment`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.status === 'Paid') {
+                            if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);
+                            Swal.fire({
+                                title: 'Pembayaran Berhasil!',
+                                text: 'Terima kasih, pembayaran Anda telah berhasil kami terima.',
+                                icon: 'success',
+                                confirmButtonColor: '#00b207'
+                            }).then(() => {
+                                updateUIPaymentSuccess();
+                            });
+                        }
+                    });
             }
         });
     }

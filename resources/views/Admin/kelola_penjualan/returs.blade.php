@@ -11,9 +11,6 @@
             </span>Retur Produk
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
-            <a href="{{ route('export.returs') }}" class="btn btn-outline-secondary btn-sm px-4 me-2 bg-white d-inline-flex align-items-center">
-                <i class="mdi mdi-download me-1"></i> Ekspor CSV
-            </a>
             <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addReturModal">
                 <i class="mdi mdi-plus me-1"></i> Tambah Retur
             </button>
@@ -85,7 +82,15 @@
                                     style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
+                            <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center px-3 ms-auto" style="height: 38px;" title="Hapus Terpilih">
+                                <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+                            </button>
                         </div>
+                    </form>
+
+                    <form action="{{ route('returs.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
+                        @csrf
+                        <div id="bulkDeleteInputs"></div>
                     </form>
 
                     <!-- Table -->
@@ -93,6 +98,13 @@
                         <table class="table" style="border-bottom: 1px solid #e4e4e4;">
                             <thead>
                                 <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
+                                    <th style="padding: 15px 10px; width: 40px;">
+                                        <div class="form-check m-0">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" id="checkAllReturs" class="form-check-input" style="cursor: pointer;">
+                                            <i class="input-helper"></i></label>
+                                        </div>
+                                    </th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pelanggan</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">ID Pesanan</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Alasan</th>
@@ -105,6 +117,13 @@
                             <tbody>
                                 @forelse($returs as $retur)
                                 <tr>
+                                    <td style="padding: 15px 10px;">
+                                        <div class="form-check m-0">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="ids[]" value="{{ $retur->id }}" class="form-check-input retur-row-checkbox" style="cursor: pointer;">
+                                            <i class="input-helper"></i></label>
+                                        </div>
+                                    </td>
                                     <td style="padding: 15px 10px;">
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-placeholder" style="width: 40px; height: 40px; font-size: 16px; margin-right: 12px;">
@@ -354,14 +373,81 @@
     </div>
 </div>
 
-@if($errors->any())
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        @if(old('_method') !== 'PUT')
+        const checkAll = document.getElementById('checkAllReturs');
+        const rowCheckboxes = document.querySelectorAll('.retur-row-checkbox');
+        const btnBulkDelete = document.getElementById('btnBulkDelete');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+        function updateBulkDeleteState() {
+            const checkedCount = document.querySelectorAll('.retur-row-checkbox:checked').length;
+            if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
+
+            if (btnBulkDelete) {
+                if (checkedCount > 0) {
+                    btnBulkDelete.classList.remove('d-none');
+                    btnBulkDelete.classList.add('d-inline-flex');
+                } else {
+                    btnBulkDelete.classList.add('d-none');
+                    btnBulkDelete.classList.remove('d-inline-flex');
+                }
+            }
+
+            if (checkAll) {
+                checkAll.checked = rowCheckboxes.length > 0 && checkedCount === rowCheckboxes.length;
+            }
+        }
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(cb => cb.checked = this.checked);
+                updateBulkDeleteState();
+            });
+        }
+
+        rowCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateBulkDeleteState);
+        });
+
+        if (btnBulkDelete && bulkDeleteForm) {
+            btnBulkDelete.addEventListener('click', function(e) {
+                e.preventDefault();
+                const selectedCheckboxes = document.querySelectorAll('.retur-row-checkbox:checked');
+                const count = selectedCheckboxes.length;
+                if (count === 0) return;
+
+                Swal.fire({
+                    title: 'Hapus Retur Terpilih?',
+                    text: `Apakah Anda yakin ingin menghapus ${count} data retur yang dipilih?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#EF4444',
+                    cancelButtonColor: '#9CA3AF',
+                    confirmButtonText: 'Ya, Hapus Terpilih!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const inputsContainer = document.getElementById('bulkDeleteInputs');
+                        inputsContainer.innerHTML = '';
+                        selectedCheckboxes.forEach(cb => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'ids[]';
+                            input.value = cb.value;
+                            inputsContainer.appendChild(input);
+                        });
+                        bulkDeleteForm.submit();
+                    }
+                });
+            });
+        }
+
+        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any() && old('_method') !== 'PUT')
             var myModal = new bootstrap.Modal(document.getElementById('addReturModal'));
             myModal.show();
         @endif
     });
 </script>
-@endif
 @endsection

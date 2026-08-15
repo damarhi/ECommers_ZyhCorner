@@ -17,6 +17,40 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @yield('styles')
     @vite(['resources/css/pelanggan_pages.css', 'resources/js/pelanggan_pages.js'])
+    <style>
+        .search-bar {
+            overflow: visible !important;
+            position: relative !important;
+        }
+        .search-input-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color, #e6e6e6);
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100%;
+            background: #ffffff;
+        }
+        .search-suggestions-dropdown {
+            position: absolute !important;
+            top: calc(100% + 6px) !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+            z-index: 9999 !important;
+            overflow: hidden !important;
+        }
+        .search-suggestion-item:hover {
+            background-color: #f0fdf4 !important;
+        }
+        .search-suggestion-footer:hover {
+            background-color: #e6f7ec !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -34,10 +68,13 @@
                 <div class="logo-text">Zyh Corner</div>
             </div>
 
-            <form action="{{ route('shop') }}" method="GET" class="search-bar" style="margin: 0;">
-                <span style="padding-left: 15px; color: #999;"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" name="search" placeholder="Search Product. . ." value="{{ request('search') }}">
-                <button type="submit">Search</button>
+            <form id="headerSearchForm" action="{{ request()->routeIs('custom-products') ? route('custom-products') : route('shop') }}" method="GET" class="search-bar" style="margin: 0; position: relative; overflow: visible !important;">
+                <div class="search-input-wrapper">
+                    <span style="padding-left: 15px; color: #999;"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="search" id="headerSearchInput" autocomplete="off" placeholder="Search Product. . ." value="{{ request('search') }}" style="flex: 1; padding: 10px 15px; border: none; outline: none; background: transparent;">
+                    <button type="submit" style="background-color: #00b207; color: white; border: none; padding: 11px 25px; font-weight: 500; cursor: pointer;">Search</button>
+                </div>
+                <div id="headerSearchSuggestions" class="search-suggestions-dropdown" style="display: none;"></div>
             </form>
 
             <div class="header-actions">
@@ -199,6 +236,14 @@
                     class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="mobile-nav-body">
+            <form id="mobileSearchForm" action="{{ request()->routeIs('custom-products') ? route('custom-products') : route('shop') }}" method="GET" style="margin-bottom: 20px; position: relative; overflow: visible !important;">
+                <div class="search-input-wrapper" style="border-radius: 6px;">
+                    <span style="padding-left: 12px; color: #999;"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="search" id="mobileSearchInput" autocomplete="off" placeholder="Search Product. . ." value="{{ request('search') }}" style="flex: 1; padding: 10px 12px; border: none; outline: none; font-size: 14px;">
+                    <button type="submit" style="background: #00b207; color: white; border: none; padding: 10px 16px; font-weight: 500; font-size: 14px; cursor: pointer;">Search</button>
+                </div>
+                <div id="mobileSearchSuggestions" class="search-suggestions-dropdown" style="display: none;"></div>
+            </form>
             <div class="mobile-nav-links">
                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
                 <a href="{{ route('shop') }}" class="{{ request()->routeIs('shop') ? 'active' : '' }}">Shop</a>
@@ -310,8 +355,98 @@
             isLoggedIn: {{ Auth::check() ? 'true' : 'false' }},
             loginRoute: "{{ route('login') }}",
             checkoutRoute: "{{ route('checkout') }}",
-            successMessage: "{{ session('success') }}"
+            successMessage: "{{ session('success') }}",
+            searchSuggestionsRoute: "{{ route('search.suggestions') }}"
         };
+
+        // Inline Fail-proof Search Suggestions Handler
+        document.addEventListener('DOMContentLoaded', function() {
+            function initSearch(inputId, dropdownId, formId) {
+                var inputEl = document.getElementById(inputId);
+                var dropdownEl = document.getElementById(dropdownId);
+                var formEl = document.getElementById(formId);
+                if (!inputEl || !dropdownEl) return;
+
+                var timer = null;
+
+                inputEl.addEventListener('input', function() {
+                    var q = this.value.trim();
+                    clearTimeout(timer);
+
+                    if (q.length < 2) {
+                        dropdownEl.style.display = 'none';
+                        dropdownEl.innerHTML = '';
+                        return;
+                    }
+
+                    dropdownEl.style.display = 'block';
+                    dropdownEl.innerHTML = '<div style="padding: 14px; text-align: center; color: #888; font-size: 13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px; color: #00b207;"></i> Mencari produk...</div>';
+
+                    timer = setTimeout(function() {
+                        var targetUrl = window.layoutConfig.searchSuggestionsRoute + '?q=' + encodeURIComponent(q);
+                        fetch(targetUrl, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                        })
+                        .then(function(res) { return res.json(); })
+                        .then(function(data) {
+                            if (!Array.isArray(data) || data.length === 0) {
+                                dropdownEl.style.display = 'block';
+                                dropdownEl.innerHTML = '<div style="padding: 16px; text-align: center; color: #777; font-size: 13.5px;"><i class="fa-solid fa-face-frown" style="font-size: 20px; color: #bbb; display: block; margin-bottom: 6px;"></i>Tidak ada produk yang cocok</div>';
+                                return;
+                            }
+
+                            var html = '<div style="max-height: 360px; overflow-y: auto;">';
+                            data.forEach(function(item) {
+                                var stockBadge = (item.stok === '0' || String(item.stok).toLowerCase() === 'habis') ? '<span style="font-size: 11px; background: #fee2e2; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Habis</span>' : '';
+                                var customBadge = item.is_kustom ? '<span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-weight: 500; margin-left: 4px;">Kustom</span>' : '';
+
+                                html += '<a href="' + item.url + '" class="search-suggestion-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; text-decoration: none; color: inherit; border-bottom: 1px solid #f2f2f2; transition: background 0.2s ease;">' +
+                                    '<img src="' + item.image + '" alt="' + item.name + '" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #f9f9f9;">' +
+                                    '<div style="flex: 1; min-width: 0;">' +
+                                        '<div style="font-weight: 600; font-size: 14px; color: #1a1a1a; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">' + item.name + '</div>' +
+                                        '<div style="font-size: 12px; color: #888; display: flex; align-items: center; gap: 4px; margin-top: 2px;"><span>' + item.category + '</span>' + customBadge + stockBadge + '</div>' +
+                                    '</div>' +
+                                    '<div style="font-weight: 600; font-size: 13.5px; color: #00b207; white-space: nowrap; flex-shrink: 0;">' + item.price + '</div>' +
+                                '</a>';
+                            });
+                            html += '</div>';
+
+                            var formAction = formEl ? formEl.getAttribute('action') : '/shop';
+                            var searchUrl = formAction + '?search=' + encodeURIComponent(q);
+                            html += '<a href="' + searchUrl + '" class="search-suggestion-footer" style="display: block; text-align: center; padding: 11px 14px; background: #f8faf8; color: #00b207; font-weight: 600; font-size: 13px; text-decoration: none; border-top: 1px solid #e6e6e6; transition: background 0.2s;">Lihat semua hasil untuk "' + q + '" <i class="fa-solid fa-arrow-right" style="margin-left: 4px; font-size: 11px;"></i></a>';
+
+                            dropdownEl.style.display = 'block';
+                            dropdownEl.innerHTML = html;
+                        })
+                        .catch(function(err) {
+                            console.error(err);
+                            dropdownEl.style.display = 'none';
+                        });
+                    }, 350);
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+                        dropdownEl.style.display = 'none';
+                    }
+                });
+
+                inputEl.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        dropdownEl.style.display = 'none';
+                    }
+                });
+
+                inputEl.addEventListener('focus', function() {
+                    if (this.value.trim().length >= 2 && dropdownEl.children.length > 0) {
+                        dropdownEl.style.display = 'block';
+                    }
+                });
+            }
+
+            initSearch('headerSearchInput', 'headerSearchSuggestions', 'headerSearchForm');
+            initSearch('mobileSearchInput', 'mobileSearchSuggestions', 'mobileSearchForm');
+        });
     </script>
     @yield('scripts')
 </body>

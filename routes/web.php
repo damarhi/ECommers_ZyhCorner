@@ -32,6 +32,7 @@ Route::get('/about', [PelangganController::class, 'about'])->name('about');
 Route::get('/contact', [PelangganController::class, 'contact'])->name('contact');
 Route::get('/faq', [PelangganController::class, 'faq'])->name('faq');
 Route::get('/product/{id}', [PelangganController::class, 'detail'])->name('product.detail');
+Route::get('/search-suggestions', [PelangganController::class, 'searchSuggestions'])->name('search.suggestions');
 Route::get('/cart', [CartCheckoutController::class, 'userChart'])->name('userChart');
 
 Route::middleware('auth')->group(function () {
@@ -100,20 +101,27 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/returs/export', [ReturController::class, 'exportReturs'])->name('export.returs');
 });
 
+Route::post('admin/products/bulk-delete', [ProdukController::class, 'bulkDelete'])->middleware('auth')->name('products.bulk-delete');
 Route::resource('admin/products', ProdukController::class)->middleware('auth')->names('products');
 Route::resource('admin/discounts', DiskonController::class)->middleware('auth')->names('discounts');
 Route::post('admin/discounts/bulk-delete', [DiskonController::class, 'bulkDelete'])->middleware('auth')->name('discounts.bulk-delete');
 Route::post('admin/discounts/{discount}/toggle', [DiskonController::class, 'toggleStatus'])->middleware('auth')->name('discounts.toggle');
+Route::post('admin/returs/bulk-delete', [ReturController::class, 'bulkDelete'])->middleware('auth')->name('returs.bulk-delete');
 Route::resource('admin/returs', ReturController::class)->middleware('auth')->names('returs');
 
 Route::middleware(['auth', 'blockKasir'])->group(function () {
+    Route::post('admin/categories/bulk-delete', [KategoriController::class, 'bulkDelete'])->name('categories.bulk-delete');
     Route::resource('admin/categories', KategoriController::class)->names('categories');
+    Route::post('admin/cassiers/bulk-delete', [CassierController::class, 'bulkDelete'])->name('cassiers.bulk-delete');
     Route::resource('admin/cassiers', CassierController::class)->names('cassiers');
+    Route::post('admin/customers/bulk-delete', [CustomerController::class, 'bulkDelete'])->name('customers.bulk-delete');
     Route::resource('admin/customers', CustomerController::class)->names('customers');
 });
 
+Route::post('admin/orders/bulk-delete', [PesananController::class, 'bulkDelete'])->middleware('auth')->name('orders.bulk-delete');
 Route::resource('admin/orders', PesananController::class)->middleware('auth')->names('orders');
 Route::get('admin/all-sales', [PesananController::class, 'allSales'])->middleware('auth')->name('all-sales.index');
+Route::get('admin/all-sales/report', [PesananController::class, 'salesReport'])->middleware('auth')->name('all-sales.report');
 Route::get('admin/orders/{id}/invoice', [PesananController::class, 'printInvoice'])->middleware('auth')->name('orders.invoice');
 Route::resource('admin/banners', BannerController::class)->middleware('auth')->names('banners');
 Route::post('admin/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->middleware('auth')->name('banners.bulk-delete');

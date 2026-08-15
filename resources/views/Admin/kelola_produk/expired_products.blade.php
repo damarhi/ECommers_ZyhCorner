@@ -129,11 +129,14 @@
                             </div>
                         </form>
 
-                        <!-- Table Bulk Delete Form -->
-                        <form action="{{ route('products.expired.bulk-delete') }}" method="POST" id="bulkDeleteForm">
+                        <!-- Table Bulk Delete Form (Outside Table to prevent form nesting) -->
+                        <form action="{{ route('products.expired.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
                             @csrf
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
+                            <div id="bulkDeleteInputs"></div>
+                        </form>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
                                     <thead>
                                         <tr>
                                             <th width="40">
@@ -338,7 +341,8 @@
             if (btnBulkDelete && bulkDeleteForm) {
                 btnBulkDelete.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const count = document.querySelectorAll('.expired-row-checkbox:checked').length;
+                    const selectedCheckboxes = document.querySelectorAll('.expired-row-checkbox:checked');
+                    const count = selectedCheckboxes.length;
                     if (count === 0) return;
 
                     Swal.fire({
@@ -357,6 +361,15 @@
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
+                            const inputsContainer = document.getElementById('bulkDeleteInputs');
+                            inputsContainer.innerHTML = '';
+                            selectedCheckboxes.forEach(cb => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'ids[]';
+                                input.value = cb.value;
+                                inputsContainer.appendChild(input);
+                            });
                             bulkDeleteForm.submit();
                         }
                     });

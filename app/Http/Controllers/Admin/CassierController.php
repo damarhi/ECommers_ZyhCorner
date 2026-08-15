@@ -116,4 +116,27 @@ class CassierController extends Controller
 
         return redirect()->route('cassiers.index')->with('success', 'Cassier deleted successfully!');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:cassiers,id',
+        ]);
+
+        $cassiers = Cassier::whereIn('id', $validated['ids'])->get();
+        foreach ($cassiers as $c) {
+            if ($c->image) {
+                Storage::disk('public')->delete($c->image);
+            }
+            $user = User::where('email', $c->email)->first();
+            if ($user) {
+                $user->delete();
+            }
+            $c->delete();
+        }
+
+        $count = count($validated['ids']);
+        return redirect()->route('cassiers.index')->with('success', "{$count} akun kasir berhasil dihapus.");
+    }
 }

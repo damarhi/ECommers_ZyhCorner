@@ -358,19 +358,25 @@
             @endif
 
             // Global Error Alert
-            @if ($errors->any())
+            @if (isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any())
                 let errorMessages = '';
-                @foreach ($errors->all() as $error)
-                    errorMessages += '{{ $error }}\n';
-                @endforeach
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: errorMessages,
-                    customClass: {
-                        popup: 'rounded-4'
-                    }
-                });
+                @if (method_exists($errors, 'all'))
+                    @foreach ($errors->all() as $error)
+                        @if(is_string($error))
+                            errorMessages += '{{ $error }}\n';
+                        @endif
+                    @endforeach
+                @endif
+                if (errorMessages !== '') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessages,
+                        customClass: {
+                            popup: 'rounded-4'
+                        }
+                    });
+                }
             @endif
 
             // Delete Confirmation

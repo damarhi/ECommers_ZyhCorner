@@ -100,11 +100,14 @@ class ProdukController extends Controller
             'status_produk' => 'required',
             'deskripsi' => 'nullable|string',
             'tanggal_expired' => 'nullable|date',
+            'bisa_custom_teks' => 'nullable|boolean',
             'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_4' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
         ]);
+
+        $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
 
         if (empty($validated['jenis_produk'])) {
             $validated['jenis_produk'] = $request->input('jenis_produk', 'showcase');
@@ -145,11 +148,14 @@ class ProdukController extends Controller
             'status_produk' => 'required',
             'deskripsi' => 'nullable|string',
             'tanggal_expired' => 'nullable|date',
+            'bisa_custom_teks' => 'nullable|boolean',
             'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_4' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
         ]);
+
+        $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
 
         if (empty($validated['jenis_produk'])) {
             $validated['jenis_produk'] = $product->jenis_produk ?? 'showcase';
@@ -248,5 +254,32 @@ class ProdukController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:produks,id_produk',
+        ]);
+
+        $products = Produk::whereIn('id_produk', $validated['ids'])->get();
+        foreach ($products as $product) {
+            if ($product->foto_1 && Storage::disk('public')->exists($product->foto_1)) {
+                Storage::disk('public')->delete($product->foto_1);
+            }
+            if ($product->foto_2 && Storage::disk('public')->exists($product->foto_2)) {
+                Storage::disk('public')->delete($product->foto_2);
+            }
+            if ($product->foto_3 && Storage::disk('public')->exists($product->foto_3)) {
+                Storage::disk('public')->delete($product->foto_3);
+            }
+            $product->delete();
+        }
+
+        $count = count($validated['ids']);
+        $redirectRoute = $request->input('redirect_to') === 'custom' ? 'products.custom' : 'products.index';
+
+        return redirect()->route($redirectRoute)->with('success', "{$count} produk berhasil dihapus.");
     }
 }

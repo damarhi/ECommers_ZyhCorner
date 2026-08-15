@@ -124,7 +124,16 @@
                 @endif
                 <div class="pi-info-row"><strong>SKU</strong><span>:
                         ZYH-{{ str_pad($product->id_produk, 4, '0', STR_PAD_LEFT) }}</span></div>
-                <div class="pi-info-row"><strong>Stok</strong><span>: {{ $product->stok ?? 'N/A' }}</span></div>
+                @if ($product->bisa_custom_teks)
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin: 15px 0; font-size: 12.5px; color: #166534; line-height: 1.45;">
+                        <div style="font-weight: 600; font-size: 13px; color: #15803d; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <i class="fa-solid fa-pen-nib" style="color: #00b207;"></i> Bisa Tambah Tulisan di Atas Kue
+                        </div>
+                        <div style="font-size: 11.5px; color: #475569;">
+                            <span style="color: #b45309; font-weight: 600;">Catatan Ketentuan:</span> Tidak menerima request ucapan <em>Selamat Ulang Tahun (HBD/Ultah)</em>, <em>Barakallah Fii Umrik</em>, <em>Anniversary (Anniv)</em>, serta <strong>angka</strong> dalam bentuk apa pun. Tulisan ucapan diisi saat Checkout.
+                        </div>
+                    </div>
+                @endif
 
                 <div class="pi-actions">
                     @if (request()->query('custom') == 1)
@@ -278,6 +287,7 @@
             productId: '{{ $product->id_produk }}',
             productName: '{{ $product->nama_produk }}',
             productPrice: {{ $product->harga }},
+            bisaCustomTeks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
             productImg: '{{ reset($fotos) }}',
             checkoutRoute: '{{ route('checkout') }}',
             loginRoute: '{{ route('login') }}'

@@ -56,14 +56,34 @@
                 </form>
             </div>
 
-            <!-- Additional Info -->
-            <div class="checkout-card">
-                <h2 class="checkout-section-title">Additional Info</h2>
-                <div class="form-group-custom" style="margin-bottom: 0;">
-                    <label for="orderNotes">Order Notes <span>(Optional)</span></label>
-                    <textarea id="orderNotes" class="form-textarea-custom" placeholder="Notes about your order, e.g. special notes for delivery"></textarea>
+            <!-- Custom Cake Text Card -->
+            <div class="checkout-card" id="customCakeTextCard" style="display: none;">
+                <h2 class="checkout-section-title" style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-pen-nib" style="color: #00b207;"></i>
+                    Tulisan di Atas Kue <span>(Opsional)</span>
+                </h2>
+                
+                <!-- Notice Warning Banner -->
+                <div style="background-color: #fff8e6; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.08);">
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #d97706; font-size: 18px; margin-top: 2px;"></i>
+                        <div style="font-size: 13px; color: #78350f; line-height: 1.55;">
+                            <strong style="color: #92400e; font-size: 13.5px;">Ketentuan Penulisan Ucapan di Atas Kue:</strong>
+                            <div style="margin-top: 4px;">
+                                Mohon maaf, toko kami <strong>TIDAK MENERIMA</strong> penulisan ucapan <em>Selamat Ulang Tahun (HBD / Ultah)</em>, <em>Barakallah Fii Umrik</em>, <em>Anniversary (Anniv)</em>, serta <strong>angka</strong> dalam bentuk apa pun di atas kue.
+                            </div>
+                            <div style="margin-top: 6px; font-size: 12px; color: #b45309; font-style: italic;">
+                                (Contoh ucapan yang diperbolehkan: "Selamat Wisuda", "Semangat Kerja", "Terima Kasih", "Congratulations", dll).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="customTextInputsContainer">
+                    <!-- Rendered by JS per product -->
                 </div>
             </div>
+
         </div>
 
         <!-- Right Side: Order Summary & Payment & Shipping -->
@@ -186,7 +206,63 @@
         userChartRoute: "{{ route('userChart') }}",
         checkoutPostRoute: "{{ route('checkout.post') }}",
         orderSuccessRoute: "{{ route('order.success') }}",
+        customTextProductIds: @json($customTextProductIds ?? []),
         csrfToken: "{{ csrf_token() }}"
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderCustomTextCard();
+    });
+
+    function renderCustomTextCard() {
+        let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
+        const card = document.getElementById('customCakeTextCard');
+        const container = document.getElementById('customTextInputsContainer');
+        if (!card || !container) return;
+
+        const serverIds = (window.checkoutConfig && window.checkoutConfig.customTextProductIds) ? window.checkoutConfig.customTextProductIds : [];
+
+        // Sync flags for items in localCart
+        localCart.forEach(item => {
+            if (serverIds.includes(String(item.id))) {
+                item.bisa_custom_teks = true;
+            }
+        });
+
+        const customItems = localCart.filter(item => 
+            item.bisa_custom_teks === true || 
+            item.bisa_custom_teks === 1 || 
+            item.bisa_custom_teks === '1' || 
+            item.bisa_custom_teks === 'true' ||
+            serverIds.includes(String(item.id))
+        );
+        
+        if (customItems.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'block';
+        container.innerHTML = customItems.map(item => `
+            <div class="form-group-custom" style="margin-bottom: 15px;">
+                <label for="custom_text_${item.id}" style="font-weight: 600; color: #1a1a1a; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-cake-candles" style="color: #00b207;"></i> Tulisan di Atas Kue: <span style="color: #00b207;">${item.name}</span>
+                </label>
+                <input type="text" id="custom_text_${item.id}" class="form-input-custom custom-text-field"
+                    placeholder="Contoh: Selamat Wisuda / Sukses Selalu / Terima Kasih"
+                    value="${item.custom_text || ''}"
+                    onchange="saveCustomTextToCart('${item.id}', this.value)">
+            </div>
+        `).join('');
+    }
+
+    window.saveCustomTextToCart = function(id, text) {
+        let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
+        const item = localCart.find(i => i.id === id);
+        if (item) {
+            item.custom_text = text.trim();
+            localStorage.setItem('zyh_cart', JSON.stringify(localCart));
+        }
     };
 
     // Override window.submitOrder to integrate Midtrans Snap
@@ -207,6 +283,15 @@
             });
             return;
         }
+
+        // Collect custom text values from inputs
+        localCart.forEach(item => {
+            const input = document.getElementById('custom_text_' + item.id);
+            if (input) {
+                item.custom_text = input.value.trim();
+            }
+        });
+        localStorage.setItem('zyh_cart', JSON.stringify(localCart));
 
         const addrEl = document.getElementById('streetAddress');
         const notesEl = document.getElementById('orderNotes');

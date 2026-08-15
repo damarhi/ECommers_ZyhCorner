@@ -11,8 +11,8 @@
             </span> Data Seluruh Penjualan
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
-            <a href="{{ route('export.all-sales') }}" class="btn btn-outline-secondary btn-sm px-4 bg-white d-inline-flex align-items-center">
-                <i class="mdi mdi-download me-1"></i> Ekspor CSV
+            <a href="{{ route('all-sales.report', request()->query()) }}" target="_blank" class="btn btn-gradient-primary btn-sm px-4 d-inline-flex align-items-center">
+                <i class="mdi mdi-printer me-1"></i> Cetak Laporan Penjualan
             </a>
         </div>
     </div>

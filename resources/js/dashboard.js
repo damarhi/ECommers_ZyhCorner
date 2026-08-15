@@ -147,24 +147,42 @@ window.payOrderNow = function(orderId) {
             if (data.success && data.snap_token) {
                 snap.pay(data.snap_token, {
                     onSuccess: function(result) {
-                        Swal.fire({
-                            title: 'Berhasil!',
-                            text: 'Pembayaran berhasil dikonfirmasi.',
-                            icon: 'success',
-                            confirmButtonColor: '#00b207'
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                        fetch(`/order-history/${orderId}/check-payment`)
+                            .then(() => {
+                                Swal.fire({
+                                    title: 'Berhasil!',
+                                    text: 'Pembayaran berhasil dikonfirmasi.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#00b207'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            });
                     },
                     onPending: function(result) {
-                        Swal.fire({
-                            title: 'Tertunda',
-                            text: 'Pembayaran sedang diproses atau tertunda.',
-                            icon: 'info',
-                            confirmButtonColor: '#00b207'
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                        fetch(`/order-history/${orderId}/check-payment`)
+                            .then(res => res.json())
+                            .then(resData => {
+                                if (resData.success && resData.status === 'Paid') {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: 'Pembayaran berhasil dikonfirmasi.',
+                                        icon: 'success',
+                                        confirmButtonColor: '#00b207'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'Tertunda',
+                                        text: 'Pembayaran sedang diproses atau tertunda.',
+                                        icon: 'info',
+                                        confirmButtonColor: '#00b207'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            });
                     },
                     onError: function(result) {
                         Swal.fire({
@@ -175,12 +193,20 @@ window.payOrderNow = function(orderId) {
                         });
                     },
                     onClose: function() {
-                        Swal.fire({
-                            title: 'Dibatalkan',
-                            text: 'Anda menutup pop-up pembayaran.',
-                            icon: 'warning',
-                            confirmButtonColor: '#00b207'
-                        });
+                        fetch(`/order-history/${orderId}/check-payment`)
+                            .then(res => res.json())
+                            .then(resData => {
+                                if (resData.success && resData.status === 'Paid') {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: 'Pembayaran berhasil dikonfirmasi.',
+                                        icon: 'success',
+                                        confirmButtonColor: '#00b207'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            });
                     }
                 });
             } else {

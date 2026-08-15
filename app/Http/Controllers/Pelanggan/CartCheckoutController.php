@@ -44,7 +44,8 @@ class CartCheckoutController extends Controller
 
     public function checkout()
     {
-        return view('Pelanggan.checkout');
+        $customTextProductIds = Produk::where('bisa_custom_teks', true)->pluck('id_produk')->map(fn($id) => (string)$id)->toArray();
+        return view('Pelanggan.checkout', compact('customTextProductIds'));
     }
 
     public function processCheckout(Request $request)
