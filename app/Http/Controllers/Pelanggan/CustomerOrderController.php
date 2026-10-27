@@ -8,6 +8,9 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Produk;
 use App\Models\Retur;
+use App\Models\UserAddress;
+use App\Models\StoreSetting;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -32,6 +35,7 @@ class CustomerOrderController extends Controller
                     'order_status' => 'batal',
                     'payment_status' => 'Cancelled'
                 ]);
+                Produk::restoreStockForOrder($order);
             }
         }
     }
@@ -66,12 +70,26 @@ class CustomerOrderController extends Controller
             }
         }
 
+        // Auto-seed user_addresses if user has alamat but no addresses
+        if ($user->alamat && !UserAddress::where('user_id', $user->user_id)->exists()) {
+            UserAddress::create([
+                'user_id' => $user->user_id,
+                'label' => 'Alamat Utama',
+                'recipient_name' => $user->nama,
+                'recipient_phone' => $user->no_hp ?? '',
+                'street_address' => $user->alamat,
+                'is_default' => true,
+            ]);
+        }
+
+        $addresses = $user->addresses()->get();
+
         $recentOrders = Pesanan::where('email_pembeli', $user->email)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        return view('Pelanggan.dashboard', compact('user', 'recentOrders'));
+        return view('Pelanggan.dashboard', compact('user', 'recentOrders', 'addresses'));
     }
 
     public function orderHistory(Request $request)
@@ -84,7 +102,7 @@ class CustomerOrderController extends Controller
 
         if ($statusFilter) {
             if ($statusFilter === 'processing') {
-                $query->whereIn('order_status', ['menunggu pembayaran', 'processing', 'proses', 'ready']);
+                $query->whereIn('order_status', ['menunggu pembayaran', 'menunggu konfirmasi', 'dikemas', 'processing', 'proses', 'ready']);
             } elseif ($statusFilter === 'on_the_way') {
                 $query->whereIn('order_status', ['on the way', 'otw', 'kirim', 'sedang dikirim']);
             } elseif ($statusFilter === 'completed') {
@@ -104,7 +122,10 @@ class CustomerOrderController extends Controller
                 ->get();
         }
 
-        return view('Pelanggan.order_history', compact('user', 'orders', 'statusFilter', 'returs'));
+        $storePhone = StoreSetting::getWaNumber();
+        $storeName = StoreSetting::get('store_name', 'Zyh Corner');
+
+        return view('Pelanggan.order_history', compact('user', 'orders', 'statusFilter', 'returs', 'storePhone', 'storeName'));
     }
 
     /**
@@ -122,10 +143,10 @@ class CustomerOrderController extends Controller
 
         if (is_array($orderItems) && count($orderItems) > 0) {
             foreach ($orderItems as $item) {
-                $product = Produk::find($item['id']);
+                $product = Produk::find($item['id'] ?? null);
                 if (!$product) {
                     $product = new Produk();
-                    $product->id_produk = $item['id'];
+                    $product->id_produk = $item['id'] ?? null;
                     $product->nama_produk = $item['name'] ?? 'Product Removed';
                     $product->harga = $item['price'] ?? 0;
                     $product->foto_1 = null;
@@ -139,61 +160,57 @@ class CustomerOrderController extends Controller
                     'qty' => $qty,
                     'price' => $price,
                     'subtotal' => $price * $qty,
-                    'img' => $item['img'] ?? null
+                    'img' => $item['img'] ?? null,
+                    'custom_text' => $item['custom_text'] ?? null,
                 ];
-            }
-        } else {
-            $products = Produk::inRandomOrder()->limit(min(3, Produk::count() ?: 1))->get();
-            $total = floatval($order->total);
-            $count = count($products);
-
-            if ($count > 0) {
-                $remaining = $total;
-                for ($i = 0; $i < $count; $i++) {
-                    $product = $products[$i];
-                    $qty = ($i === 0 && $count > 1) ? 2 : 1;
-
-                    if ($i === $count - 1) {
-                        $itemPrice = $remaining / $qty;
-                    } else {
-                        $itemPrice = round(($total / ($count + 1)) / 1000) * 1000;
-                        if ($itemPrice * $qty >= $remaining) {
-                            $itemPrice = round(($remaining / 2) / 1000) * 1000;
-                        }
-                    }
-
-                    $items[] = [
-                        'product' => $product,
-                        'qty' => $qty,
-                        'price' => $itemPrice,
-                        'subtotal' => $itemPrice * $qty
-                    ];
-
-                    $remaining -= $itemPrice * $qty;
-                }
             }
         }
 
-        $estimatedArrival = $order->created_at->addDays(1)->format('l') . ', 2 PM - 4 PM';
+        $itemsSubtotal = array_sum(array_column($items, 'subtotal'));
+        $shippingCost = max(0, floatval($order->total) - $itemsSubtotal);
+
+        Carbon::setLocale('id');
+        $estimatedArrival = $order->created_at->addDays(1)->translatedFormat('l') . ', 14:00 - 16:00 WIB';
         $expiryTimestamp = $order->created_at->addHours(24)->timestamp;
 
-        return view('Pelanggan.order_detail', compact('user', 'order', 'items', 'estimatedArrival', 'expiryTimestamp'));
+        $storePhone = StoreSetting::getWaNumber();
+        $storeName = StoreSetting::get('store_name', 'Zyh Corner');
+
+        return view('Pelanggan.order_detail', compact(
+            'user',
+            'order',
+            'items',
+            'estimatedArrival',
+            'expiryTimestamp',
+            'shippingCost',
+            'itemsSubtotal',
+            'storePhone',
+            'storeName'
+        ));
     }
 
     /**
+     * @param  \Illuminate\Http\Request  $request
      * @param  int|string  $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function cancelOrder($id)
+    public function cancelOrder(Request $request, $id)
     {
         $user = Auth::user();
         $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+        if ($order->can_be_canceled) {
+            $cancelReason = $request->input('cancel_reason');
 
-        if (Str::contains(strtolower($order->order_status), ['menunggu', 'pending'])) {
-            $order->update([
+            $updateData = [
                 'order_status' => 'batal',
                 'payment_status' => 'Cancelled'
-            ]);
+            ];
+            if (!empty($cancelReason)) {
+                $updateData['cancel_reason'] = $cancelReason;
+            }
+
+            $order->update($updateData);
+            Produk::restoreStockForOrder($order);
             return response()->json([
                 'success' => true,
                 'message' => 'Pesanan berhasil dibatalkan!'

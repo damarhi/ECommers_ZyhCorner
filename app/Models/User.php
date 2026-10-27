@@ -39,4 +39,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(Customer::class, 'user_id');
     }
+
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class, 'user_id', 'user_id')->orderByDesc('is_default')->orderByDesc('id');
+    }
+
+    public function defaultAddress()
+    {
+        return $this->hasOne(UserAddress::class, 'user_id', 'user_id')->where('is_default', true);
+    }
 }

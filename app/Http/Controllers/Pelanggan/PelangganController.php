@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Pelanggan;
 
 use App\Http\Controllers\Controller;
-use App\Models\Produk;
-use App\Models\Kategori;
 use App\Models\Banner;
+use App\Models\ContactMessage;
+use App\Models\Kategori;
 use App\Models\Pesanan;
+use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,14 +17,64 @@ class PelangganController extends Controller
     {
         Produk::checkAndEmptyExpiredProducts();
 
-        $featuredProducts = Produk::with('kategori')->inRandomOrder()->limit(4)->get();
-        $hotDeals = Produk::with('kategori')->inRandomOrder()->limit(3)->get();
-        $bestSellers = Produk::with('kategori')->inRandomOrder()->limit(3)->get();
-        $topRated = Produk::with('kategori')->inRandomOrder()->limit(3)->get();
-        $categories = Kategori::withCount('produks')->get();
-        $newestProducts = Produk::with('kategori')->orderBy('created_at', 'desc')->limit(4)->get();
+        $featuredProducts = Produk::with(['kategori', 'diskonAktif'])
+            ->where(function($q) {
+                $q->where('jenis_produk', 'showcase')
+                  ->orWhereNull('jenis_produk');
+            })
+            ->where('status_produk', '!=', '0')
+            ->orderBy('id_produk', 'asc')
+            ->limit(4)
+            ->get();
 
-        $heroBanners = Banner::where('status', 'Aktif')->orderBy('urutan', 'asc')->get();
+        // Hot Deals: Real active discounted products from database
+        $hotDeals = Produk::with(['kategori', 'diskonAktif'])
+            ->whereHas('diskonAktif')
+            ->limit(3)
+            ->get();
+
+        if ($hotDeals->count() < 3) {
+            $excludeIds = $hotDeals->pluck('id_produk')->toArray();
+            $extra = Produk::with(['kategori', 'diskonAktif'])
+                ->whereNotIn('id_produk', $excludeIds)
+                ->where(function($q) {
+                    $q->where('jenis_produk', 'showcase')
+                      ->orWhereNull('jenis_produk');
+                })
+                ->limit(3 - $hotDeals->count())
+                ->get();
+            $hotDeals = $hotDeals->concat($extra);
+        }
+
+        // Best Sellers: Real sales aggregated from completed/paid order items
+        $bestSellers = Produk::getBestSellers(3);
+
+        // Top Rated / Recommended
+        $topRated = Produk::with(['kategori', 'diskonAktif'])
+            ->where(function($q) {
+                $q->where('jenis_produk', 'showcase')
+                  ->orWhereNull('jenis_produk');
+            })
+            ->orderBy('id_produk', 'desc')
+            ->limit(3)
+            ->get();
+
+        $categories = Kategori::withCount('produks')->get();
+        $newestProducts = Produk::with(['kategori', 'diskonAktif'])
+            ->where(function($q) {
+                $q->where('jenis_produk', 'showcase')
+                  ->orWhereNull('jenis_produk');
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        // Home Hero Banner Slideshow (Dynamic from database)
+        $heroBanners = Banner::where('posisi_banner', 'home_hero')
+            ->where('status', 'Aktif')
+            ->orderBy('urutan', 'asc')
+            ->get();
+
         $promoBanners = Banner::where('posisi_banner', 'popup_promo')->where('status', 'Aktif')->orderBy('urutan', 'asc')->get();
         $popupBanner = $promoBanners->first();
 
@@ -44,7 +95,7 @@ class PelangganController extends Controller
     {
         Produk::checkAndEmptyExpiredProducts();
 
-        $query = Produk::with('kategori')
+        $query = Produk::with(['kategori', 'diskonAktif'])
             ->where(function($q) {
                 $q->where('jenis_produk', 'showcase')
                   ->orWhereNull('jenis_produk');
@@ -176,6 +227,41 @@ class PelangganController extends Controller
         return view('Pelanggan.contact');
     }
 
+    public function sendContactMessage(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'subjek' => 'required|string|max:255',
+            'pesan' => 'required|string|max:3000',
+        ], [
+            'nama.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'subjek.required' => 'Subjek pesan wajib diisi.',
+            'pesan.required' => 'Isi pesan wajib diisi.',
+            'pesan.max' => 'Pesan maksimal 3000 karakter.',
+        ]);
+
+        $message = ContactMessage::create([
+            'nama' => strip_tags($validated['nama']),
+            'email' => filter_var($validated['email'], FILTER_SANITIZE_EMAIL),
+            'subjek' => strip_tags($validated['subjek']),
+            'pesan' => strip_tags($validated['pesan']),
+            'status' => 'Belum Dibaca',
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Terima kasih atas pesan Anda! Tim Zyh Corner akan segera merespons melalui email.',
+                'data' => $message,
+            ]);
+        }
+
+        return back()->with('success', 'Terima kasih atas pesan Anda! Tim Zyh Corner akan segera merespons melalui email.');
+    }
+
     public function faq()
     {
         return view('Pelanggan.faq');
@@ -189,13 +275,43 @@ class PelangganController extends Controller
     {
         Produk::checkAndEmptyExpiredProducts();
 
-        $product = Produk::with('kategori')->findOrFail($id);
-        $relatedProducts = Produk::with('kategori')
+        $product = Produk::with(['kategori', 'diskonAktif'])->findOrFail($id);
+
+        $isCustom = request()->query('custom') == 1 || ($product->jenis_produk ?? '') === 'kustom';
+
+        $relatedProducts = Produk::with(['kategori', 'diskonAktif'])
             ->where('id_kategori', $product->id_kategori)
             ->where('id_produk', '!=', $product->id_produk)
+            ->when($isCustom, function ($q) {
+                $q->where('jenis_produk', 'kustom');
+            }, function ($q) {
+                $q->where(function ($sq) {
+                    $sq->where('jenis_produk', 'showcase')
+                       ->orWhereNull('jenis_produk');
+                });
+            })
             ->inRandomOrder()
             ->limit(4)
             ->get();
+
+        if ($relatedProducts->count() < 4) {
+            $excludeIds = array_merge([$product->id_produk], $relatedProducts->pluck('id_produk')->toArray());
+            $extra = Produk::with(['kategori', 'diskonAktif'])
+                ->whereNotIn('id_produk', $excludeIds)
+                ->when($isCustom, function ($q) {
+                    $q->where('jenis_produk', 'kustom');
+                }, function ($q) {
+                    $q->where(function ($sq) {
+                        $sq->where('jenis_produk', 'showcase')
+                           ->orWhereNull('jenis_produk');
+                    });
+                })
+                ->inRandomOrder()
+                ->limit(4 - $relatedProducts->count())
+                ->get();
+
+            $relatedProducts = $relatedProducts->concat($extra);
+        }
 
         $unpaidOrder = null;
         if (Auth::check()) {
@@ -271,12 +387,7 @@ class PelangganController extends Controller
             ->get();
 
         $results = $products->map(function ($item) {
-            $image = null;
-            if ($item->foto_1) {
-                $image = asset('storage/' . $item->foto_1);
-            } else {
-                $image = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop';
-            }
+            $image = $item->foto_1 ? asset('storage/' . $item->foto_1) : null;
 
             $isCustom = $item->jenis_produk === 'kustom';
             $detailUrl = route('product.detail', $item->id_produk) . ($isCustom ? '?custom=1' : '');

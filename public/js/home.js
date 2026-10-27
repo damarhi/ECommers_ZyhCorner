@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (floatTween) floatTween.kill();
         const img = slide.querySelector('.hero-image img');
         if (img && typeof gsap !== 'undefined') {
-            gsap.set(img, { y: 0 });
+            gsap.set(img, { scale: 1 });
             floatTween = gsap.to(img, {
-                y: -10,
-                duration: 2.5,
+                scale: 1.025,
+                duration: 3.5,
                 repeat: -1,
                 yoyo: true,
                 ease: 'sine.inOut'
@@ -28,11 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function animateSlideIn(targetSlide, direction = 1) {
-        const h4 = targetSlide.querySelector('.hero-text h4');
+        const badge = targetSlide.querySelector('.hero-text .hero-badge-pill, .hero-text h4');
         const h1 = targetSlide.querySelector('.hero-text h1');
+        const callout = targetSlide.querySelector('.hero-text .hero-sale-callout, .hero-text p.sale');
+        const desc = targetSlide.querySelector('.hero-text p.desc');
         const btn = targetSlide.querySelector('.hero-text .hero-btn');
         const img = targetSlide.querySelector('.hero-image');
-
         targetSlide.style.display = 'block';
         targetSlide.classList.add('active');
 
@@ -53,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
             { opacity: 1, scale: 1, duration: 0.45, ease: 'power2.out' }
         );
 
-        if (h4) {
-            tl.fromTo(h4,
+        if (badge) {
+            tl.fromTo(badge,
                 { y: -25, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.55, ease: 'back.out(1.7)' },
                 '-=0.35'
@@ -63,25 +64,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (h1) {
             tl.fromTo(h1,
-                { x: direction > 0 ? -50 : 50, opacity: 0, filter: 'blur(4px)' },
-                { x: 0, opacity: 1, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out' },
+                { x: direction > 0 ? -40 : 40, opacity: 0, filter: 'blur(4px)' },
+                { x: 0, opacity: 1, filter: 'blur(0px)', duration: 0.65, ease: 'power3.out' },
                 '-=0.45'
+            );
+        }
+
+        if (callout) {
+            tl.fromTo(callout,
+                { y: 15, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+                '-=0.4'
+            );
+        }
+
+        if (desc) {
+            tl.fromTo(desc,
+                { y: 15, opacity: 0 },
+                { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+                '-=0.35'
             );
         }
 
         if (btn) {
             tl.fromTo(btn,
-                { y: 20, opacity: 0, scale: 0.88 },
-                { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(2)' },
-                '-=0.4'
+                { y: 20, opacity: 0, scale: 0.9 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(2)' },
+                '-=0.35'
             );
         }
 
         if (img) {
             tl.fromTo(img,
-                { x: direction > 0 ? 60 : -60, opacity: 0, scale: 0.84, rotation: direction > 0 ? 5 : -5 },
-                { x: 0, opacity: 1, scale: 1, rotation: 0, duration: 0.85, ease: 'back.out(1.4)' },
-                '-=0.65'
+                { x: direction > 0 ? 25 : -25, opacity: 0, scale: 0.98 },
+                { x: 0, opacity: 1, scale: 1, duration: 0.7, ease: 'power2.out' },
+                '-=0.55'
             );
         }
     }
@@ -89,113 +106,112 @@ document.addEventListener('DOMContentLoaded', function() {
     // Animate first slide on load
     animateSlideIn(slides[0], 1);
 
-    if (slides.length <= 1) return;
+    if (slides.length > 1) {
+        function goToSlide(newIndex, direction = 1) {
+            if (isAnimating || newIndex === currentSlide) return;
+            isAnimating = true;
 
-    function goToSlide(newIndex, direction = 1) {
-        if (isAnimating || newIndex === currentSlide) return;
-        isAnimating = true;
+            const oldSlide = slides[currentSlide];
+            const newSlide = slides[newIndex];
 
-        const oldSlide = slides[currentSlide];
-        const newSlide = slides[newIndex];
+            if (dots[currentSlide]) dots[currentSlide].classList.remove('active');
+            if (dots[newIndex]) dots[newIndex].classList.add('active');
 
-        if (dots[currentSlide]) dots[currentSlide].classList.remove('active');
-        if (dots[newIndex]) dots[newIndex].classList.add('active');
+            if (floatTween) floatTween.kill();
 
-        if (floatTween) floatTween.kill();
-
-        if (typeof gsap === 'undefined') {
-            oldSlide.style.display = 'none';
-            oldSlide.classList.remove('active');
-            newSlide.style.display = 'block';
-            newSlide.classList.add('active');
-            currentSlide = newIndex;
-            isAnimating = false;
-            return;
-        }
-
-        gsap.to(oldSlide, {
-            opacity: 0,
-            scale: 0.97,
-            duration: 0.35,
-            ease: 'power2.in',
-            onComplete: () => {
+            if (typeof gsap === 'undefined') {
                 oldSlide.style.display = 'none';
                 oldSlide.classList.remove('active');
+                newSlide.style.display = 'block';
+                newSlide.classList.add('active');
                 currentSlide = newIndex;
-                animateSlideIn(newSlide, direction);
+                isAnimating = false;
+                return;
             }
+
+            gsap.to(oldSlide, {
+                opacity: 0,
+                scale: 0.97,
+                duration: 0.35,
+                ease: 'power2.in',
+                onComplete: () => {
+                    oldSlide.style.display = 'none';
+                    oldSlide.classList.remove('active');
+                    currentSlide = newIndex;
+                    animateSlideIn(newSlide, direction);
+                }
+            });
+        }
+
+        function nextSlide() {
+            const nextIndex = (currentSlide + 1) % slides.length;
+            goToSlide(nextIndex, 1);
+        }
+
+        function prevSlide() {
+            const prevIndex = (currentSlide - 1 + slides.length) % slides.length;
+            goToSlide(prevIndex, -1);
+        }
+
+        function startAutoplay() {
+            stopAutoplay();
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+
+        function stopAutoplay() {
+            clearInterval(slideInterval);
+        }
+
+        function manualSwitch(action) {
+            stopAutoplay();
+            action();
+            startAutoplay();
+        }
+
+        if (prevBtn) prevBtn.addEventListener('click', () => manualSwitch(prevSlide));
+        if (nextBtn) nextBtn.addEventListener('click', () => manualSwitch(nextSlide));
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const targetSlide = parseInt(this.getAttribute('data-slide-to'));
+                const dir = targetSlide > currentSlide ? 1 : -1;
+                manualSwitch(() => goToSlide(targetSlide, dir));
+            });
         });
-    }
 
-    function nextSlide() {
-        const nextIndex = (currentSlide + 1) % slides.length;
-        goToSlide(nextIndex, 1);
-    }
+        if (wrapper) {
+            wrapper.addEventListener('mouseenter', stopAutoplay);
+            wrapper.addEventListener('mouseleave', startAutoplay);
 
-    function prevSlide() {
-        const prevIndex = (currentSlide - 1 + slides.length) % slides.length;
-        goToSlide(prevIndex, -1);
-    }
+            wrapper.addEventListener('mousemove', function(e) {
+                const activeImg = slides[currentSlide].querySelector('.hero-image img');
+                if (activeImg && window.innerWidth > 768 && typeof gsap !== 'undefined') {
+                    const rect = wrapper.getBoundingClientRect();
+                    const mouseX = (e.clientX - rect.left) / rect.width - 0.5;
+                    const mouseY = (e.clientY - rect.top) / rect.height - 0.5;
+                    gsap.to(activeImg, {
+                        x: mouseX * 20,
+                        y: mouseY * 15,
+                        rotation: mouseX * 3,
+                        duration: 0.6,
+                        ease: 'power2.out'
+                    });
+                }
+            });
 
-    function startAutoplay() {
-        stopAutoplay();
-        slideInterval = setInterval(nextSlide, 5000);
-    }
+            let touchStartX = 0;
+            wrapper.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX, { passive: true });
+            wrapper.addEventListener('touchend', (e) => {
+                const swipeDistance = e.changedTouches[0].screenX - touchStartX;
+                if (Math.abs(swipeDistance) > 40) {
+                    if (swipeDistance < 0) manualSwitch(nextSlide);
+                    else manualSwitch(prevSlide);
+                }
+            }, { passive: true });
+        }
 
-    function stopAutoplay() {
-        if (slideInterval) clearInterval(slideInterval);
-    }
-
-    function manualSwitch(action) {
-        stopAutoplay();
-        action();
         startAutoplay();
     }
-
-    if (prevBtn) prevBtn.addEventListener('click', () => manualSwitch(prevSlide));
-    if (nextBtn) nextBtn.addEventListener('click', () => manualSwitch(nextSlide));
-
-    dots.forEach(dot => {
-        dot.addEventListener('click', function() {
-            const targetSlide = parseInt(this.getAttribute('data-slide-to'));
-            const dir = targetSlide > currentSlide ? 1 : -1;
-            manualSwitch(() => goToSlide(targetSlide, dir));
-        });
-    });
-
-    if (wrapper) {
-        wrapper.addEventListener('mouseenter', stopAutoplay);
-        wrapper.addEventListener('mouseleave', startAutoplay);
-
-        wrapper.addEventListener('mousemove', function(e) {
-            const activeImg = slides[currentSlide].querySelector('.hero-image img');
-            if (activeImg && window.innerWidth > 768 && typeof gsap !== 'undefined') {
-                const rect = wrapper.getBoundingClientRect();
-                const mouseX = (e.clientX - rect.left) / rect.width - 0.5;
-                const mouseY = (e.clientY - rect.top) / rect.height - 0.5;
-                gsap.to(activeImg, {
-                    x: mouseX * 20,
-                    y: mouseY * 15,
-                    rotation: mouseX * 3,
-                    duration: 0.6,
-                    ease: 'power2.out'
-                });
-            }
-        });
-
-        let touchStartX = 0;
-        wrapper.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX, { passive: true });
-        wrapper.addEventListener('touchend', (e) => {
-            const swipeDistance = e.changedTouches[0].screenX - touchStartX;
-            if (Math.abs(swipeDistance) > 40) {
-                if (swipeDistance < 0) manualSwitch(nextSlide);
-                else manualSwitch(prevSlide);
-            }
-        }, { passive: true });
-    }
-
-    startAutoplay();
-
     // ==========================================
     // Category Slider Navigation Logic
     // ==========================================
@@ -249,5 +265,31 @@ document.addEventListener('DOMContentLoaded', function() {
         categoryGrid.addEventListener('scroll', updateCategoryArrows);
         window.addEventListener('resize', updateCategoryArrows);
         updateCategoryArrows();
+    }
+
+    // ==========================================
+    // Scroll Reveal Observer for Cards (Figma Motion Standards)
+    // ==========================================
+    const revealElements = document.querySelectorAll('.scroll-reveal, .safe-reveal');
+    if (revealElements.length > 0) {
+        // Enable animated state for browsers with active JS
+        document.body.classList.add('js-animate');
+
+        if ('IntersectionObserver' in window) {
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.08,
+                rootMargin: '0px 0px -30px 0px'
+            });
+            revealElements.forEach(el => revealObserver.observe(el));
+        } else {
+            revealElements.forEach(el => el.classList.add('is-visible'));
+        }
     }
 });

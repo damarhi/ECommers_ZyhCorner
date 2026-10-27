@@ -33,19 +33,26 @@ class CartCheckoutController extends Controller
                     'order_status' => 'batal',
                     'payment_status' => 'Cancelled'
                 ]);
+                Produk::restoreStockForOrder($order);
             }
         }
     }
 
     public function userChart()
     {
+        if (Auth::check() && in_array(Auth::user()->role, ['admin', 'kasir'])) {
+            abort(403, 'Akses Ditolak: Halaman keranjang belanja hanya diperuntukkan bagi pelanggan toko.');
+        }
+
         return view('Pelanggan.userChart');
     }
 
     public function checkout()
     {
         $customTextProductIds = Produk::where('bisa_custom_teks', true)->pluck('id_produk')->map(fn($id) => (string)$id)->toArray();
-        return view('Pelanggan.checkout', compact('customTextProductIds'));
+        $user = Auth::user();
+        $userAddresses = $user ? $user->addresses()->get() : collect();
+        return view('Pelanggan.checkout', compact('customTextProductIds', 'userAddresses'));
     }
 
     public function processCheckout(Request $request)
@@ -87,11 +94,15 @@ class CartCheckoutController extends Controller
         $notes = $request->input('notes');
         $paymentMethod = $request->input('payment_method', 'COD');
         $shippingMethod = $request->input('shipping_method', 'Maxim');
+        $recipientName = $request->input('recipient_name');
+        $recipientPhone = $request->input('recipient_phone');
+        $postalCode = $request->input('postal_code');
+        $shippingCost = (int) $request->input('shipping_cost', 0);
 
         if (Auth::check()) {
             /** @var \App\Models\User $user */
             $user = Auth::user();
-            $customerName = $user->nama;
+            $customerName = !empty($recipientName) ? $recipientName : $user->nama;
             $email = $user->email;
 
             // Save address to user if not set
@@ -99,25 +110,60 @@ class CartCheckoutController extends Controller
                 if (!$user->alamat) {
                     $user->update(['alamat' => $address]);
                 }
+                if ($recipientPhone && !$user->no_hp) {
+                    $user->update(['no_hp' => $recipientPhone]);
+                }
                 // Sync to customer profile
                 $customer = Customer::where('user_id', $user->user_id)->first();
                 if ($customer) {
                     if (!$customer->location) {
                         $customer->update(['location' => $address]);
                     }
+                    if ($recipientPhone && !$customer->contact) {
+                        $customer->update(['contact' => $recipientPhone]);
+                    }
                 } else {
                     Customer::create([
                         'user_id' => $user->user_id,
-                        'name' => $user->nama,
+                        'name' => $customerName,
                         'email' => $user->email,
-                        'contact' => $user->no_hp,
+                        'contact' => $recipientPhone ?: $user->no_hp,
                         'location' => $address
+                    ]);
+                }
+                // Auto-save to address book if requested or if user has no addresses saved yet
+                if ($address && ($request->boolean('save_address') || !\App\Models\UserAddress::where('user_id', $user->user_id)->exists())) {
+                    $hasAddress = \App\Models\UserAddress::where('user_id', $user->user_id)->exists();
+                    \App\Models\UserAddress::create([
+                        'user_id' => $user->user_id,
+                        'label' => $request->input('address_label') ?: 'Alamat Utama',
+                        'recipient_name' => $customerName,
+                        'recipient_phone' => $recipientPhone ?: ($user->no_hp ?? ''),
+                        'destination_area_id' => $request->input('destination_area_id'),
+                        'destination_area_name' => $request->input('destination_area_name'),
+                        'postal_code' => $postalCode,
+                        'street_address' => $address,
+                        'notes' => $notes ?: null,
+                        'latitude' => $request->input('latitude'),
+                        'longitude' => $request->input('longitude'),
+                        'is_default' => !$hasAddress,
                     ]);
                 }
             }
         } else {
-            $customerName = 'Guest Customer';
+            $customerName = !empty($recipientName) ? $recipientName : 'Guest Customer';
             $email = null;
+        }
+
+        $fullAddress = $address;
+        if ($postalCode && !str_contains($fullAddress, $postalCode)) {
+            $fullAddress .= ' (Kode Pos: ' . $postalCode . ')';
+        }
+
+        $finalNotes = $notes;
+        if ($recipientPhone) {
+            $contactNote = '[Penerima: ' . $customerName . ' (' . $recipientPhone . ')]';
+            $finalNotes = $finalNotes ? ($finalNotes . ' ' . $contactNote) : $contactNote;
         }
 
         do {
@@ -125,7 +171,7 @@ class CartCheckoutController extends Controller
         } while (Pesanan::where('order_number', $orderNumber)->exists());
 
         try {
-            $orderStatus = (strtoupper($paymentMethod) === 'COD') ? 'dikemas' : 'menunggu pembayaran';
+            $orderStatus = (strtoupper($paymentMethod) === 'COD') ? 'menunggu konfirmasi' : 'menunggu pembayaran';
 
             $pesanan = Pesanan::create([
                 'order_number' => $orderNumber,
@@ -134,14 +180,13 @@ class CartCheckoutController extends Controller
                 'shipping_method' => $shippingMethod,
                 'customer_name' => $customerName,
                 'email_pembeli' => $email,
-                'alamat_pengiriman' => $address,
-                'catatan_pesanan' => $notes,
+                'alamat_pengiriman' => $fullAddress,
+                'catatan_pesanan' => $finalNotes,
                 'payment_status' => 'Pending',
                 'order_status' => $orderStatus,
-                'total' => $total,
+                'total' => $total + $shippingCost,
                 'items' => $items,
             ]);
-
             // Generate Midtrans Snap token if not COD
             $snapToken = null;
             if (strtoupper($paymentMethod) !== 'COD') {
@@ -153,12 +198,13 @@ class CartCheckoutController extends Controller
                 }
             }
 
-            // Reduce stock and send email notification to cashier if COD or Paid
+            // Potong stok langsung untuk seluruh pesanan (baik COD maupun Online/Transfer)
+            Produk::reduceStockForOrder($pesanan);
+
+            // Kirim notifikasi email ke kasir untuk pesanan COD atau Paid
             if (strtoupper($paymentMethod) === 'COD' || $pesanan->payment_status === 'Paid') {
-                Produk::reduceStockForOrder($pesanan);
                 NotificationService::sendToKasir(new PesananBaruKasirMail($pesanan));
             }
-
             return response()->json([
                 'success' => true,
                 'message' => 'Pesanan berhasil dibuat dengan nomor order ' . $orderNumber,

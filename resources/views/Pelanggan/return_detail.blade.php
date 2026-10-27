@@ -213,8 +213,8 @@
                                         <img src="{{ asset('storage/' . $item['product']->gambar) }}"
                                             alt="{{ $item['product']->nama_produk }}">
                                     @else
-                                        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop"
-                                            alt="Cake">
+                                        <img src="{{ asset('image/logo_circle.png') }}"
+                                            alt="{{ $item['product']->nama_produk }}">
                                     @endif
                                 </div>
                                 <div class="product-info">

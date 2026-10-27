@@ -17,16 +17,17 @@
         @if(isset($shopBanners) && $shopBanners->count() > 1)
             @include('Pelanggan.partials.multi_banner_grid', ['banners' => $shopBanners])
         @elseif(isset($shopBanner) && $shopBanner && $shopBanner->status === 'Aktif')
-            <div class="shop-promo-banner" @if($shopBanner->gambar_banner && Storage::disk('public')->exists($shopBanner->gambar_banner)) style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{{ asset('storage/' . $shopBanner->gambar_banner) }}'); background-size: cover; background-position: center;" @endif>
+            <div class="shop-promo-banner" @if($shopBanner->gambar_banner && Storage::disk('public')->exists($shopBanner->gambar_banner)) style="background-image: url('{{ asset('storage/' . $shopBanner->gambar_banner) }}'); background-size: cover; background-position: center right;" @endif>
                 <div class="spb-content">
-                    @if($shopBanner->subjudul)
-                        <h4>{{ $shopBanner->subjudul }}</h4>
-                    @endif
-                    <h2>{{ $shopBanner->judul_banner }}</h2>
+                    <span class="spb-pill-badge badge-shop">
+                        <i class="fa-solid fa-tags"></i> {{ $shopBanner->subjudul ?? 'Exclusive Pastry' }}
+                    </span>
+                    <h2 class="spb-title">{{ $shopBanner->judul_banner }}</h2>
+                    <p class="spb-desc">Pilihan produk roti segar, kue ulang tahun premium, dan pastry berkualitas tinggi langsung dari oven.</p>
                     @if($shopBanner->link_url)
-                        <a href="{{ $shopBanner->link_url }}" class="spb-btn text-decoration-none d-inline-flex align-items-center mt-3">Shop Now <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                        <a href="{{ $shopBanner->link_url }}" class="spb-btn">Shop Now <i class="fa-solid fa-arrow-right ms-2"></i></a>
                     @else
-                        <button class="spb-btn mt-3">Shop Now <i class="fa-solid fa-arrow-right"></i></button>
+                        <button class="spb-btn" type="button">Shop Now <i class="fa-solid fa-arrow-right ms-2"></i></button>
                     @endif
                 </div>
             </div>
@@ -117,21 +118,24 @@
         <!-- Product Grid -->
         <div class="product-grid">
             @forelse ($products as $index => $product)
-                <div class="product-card">
+                <div class="product-card" style="cursor: pointer;"
+                    onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                     <div class="product-image">
-                        @if ($product->stok == 0)
+                        @if ($product->has_diskon)
+                            <div class="badge" style="background-color: #ff8a00; color: white;">{{ $product->diskon_badge }}</div>
+                        @elseif ($product->stok == 0)
                             <div class="badge out-of-stock">Habis</div>
-                        @elseif($index == 3 || $index == 7)
-                            <div class="badge sale">Sale 50%</div>
                         @endif
 
                         <div class="product-actions">
-                            <div class="action-btn"><i class="fa-regular fa-heart"></i></div>
-                            <div class="action-btn" title="Quick View" onclick="openProductModal(this)"
+                            <div class="action-btn" title="Quick View" onclick="event.stopPropagation(); openProductModal(this)"
                                 data-id="{{ $product->id_produk }}" data-name="{{ $product->nama_produk }}"
-                                data-price="{{ $product->harga }}" data-desc="{{ $product->deskripsi }}"
+                                data-price="{{ $product->harga_diskon }}"
+                                data-old-price="{{ $product->has_diskon ? 'Rp. ' . number_format($product->harga, 0, ',', '.') : '' }}"
+                                data-discount-badge="{{ $product->diskon_badge ?? '' }}"
+                                data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
-                                data-sale="{{ $index == 3 || $index == 7 ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -140,38 +144,42 @@
                             </div>
                         </div>
 
-                        <a href="{{ route('product.detail', $product->id_produk) }}" style="display:block;">
+                        <a href="{{ route('product.detail', $product->id_produk) }}" style="display:block;" onclick="event.stopPropagation();">
                             @if ($product->foto_1)
                                 <img src="{{ asset('storage/' . $product->foto_1) }}" alt="{{ $product->nama_produk }}">
-                            @else
-                                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop"
-                                    alt="Placeholder">
                             @endif
                         </a>
                     </div>
                     <div class="product-info">
                         <a href="{{ route('product.detail', $product->id_produk) }}"
-                            class="product-name">{{ $product->nama_produk }}</a>
+                            class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
                         <div class="product-price">
-                            Rp. {{ number_format($product->harga, 0, ',', '.') }}
-                            @if ($index == 3 || $index == 7)
-                                <span class="old">Rp. {{ number_format($product->harga * 2, 0, ',', '.') }}</span>
+                            @if ($product->has_diskon)
+                                Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
+                                <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                            @else
+                                Rp. {{ number_format($product->harga, 0, ',', '.') }}
                             @endif
                         </div>
 
                         @if ($product->stok > 0)
-                            <div class="cart-btn {{ $index == 2 ? 'active' : '' }}"
-                                onclick="addToCart({
-                        id: '{{ $product->id_produk }}',
-                        name: '{{ $product->nama_produk }}',
-                        price: {{ $product->harga }},
-                        bisa_custom_teks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
-                        img: '{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop' }}'
-                    })">
+                            <div class="cart-btn" title="Lihat Preview & Pesan"
+                                onclick="event.stopPropagation(); openProductModal(this);"
+                                data-id="{{ $product->id_produk }}" data-name="{{ $product->nama_produk }}"
+                                data-price="{{ $product->harga_diskon }}"
+                                data-old-price="{{ $product->has_diskon ? 'Rp. ' . number_format($product->harga, 0, ',', '.') : '' }}"
+                                data-discount-badge="{{ $product->diskon_badge ?? '' }}"
+                                data-desc="{{ $product->deskripsi }}"
+                                data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
+                                data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
+                                data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
+                                data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
+                                data-f4="{{ $product->foto_4 ? asset('storage/' . $product->foto_4) : '' }}">
                                 <i class="fa-solid fa-bag-shopping"></i>
                             </div>
                         @else
-                            <div class="cart-btn disabled" title="Stok Habis">
+                            <div class="cart-btn disabled" title="Stok Habis" onclick="event.stopPropagation();">
                                 <i class="fa-solid fa-ban"></i>
                             </div>
                         @endif

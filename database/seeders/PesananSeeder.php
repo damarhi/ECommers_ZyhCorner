@@ -272,8 +272,33 @@ class PesananSeeder extends Seeder
             ],
         ];
 
-        foreach ($pesanans as $pesanan) {
-            Pesanan::create($pesanan);
+        $produks = \App\Models\Produk::all();
+        foreach ($pesanans as $index => $pesananData) {
+            if ($produks->isNotEmpty()) {
+                $offset = $index % $produks->count();
+                $selected = $produks->slice($offset, 2);
+                if ($selected->isEmpty()) {
+                    $selected = $produks->take(2);
+                }
+                $orderItems = [];
+                $calcTotal = 0;
+                foreach ($selected as $prod) {
+                    $qty = (($index + $prod->id_produk) % 2) + 1;
+                    $price = $prod->harga;
+                    $orderItems[] = [
+                        'id' => $prod->id_produk,
+                        'nama_produk' => $prod->nama_produk,
+                        'price' => $price,
+                        'qty' => $qty,
+                        'subtotal' => $price * $qty,
+                        'img' => $prod->foto_1 ? asset('storage/' . $prod->foto_1) : asset('image/logo_circle.png')
+                    ];
+                    $calcTotal += ($price * $qty);
+                }
+                $pesananData['items'] = $orderItems;
+                $pesananData['total'] = $calcTotal;
+            }
+            Pesanan::create($pesananData);
         }
     }
 }

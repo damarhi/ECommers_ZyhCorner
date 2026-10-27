@@ -59,12 +59,16 @@
                                 <td class="p-1">: 
                                     @if($order->order_status == 'menunggu pembayaran')
                                         <span class="badge badge-soft-warning">Menunggu Pembayaran</span>
+                                    @elseif($order->order_status == 'menunggu konfirmasi')
+                                        <span class="badge badge-soft-warning badge-pulse-amber">Menunggu Konfirmasi</span>
                                     @elseif($order->order_status == 'dikemas')
                                         <span class="badge badge-soft-info">Dikemas</span>
                                     @elseif($order->order_status == 'dikirim')
                                         <span class="badge badge-soft-primary">Dikirim</span>
                                     @elseif($order->order_status == 'selesai')
                                         <span class="badge badge-soft-success">Selesai</span>
+                                    @elseif($order->order_status == 'batal')
+                                        <span class="badge badge-soft-danger">Dibatalkan</span>
                                     @else
                                         <span class="badge badge-soft-dark">{{ $order->order_status }}</span>
                                     @endif

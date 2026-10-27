@@ -60,55 +60,52 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
+                        @php
+                            $recentNavbarMessages = \App\Models\ContactMessage::latest()->take(3)->get();
+                            $navbarUnreadMsgCount = \App\Models\ContactMessage::where('status', 'Belum Dibaca')->count();
+                        @endphp
                         <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="mdi mdi-email-outline"></i>
-                            <span class="count-symbol bg-warning"></span>
+                            @if($navbarUnreadMsgCount > 0)
+                                <span class="count-symbol bg-warning"></span>
+                            @endif
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list"
-                            aria-labelledby="messageDropdown">
-                            <h6 class="p-3 mb-0">Pesan</h6>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item preview-item">
-                                <div class="preview-thumbnail">
-                                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face4.jpg') }}" alt="image"
-                                        class="profile-pic">
+                        <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list shadow-sm"
+                            aria-labelledby="messageDropdown" style="min-width: 290px;">
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <h6 class="mb-0 font-weight-bold">Pesan Kontak</h6>
+                                @if($navbarUnreadMsgCount > 0)
+                                    <span class="badge bg-warning text-dark">{{ $navbarUnreadMsgCount }} baru</span>
+                                @endif
+                            </div>
+                            @forelse($recentNavbarMessages as $navMsg)
+                                <a href="{{ route('messages.index', ['search' => $navMsg->email]) }}" class="dropdown-item preview-item py-2 border-bottom">
+                                    <div class="preview-thumbnail">
+                                        <div class="avatar-circle bg-light text-primary font-weight-bold d-flex align-items-center justify-content-center"
+                                             style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid #e0e0e0; font-size: 13px;">
+                                            {{ strtoupper(substr($navMsg->nama, 0, 1)) }}
+                                        </div>
+                                    </div>
+                                    <div class="preview-item-content d-flex align-items-start flex-column justify-content-center ps-2">
+                                        <h6 class="preview-subject ellipsis mb-1 font-weight-normal text-dark" style="max-width: 170px;">
+                                            {{ $navMsg->nama }}
+                                        </h6>
+                                        <p class="text-muted mb-0" style="font-size: 11px;">
+                                            {{ $navMsg->created_at->diffForHumans() }}
+                                        </p>
+                                    </div>
+                                </a>
+                            @empty
+                                <div class="p-3 text-center text-muted" style="font-size: 12px;">
+                                    Belum ada pesan kontak
                                 </div>
-                                <div
-                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Mark send you a message
-                                    </h6>
-                                    <p class="text-gray mb-0"> 1 Minutes ago </p>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item preview-item">
-                                <div class="preview-thumbnail">
-                                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face2.jpg') }}" alt="image"
-                                        class="profile-pic">
-                                </div>
-                                <div
-                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Cregh send you a
-                                        message</h6>
-                                    <p class="text-gray mb-0"> 15 Minutes ago </p>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item preview-item">
-                                <div class="preview-thumbnail">
-                                    <img src="{{ asset('PurpleAdmin/assets/images/faces/face3.jpg') }}" alt="image"
-                                        class="profile-pic">
-                                </div>
-                                <div
-                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Profile picture updated
-                                    </h6>
-                                    <p class="text-gray mb-0"> 18 Minutes ago </p>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <h6 class="p-3 mb-0 text-center">4 pesan baru</h6>
+                            @endforelse
+                            <div class="p-2 text-center">
+                                <a href="{{ route('messages.index') }}" class="text-primary text-decoration-none font-weight-500" style="font-size: 12.5px;">
+                                    Lihat Semua Pesan
+                                </a>
+                            </div>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -293,6 +290,23 @@
                             </a>
                         </li>
 
+                        <!-- Interaksi Pelanggan -->
+                        <li class="nav-category-header">Interaksi Pelanggan</li>
+
+                        <li class="nav-item {{ Request::is('admin/messages*') ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('messages.index') }}">
+                                <span class="menu-title d-flex align-items-center justify-content-between w-100 pe-2">
+                                    <span>Pesan Kontak</span>
+                                    @php
+                                        $sidebarUnreadCount = \App\Models\ContactMessage::where('status', 'Belum Dibaca')->count();
+                                    @endphp
+                                    @if($sidebarUnreadCount > 0)
+                                        <span class="badge bg-danger rounded-pill px-2 py-1 text-white" style="font-size: 10px;">{{ $sidebarUnreadCount }}</span>
+                                    @endif
+                                </span>
+                                <i class="mdi mdi-email-open-multiple-outline menu-icon"></i>
+                            </a>
+                        </li>
                         <!-- Tombol Keluar (Logout) -->
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
@@ -456,6 +470,15 @@
                 }
             });
         };
+    </script>
+
+    <!-- Anti-bfcache Back Button Protection -->
+    <script>
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
     </script>
     <!-- Plugin js for this page -->
     <!-- End plugin js for this page -->

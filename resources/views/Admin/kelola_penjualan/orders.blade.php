@@ -82,7 +82,7 @@
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status Pembayaran</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status Pesanan</th>
                                     <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Total</th>
-                                    <th style="padding: 15px 10px; width: 100px;"></th>
+                                    <th style="padding: 15px 10px; width: 140px; text-align: center;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -105,22 +105,35 @@
                                             <span class="badge badge-soft-warning">Tertunda</span>
                                         @endif
                                     </td>
-                                    <td style="padding: 15px 10px;">
+                                    <td style="padding: 15px 10px;" id="order-status-badge-{{ $order->id }}">
                                         @if($order->order_status == 'menunggu pembayaran')
                                             <span class="badge badge-soft-warning">Menunggu Pembayaran</span>
+                                        @elseif($order->order_status == 'menunggu konfirmasi')
+                                            <span class="badge badge-pulse-amber">Menunggu Konfirmasi</span>
                                         @elseif($order->order_status == 'dikemas')
                                             <span class="badge badge-soft-info">Dikemas</span>
                                         @elseif($order->order_status == 'dikirim')
                                             <span class="badge badge-soft-primary">Dikirim</span>
                                         @elseif($order->order_status == 'selesai')
                                             <span class="badge badge-soft-success">Selesai</span>
+                                        @elseif($order->order_status == 'batal')
+                                            <span class="badge badge-soft-danger">Dibatalkan</span>
                                         @else
                                             <span class="badge badge-soft-dark">{{ $order->order_status }}</span>
                                         @endif
                                     </td>
                                     <td style="padding: 15px 10px; font-size: 14px; color: #444;">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
                                     <td style="padding: 15px 10px;">
-                                        <div class="d-flex">
+                                        <div class="d-flex align-items-center">
+                                            @if(in_array(strtolower($order->order_status ?? ''), ['menunggu konfirmasi', 'unconfirmed']))
+                                                <button type="button" 
+                                                    class="btn btn-sm btn-quick-confirm me-2" 
+                                                    id="btn-quick-confirm-{{ $order->id }}"
+                                                    onclick="quickConfirmOrder({{ $order->id }}, '{{ $order->order_number }}')"
+                                                    title="Konfirmasi Pesanan &amp; Siap Kemas">
+                                                    <i class="mdi mdi-check-circle-outline me-1"></i> Konfirmasi &amp; Kemas
+                                                </button>
+                                            @endif
                                             <button type="button" class="btn btn-sm btn-outline-success bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Detail Pesanan">
                                                 <i class="mdi mdi-eye" style="font-size: 16px; margin: 0;"></i>
                                             </button>
@@ -185,9 +198,11 @@
                                                 <label class="font-weight-500 mb-2">Status Pesanan</label>
                                                 <select class="form-select form-control" name="order_status" required>
                                                     <option value="menunggu pembayaran" {{ $order->order_status == 'menunggu pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran</option>
+                                                    <option value="menunggu konfirmasi" {{ $order->order_status == 'menunggu konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
                                                     <option value="dikemas" {{ $order->order_status == 'dikemas' ? 'selected' : '' }}>Dikemas</option>
                                                     <option value="dikirim" {{ $order->order_status == 'dikirim' ? 'selected' : '' }}>Dikirim</option>
                                                     <option value="selesai" {{ $order->order_status == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                                    <option value="batal" {{ $order->order_status == 'batal' ? 'selected' : '' }}>Dibatalkan</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -251,9 +266,11 @@
                         <label class="font-weight-500 mb-2">Status Pesanan</label>
                         <select class="form-select form-control" name="order_status" required>
                             <option value="menunggu pembayaran">Menunggu Pembayaran</option>
+                            <option value="menunggu konfirmasi">Menunggu Konfirmasi</option>
                             <option value="dikemas">Dikemas</option>
                             <option value="dikirim">Dikirim</option>
                             <option value="selesai">Selesai</option>
+                            <option value="batal">Dibatalkan</option>
                         </select>
                     </div>
                 </div>
@@ -342,6 +359,150 @@
             myModal.show();
         @endif
     });
+
+    function quickConfirmOrder(orderId, orderNumber) {
+        const btn = document.getElementById(`btn-quick-confirm-${orderId}`);
+        
+        Swal.fire({
+            title: 'Konfirmasi Pesanan?',
+            text: `Pesanan ${orderNumber} akan dikonfirmasi dan statusnya diubah menjadi Dikemas untuk segera diproses di dapur.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#00b207',
+            cancelButtonColor: '#9CA3AF',
+            confirmButtonText: '<i class="mdi mdi-check-bold me-1"></i> Ya, Konfirmasi &amp; Kemas',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Memproses...';
+                }
+
+                fetch(`{{ url('admin/orders') }}/${orderId}/quick-confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json().then(data => ({ status: res.status, ok: res.ok, body: data })))
+                .then(({ status, ok, body }) => {
+                    if (ok && body.success) {
+                        Swal.fire({
+                            title: 'Pesanan Dikonfirmasi!',
+                            text: body.message,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+
+                        // Instant DOM update: Swap status badge and fade out quick-confirm button
+                        const badgeContainer = document.getElementById(`order-status-badge-${orderId}`);
+                        if (badgeContainer) {
+                            badgeContainer.innerHTML = '<span class="badge badge-soft-info">Dikemas</span>';
+                        }
+                        if (btn) {
+                            btn.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                            btn.style.opacity = '0';
+                            btn.style.transform = 'scale(0.8)';
+                            setTimeout(() => btn.remove(), 300);
+                        }
+                    } else {
+                        Swal.fire({
+                            title: 'Gagal',
+                            text: body.message || 'Terjadi kesalahan saat mengonfirmasi pesanan.',
+                            icon: 'error'
+                        });
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="mdi mdi-check-circle-outline me-1"></i> Konfirmasi &amp; Kemas';
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire({
+                        title: 'Kesalahan Sistem',
+                        text: 'Tidak dapat menghubungi server. Silakan coba beberapa saat lagi.',
+                        icon: 'error'
+                    });
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="mdi mdi-check-circle-outline me-1"></i> Konfirmasi &amp; Kemas';
+                    }
+                });
+            }
+        });
+    }
 </script>
+
+<style>
+.badge-pulse-amber {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    padding: 6px 10px;
+    border-radius: 20px;
+}
+.badge-pulse-amber::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: #f59e0b;
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+    animation: pulse-amber-dot 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+@keyframes pulse-amber-dot {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    }
+}
+.btn-quick-confirm {
+    background: linear-gradient(135deg, #00b207 0%, #008f05 100%);
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 178, 7, 0.25);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+.btn-quick-confirm:hover {
+    background: linear-gradient(135deg, #009606 0%, #007a04 100%);
+    box-shadow: 0 4px 8px rgba(0, 178, 7, 0.35);
+    transform: translateY(-1px);
+}
+.btn-quick-confirm:active {
+    transform: translateY(0);
+}
+.btn-quick-confirm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+</style>
 
 @endsection

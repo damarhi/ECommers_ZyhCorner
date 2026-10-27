@@ -76,7 +76,7 @@ class AdminSettingsTest extends TestCase
             'store_hours' => 'Senin - Sabtu (08:00 - 20:00)',
         ]);
 
-        $response->assertRedirect(route('settings.index'));
+        $response->assertRedirect(route('settings.index') . '#store-tab');
         $this->assertEquals('Zyh Corner Official Store', session('store_name'));
     }
 }

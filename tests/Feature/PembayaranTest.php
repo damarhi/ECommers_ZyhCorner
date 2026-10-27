@@ -60,6 +60,6 @@ class PembayaranTest extends TestCase
         $response->assertJson(['message' => 'Callback processed successfully']);
 
         $this->assertEquals('Paid', $order->fresh()->payment_status);
-        $this->assertEquals('dikemas', $order->fresh()->order_status);
+        $this->assertEquals('menunggu konfirmasi', $order->fresh()->order_status);
     }
 }

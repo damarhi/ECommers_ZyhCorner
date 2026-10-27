@@ -10,16 +10,17 @@
         @if(isset($customBanners) && $customBanners->count() > 1)
             @include('Pelanggan.partials.multi_banner_grid', ['banners' => $customBanners])
         @elseif(isset($customBanner) && $customBanner && $customBanner->status === 'Aktif')
-            <div class="shop-promo-banner" @if($customBanner->gambar_banner && Storage::disk('public')->exists($customBanner->gambar_banner)) style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{{ asset('storage/' . $customBanner->gambar_banner) }}'); background-size: cover; background-position: center;" @endif>
+            <div class="shop-promo-banner" @if($customBanner->gambar_banner && Storage::disk('public')->exists($customBanner->gambar_banner)) style="background-image: url('{{ asset('storage/' . $customBanner->gambar_banner) }}'); background-size: cover; background-position: center right;" @endif>
                 <div class="spb-content">
-                    @if($customBanner->subjudul)
-                        <h4>{{ $customBanner->subjudul }}</h4>
-                    @endif
-                    <h2>{{ $customBanner->judul_banner }}</h2>
+                    <span class="spb-pill-badge badge-custom">
+                        <i class="fa-solid fa-cake-candles"></i> {{ $customBanner->subjudul ?? 'Custom Cake Studio' }}
+                    </span>
+                    <h2 class="spb-title">{{ $customBanner->judul_banner }}</h2>
+                    <p class="spb-desc">Wujudkan kue impian untuk perayaan spesial Anda. Bebas tentukan tema, desain, rasa, dan ukuran.</p>
                     @if($customBanner->link_url)
-                        <a href="{{ $customBanner->link_url }}" class="spb-btn text-decoration-none d-inline-flex align-items-center mt-3">Pesan Sekarang <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                        <a href="{{ $customBanner->link_url }}" class="spb-btn">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></a>
                     @else
-                        <button class="spb-btn mt-3">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></button>
+                        <button class="spb-btn" type="button">Pesan Sekarang <i class="fa-solid fa-arrow-right"></i></button>
                     @endif
                 </div>
             </div>
@@ -110,21 +111,19 @@
         <!-- Product Grid -->
         <div class="product-grid">
             @forelse ($products as $index => $product)
-                <div class="product-card">
+                <div class="product-card" style="cursor: pointer;"
+                    onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}?custom=1'">
                     <div class="product-image">
                         @if ($product->stok == 0)
                             <div class="badge out-of-stock">Habis</div>
-                        @elseif($index == 3 || $index == 7)
-                            <div class="badge sale">Sale 50%</div>
                         @endif
 
                         <div class="product-actions">
-                            <div class="action-btn"><i class="fa-regular fa-heart"></i></div>
-                            <div class="action-btn" title="Quick View" onclick="openProductModal(this)"
+                            <div class="action-btn" title="Quick View" onclick="event.stopPropagation(); openProductModal(this)"
                                 data-id="{{ $product->id_produk }}" data-name="{{ $product->nama_produk }}"
                                 data-price="{{ $product->harga }}" data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
-                                data-sale="{{ $index == 3 || $index == 7 ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-sale="0" data-stock="{{ $product->stok }}"
                                 data-custom="1"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
@@ -134,39 +133,34 @@
                             </div>
                         </div>
 
-                        <a href="{{ route('product.detail', $product->id_produk) }}?custom=1" style="display:block;">
+                        <a href="{{ route('product.detail', $product->id_produk) }}?custom=1" style="display:block;" onclick="event.stopPropagation();">
                             @if ($product->foto_1)
                                 <img src="{{ asset('storage/' . $product->foto_1) }}" alt="{{ $product->nama_produk }}">
-                            @else
-                                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop"
-                                    alt="Placeholder">
                             @endif
                         </a>
                     </div>
                     <div class="product-info">
                         <a href="{{ route('product.detail', $product->id_produk) }}?custom=1"
-                            class="product-name">{{ $product->nama_produk }}</a>
+                            class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
                         <div class="product-price">
                             @if ($product->harga_max && $product->harga_max > $product->harga)
                                 Rp. {{ number_format($product->harga, 0, ',', '.') }} - Rp. {{ number_format($product->harga_max, 0, ',', '.') }}
                             @else
                                 Rp. {{ number_format($product->harga, 0, ',', '.') }}
-                                @if ($index == 3 || $index == 7)
-                                    <span class="old">Rp. {{ number_format($product->harga * 2, 0, ',', '.') }}</span>
-                                @endif
                             @endif
                         </div>
 
                         @if ($product->stok > 0)
                             @php
-                                $message = urlencode("Halo Zyh Corner, saya tertarik untuk memesan Custom Product: " . $product->nama_produk . " (Harga: Rp. " . number_format($product->harga, 0, ',', '.') . "). Mohon info lebih lanjut.");
-                                $waUrl = "https://wa.me/628123456789?text=" . $message;
+                                $storeName = $storeSettings['store_name'] ?? 'Zyh Corner';
+                                $message = urlencode("Halo " . $storeName . ", saya tertarik untuk memesan Custom Product: " . $product->nama_produk . " (Harga: Rp. " . number_format($product->harga, 0, ',', '.') . "). Mohon info lebih lanjut.");
+                                $waUrl = "https://wa.me/" . ($storeSettings['wa_number'] ?? '628123456789') . "?text=" . $message;
                             @endphp
-                            <a href="{{ $waUrl }}" target="_blank" class="cart-btn" style="background-color: #25d366; color: white;" title="Pesan via WhatsApp">
+                            <a href="{{ $waUrl }}" target="_blank" class="cart-btn" style="background-color: #25d366; color: white;" title="Pesan via WhatsApp" onclick="event.stopPropagation();">
                                 <i class="fa-brands fa-whatsapp"></i>
                             </a>
                         @else
-                            <div class="cart-btn disabled" title="Stok Habis">
+                            <div class="cart-btn disabled" title="Stok Habis" onclick="event.stopPropagation();">
                                 <i class="fa-solid fa-ban"></i>
                             </div>
                         @endif

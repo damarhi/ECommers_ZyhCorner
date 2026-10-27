@@ -60,31 +60,35 @@
         <div class="product-main">
 
             {{-- Gallery --}}
+            @php
+                $fotos = array_filter([
+                    $product->foto_1 ? asset('storage/' . $product->foto_1) : null,
+                    $product->foto_2 ? asset('storage/' . $product->foto_2) : null,
+                    $product->foto_3 ? asset('storage/' . $product->foto_3) : null,
+                    $product->foto_4 ? asset('storage/' . $product->foto_4) : null,
+                ]);
+                if (empty($fotos) && $product->foto_1) {
+                    $fotos = [asset('storage/' . $product->foto_1)];
+                }
+            @endphp
             <div class="gallery-wrapper">
-                <div class="gallery-thumbs" id="thumbsContainer">
-                    @php
-                        $fotos = array_filter([
-                            $product->foto_1 ? asset('storage/' . $product->foto_1) : null,
-                            $product->foto_2 ? asset('storage/' . $product->foto_2) : null,
-                            $product->foto_3 ? asset('storage/' . $product->foto_3) : null,
-                            $product->foto_4 ? asset('storage/' . $product->foto_4) : null,
-                        ]);
-                        if (empty($fotos)) {
-                            $fotos = [
-                                'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop',
-                            ];
-                        }
-                    @endphp
-                    @foreach ($fotos as $i => $foto)
-                        <div class="gallery-thumb {{ $i === array_key_first($fotos) ? 'active' : '' }}"
-                            onclick="switchImage('{{ $foto }}', this)">
-                            <img src="{{ $foto }}" alt="Foto {{ $loop->iteration }}">
-                        </div>
-                    @endforeach
-                </div>
+                @if (count($fotos) > 1)
+                    <div class="gallery-thumbs" id="thumbsContainer">
+                        @foreach ($fotos as $i => $foto)
+                            <div class="gallery-thumb {{ $i === array_key_first($fotos) ? 'active' : '' }}"
+                                onclick="switchImage('{{ $foto }}', this)">
+                                <img src="{{ $foto }}" alt="Foto {{ $loop->iteration }}">
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
                 <div class="gallery-main">
-                    @if ($product->stok == 0)
-                        <div class="gallery-badge">Out of Stock</div>
+                    @if ($product->jenis_produk === 'kustom' || request()->query('custom') == 1)
+                        <div class="gallery-badge custom">Pre-Order</div>
+                    @elseif ($product->stok == 0)
+                        <div class="gallery-badge out">Out of Stock</div>
+                    @elseif ($product->stok <= 3)
+                        <div class="gallery-badge warning">Sisa {{ $product->stok }} Unit</div>
                     @else
                         <div class="gallery-badge green">In Stock</div>
                     @endif
@@ -97,17 +101,15 @@
                 <div class="pi-category">{{ $product->kategori->nama_kategori ?? 'Produk' }}</div>
                 <h1 class="pi-name">{{ $product->nama_produk }}</h1>
 
-                <div class="pi-meta">
-                    <span class="pi-stock {{ $product->stok > 0 ? 'in' : 'out' }}">
-                        {{ $product->stok > 0 ? 'Tersedia' : 'Habis' }}
-                    </span>
-                </div>
 
                 <div class="pi-price-block">
-                    <span class="pi-price">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
-                    {{-- Uncomment jika ada harga diskon --}}
-                    {{-- <span class="pi-old-price">Rp. {{ number_format($product->harga * 1.3, 0, ',', '.') }}</span> --}}
-                    {{-- <span class="pi-discount">30% Off</span> --}}
+                    @if ($product->has_diskon)
+                        <span class="pi-price">Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}</span>
+                        <span class="pi-old-price">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                        <span class="pi-discount">{{ $product->diskon_badge }}</span>
+                    @else
+                        <span class="pi-price">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                    @endif
                 </div>
 
                 <hr class="pi-divider">
@@ -124,6 +126,17 @@
                 @endif
                 <div class="pi-info-row"><strong>SKU</strong><span>:
                         ZYH-{{ str_pad($product->id_produk, 4, '0', STR_PAD_LEFT) }}</span></div>
+                <div class="pi-info-row"><strong>Stok</strong><span>:
+                        @if ($product->jenis_produk === 'kustom' || request()->query('custom') == 1)
+                            <span class="pi-stock custom">Pre-Order / Dibuat Sesuai Pesanan</span>
+                        @elseif ($product->stok <= 0)
+                            <span class="pi-stock out">Stok Habis</span>
+                        @elseif ($product->stok <= 3)
+                            <span class="pi-stock low">Sisa {{ $product->stok }} unit lagi (Segera Habis!)</span>
+                        @else
+                            <span class="pi-stock in">Tersedia: {{ $product->stok }} unit</span>
+                        @endif
+                    </span></div>
                 @if ($product->bisa_custom_teks)
                     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin: 15px 0; font-size: 12.5px; color: #166534; line-height: 1.45;">
                         <div style="font-weight: 600; font-size: 13px; color: #15803d; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
@@ -135,38 +148,41 @@
                     </div>
                 @endif
 
-                <div class="pi-actions">
-                    @if (request()->query('custom') == 1)
+                <div class="pi-actions {{ $product->stok <= 0 && $product->jenis_produk !== 'kustom' && request()->query('custom') != 1 ? 'is-out-of-stock' : '' }}">
+                    @if (request()->query('custom') == 1 || $product->jenis_produk === 'kustom')
                         <div class="qty-box">
-                            <button class="qty-btn" onclick="changeQty(-1)"><i class="fa-solid fa-minus"></i></button>
-                            <input class="qty-input" type="text" value="1" id="qtyInput" min="1">
-                            <button class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
+                            <button type="button" class="qty-btn" onclick="changeQty(-1)"><i class="fa-solid fa-minus"></i></button>
+                            <input class="qty-input" type="text" value="1" id="qtyInput" min="1" max="{{ $product->stok > 0 ? $product->stok : 999 }}" oninput="changeQty(0)">
+                            <button type="button" class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
                         </div>
                         <button class="btn-buy" onclick="buyCustomNow()" style="background-color: #25d366 !important;">
                             <i class="fa-brands fa-whatsapp"></i> Pesan via WhatsApp @if($product->stok <= 0) (Pre-Order) @endif
                         </button>
+                        <div id="qtyStockWarning" class="qty-stock-warning" style="display: none;">
+                            <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok tercapai (tersisa {{ $product->stok }} unit)
+                        </div>
                     @elseif ($product->stok > 0)
                         <div class="qty-box">
-                            <button class="qty-btn" onclick="changeQty(-1)"><i class="fa-solid fa-minus"></i></button>
-                            <input class="qty-input" type="text" value="1" id="qtyInput" min="1">
-                            <button class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
+                            <button type="button" class="qty-btn" onclick="changeQty(-1)"><i class="fa-solid fa-minus"></i></button>
+                            <input class="qty-input" type="text" value="1" id="qtyInput" min="1" max="{{ $product->stok }}" oninput="changeQty(0)">
+                            <button type="button" class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
                         </div>
                         <button class="btn-buy" onclick="buyNow()">
                             <i class="fa-solid fa-bag-shopping"></i> Beli Sekarang
                         </button>
+                        <div id="qtyStockWarning" class="qty-stock-warning" style="display: none;">
+                            <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok tercapai (tersisa {{ $product->stok }} unit)
+                        </div>
                     @else
                         <div class="qty-box" style="opacity: 0.5; pointer-events: none; background-color: #f5f5f5;">
                             <button class="qty-btn" disabled><i class="fa-solid fa-minus"></i></button>
                             <input class="qty-input" type="text" value="0" id="qtyInput" disabled style="background-color: #f5f5f5;">
                             <button class="qty-btn" disabled><i class="fa-solid fa-plus"></i></button>
                         </div>
-                        <button class="btn-buy disabled" disabled style="background-color: #e6e6e6 !important; color: #999999 !important;">
+                        <button class="btn-buy disabled" disabled style="background-color: #e6e6e6 !important; color: #999999 !important; cursor: not-allowed;">
                             <i class="fa-solid fa-ban"></i> Stok Habis
                         </button>
                     @endif
-                    <button class="btn-wish" title="Tambah ke Wishlist">
-                        <i class="fa-regular fa-heart"></i>
-                    </button>
                 </div>
             </div>
 
@@ -200,8 +216,18 @@
                         <td>Rp. {{ number_format($product->harga, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <td>Status</td>
-                        <td>{{ $product->status_produk ?? 'Aktif' }}</td>
+                        <td>Ketersediaan Stok</td>
+                        <td>
+                            @if ($product->jenis_produk === 'kustom' || request()->query('custom') == 1)
+                                <span class="spec-stock-badge custom">Pre-Order (Dibuat Sesuai Pesanan)</span>
+                            @elseif ($product->stok <= 0)
+                                <span class="spec-stock-badge out">Habis (Sedang Diproduksi Ulang)</span>
+                            @elseif ($product->stok <= 3)
+                                <span class="spec-stock-badge low">Sisa {{ $product->stok }} unit (Segera Habis)</span>
+                            @else
+                                <span class="spec-stock-badge in">{{ $product->stok }} unit (Ready Stock / Siap Kirim)</span>
+                            @endif
+                        </td>
                     </tr>
                     @if ($product->tanggal_expired)
                         <tr>
@@ -221,56 +247,96 @@
 
         {{-- RELATED PRODUCTS --}}
         @if ($relatedProducts->count() > 0)
-            <div>
+            <div style="margin-top: 50px;">
                 <div class="section-header">
                     <h2>Produk Terkait</h2>
-                    <a href="{{ route('shop') }}" class="view-all-link">Lihat Semua <i
-                            class="fa-solid fa-arrow-right"></i></a>
+                    <a href="{{ request()->query('custom') == 1 ? route('custom-products') : route('shop') }}" class="view-all-link">
+                        Lihat Semua <i class="fa-solid fa-arrow-right"></i>
+                    </a>
                 </div>
-                <div class="related-grid">
+                <div class="product-grid related-grid">
                     @foreach ($relatedProducts as $rp)
-                        <div class="rp-card">
-                            <div class="rp-img">
-                                <img src="{{ $rp->foto_1 ? asset('storage/' . $rp->foto_1) : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop' }}"
-                                    alt="{{ $rp->nama_produk }}">
-                            </div>
-                            <div class="rp-cat">{{ $rp->kategori->nama_kategori ?? 'Produk' }}</div>
-                            <div class="rp-name">{{ $rp->nama_produk }}</div>
-                            <div class="rp-price">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</div>
+                        <div class="product-card" style="cursor: pointer;"
+                            onclick="window.location.href='{{ route('product.detail', $rp->id_produk) }}{{ request()->query('custom') == 1 ? '?custom=1' : '' }}'">
+                            <div class="product-image">
+                                @if ($rp->has_diskon)
+                                    <div class="badge" style="background-color: #ff8a00; color: white;">{{ $rp->diskon_badge }}</div>
+                                @elseif ($rp->stok == 0)
+                                    <div class="badge out-of-stock">Habis</div>
+                                @endif
 
-                            <div style="display:flex; gap:8px; margin-top:10px;">
+                                <div class="product-actions">
+                                    <div class="action-btn" title="Quick View" onclick="event.stopPropagation(); openProductModal(this)"
+                                        data-id="{{ $rp->id_produk }}" data-name="{{ $rp->nama_produk }}"
+                                        data-price="{{ $rp->harga_diskon }}"
+                                        data-old-price="{{ $rp->has_diskon ? 'Rp. ' . number_format($rp->harga, 0, ',', '.') : '' }}"
+                                        data-discount-badge="{{ $rp->diskon_badge ?? '' }}"
+                                        data-desc="{{ $rp->deskripsi }}"
+                                        data-cat="{{ $rp->kategori->nama_kategori ?? 'Uncategorized' }}"
+                                        data-sale="{{ $rp->has_diskon ? '1' : '0' }}" data-stock="{{ $rp->stok }}"
+                                        @if(request()->query('custom') == 1) data-custom="1" @endif
+                                        data-f1="{{ $rp->foto_1 ? asset('storage/' . $rp->foto_1) : '' }}"
+                                        data-f2="{{ $rp->foto_2 ? asset('storage/' . $rp->foto_2) : '' }}"
+                                        data-f3="{{ $rp->foto_3 ? asset('storage/' . $rp->foto_3) : '' }}"
+                                        data-f4="{{ $rp->foto_4 ? asset('storage/' . $rp->foto_4) : '' }}">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </div>
+                                </div>
+
+                                <a href="{{ route('product.detail', $rp->id_produk) }}{{ request()->query('custom') == 1 ? '?custom=1' : '' }}" style="display:block;" onclick="event.stopPropagation();">
+                                    @if ($rp->foto_1)
+                                        <img src="{{ asset('storage/' . $rp->foto_1) }}" alt="{{ $rp->nama_produk }}">
+                                    @endif
+                                </a>
+                            </div>
+                            <div class="product-info">
+                                <a href="{{ route('product.detail', $rp->id_produk) }}{{ request()->query('custom') == 1 ? '?custom=1' : '' }}"
+                                    class="product-name" onclick="event.stopPropagation();">{{ $rp->nama_produk }}</a>
+                                <div class="product-price">
+                                    @if ($rp->has_diskon)
+                                        Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}
+                                        <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
+                                    @else
+                                        Rp. {{ number_format($rp->harga, 0, ',', '.') }}
+                                    @endif
+                                </div>
+
                                 @if (request()->query('custom') == 1)
-                                    <a href="{{ route('product.detail', $rp->id_produk) }}?custom=1" class="rp-btn-link"
-                                        style="flex:1;">Detail</a>
                                     @if ($rp->stok > 0)
                                         @php
-                                            $rpMessage = urlencode("Halo Zyh Corner, saya tertarik untuk memesan Custom Product: " . $rp->nama_produk . " (Harga: Rp. " . number_format($rp->harga, 0, ',', '.') . "). Mohon info lebih lanjut.");
-                                            $rpWaUrl = "https://wa.me/628123456789?text=" . $rpMessage;
+                                            $storeName = $storeSettings['store_name'] ?? 'Zyh Corner';
+                                            $rpMessage = urlencode("Halo " . $storeName . ", saya tertarik untuk memesan Custom Product: " . $rp->nama_produk . " (Harga: Rp. " . number_format($rp->has_diskon ? $rp->harga_diskon : $rp->harga, 0, ',', '.') . "). Mohon info lebih lanjut.");
+                                            $rpWaUrl = "https://wa.me/" . ($storeSettings['wa_number'] ?? '628123456789') . "?text=" . $rpMessage;
                                         @endphp
-                                        <a href="{{ $rpWaUrl }}" target="_blank" class="rp-btn-link" style="flex:0 0 40px; border:none; cursor:pointer; background-color: #25d366; color: white; display: flex; align-items: center; justify-content: center;" title="Pesan via WhatsApp">
+                                        <a href="{{ $rpWaUrl }}" target="_blank" class="cart-btn" style="background-color: #25d366; color: white;" title="Pesan via WhatsApp" onclick="event.stopPropagation();">
                                             <i class="fa-brands fa-whatsapp"></i>
                                         </a>
                                     @else
-                                        <button class="rp-btn-link disabled" style="flex:0 0 40px; border:none; cursor:not-allowed; background-color: #f2f2f2; color: #ccc;" disabled title="Stok Habis">
+                                        <div class="cart-btn disabled" title="Stok Habis" onclick="event.stopPropagation();">
                                             <i class="fa-solid fa-ban"></i>
-                                        </button>
+                                        </div>
                                     @endif
                                 @else
-                                    <a href="{{ route('product.detail', $rp->id_produk) }}" class="rp-btn-link"
-                                        style="flex:1;">Detail</a>
                                     @if ($rp->stok > 0)
-                                        <button class="rp-btn-link" style="flex:0 0 40px; border:none; cursor:pointer;"
-                                            onclick="addToCart({
-                                id: '{{ $rp->id_produk }}',
-                                name: '{{ $rp->nama_produk }}',
-                                price: {{ $rp->harga }},
-                                img: '{{ $rp->foto_1 ? asset('storage/' . $rp->foto_1) : 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop' }}'
-                            })"><i
-                                                class="fa-solid fa-bag-shopping"></i></button>
+                                        <div class="cart-btn" title="Lihat Preview & Pesan"
+                                            onclick="event.stopPropagation(); openProductModal(this);"
+                                            data-id="{{ $rp->id_produk }}" data-name="{{ $rp->nama_produk }}"
+                                            data-price="{{ $rp->harga_diskon }}"
+                                            data-old-price="{{ $rp->has_diskon ? 'Rp. ' . number_format($rp->harga, 0, ',', '.') : '' }}"
+                                            data-discount-badge="{{ $rp->diskon_badge ?? '' }}"
+                                            data-desc="{{ $rp->deskripsi }}"
+                                            data-cat="{{ $rp->kategori->nama_kategori ?? 'Uncategorized' }}"
+                                            data-sale="{{ $rp->has_diskon ? '1' : '0' }}" data-stock="{{ $rp->stok }}"
+                                            data-f1="{{ $rp->foto_1 ? asset('storage/' . $rp->foto_1) : '' }}"
+                                            data-f2="{{ $rp->foto_2 ? asset('storage/' . $rp->foto_2) : '' }}"
+                                            data-f3="{{ $rp->foto_3 ? asset('storage/' . $rp->foto_3) : '' }}"
+                                            data-f4="{{ $rp->foto_4 ? asset('storage/' . $rp->foto_4) : '' }}">
+                                            <i class="fa-solid fa-bag-shopping"></i>
+                                        </div>
                                     @else
-                                        <button class="rp-btn-link disabled" style="flex:0 0 40px; border:none; cursor:not-allowed; background-color: #f2f2f2; color: #ccc;" disabled title="Stok Habis">
+                                        <div class="cart-btn disabled" title="Stok Habis" onclick="event.stopPropagation();">
                                             <i class="fa-solid fa-ban"></i>
-                                        </button>
+                                        </div>
                                     @endif
                                 @endif
                             </div>
@@ -286,13 +352,14 @@
         window.detailConfig = {
             productId: '{{ $product->id_produk }}',
             productName: '{{ $product->nama_produk }}',
-            productPrice: {{ $product->harga }},
+            productPrice: {{ $product->has_diskon ? $product->harga_diskon : $product->harga }},
+            productStock: {{ (int) $product->stok }},
             bisaCustomTeks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
             productImg: '{{ reset($fotos) }}',
             checkoutRoute: '{{ route('checkout') }}',
+            cartRoute: '{{ route('userChart') }}',
             loginRoute: '{{ route('login') }}'
         };
-
         @if (isset($unpaidOrder) && $unpaidOrder)
         (function() {
             const expiryTime = {{ $unpaidOrder->created_at->addHours(24)->timestamp }} * 1000;

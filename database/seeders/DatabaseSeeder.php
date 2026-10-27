@@ -38,13 +38,17 @@ class DatabaseSeeder extends Seeder
 
         // ── Call Individual Seeders ────────────────────────────────
         $this->call([
-            KategoriSeeder::class,        // Data dummy kategori & pengait produk
-            UserPelangganSeeder::class,  // Akun pelanggan dummy
-            CustomerSeeder::class,        // Data customer (admin panel)
-            PesananSeeder::class,         // Pesanan & penjualan
-            ReturSeeder::class,           // Data return
-            DiskonSeeder::class,          // Data diskon promo
-            BannerSeeder::class,          // Data banner promo
+            KategoriSeeder::class,         // Data kategori produk
+            ProdukSeeder::class,           // Data produk riil
+            UserPelangganSeeder::class,   // Akun pelanggan dummy
+            CassierSeeder::class,         // Akun kasir POS & user kasir
+            CustomerSeeder::class,         // Data customer (admin panel)
+            PesananSeeder::class,          // Pesanan & transaksi penjualan
+            ReturSeeder::class,            // Data retur produk
+            DiskonSeeder::class,           // Data diskon promo
+            ProdukKadaluarsaSeeder::class, // Data produk kadaluarsa
+            BannerSeeder::class,           // Data banner hero & promo
+            StoreSettingSeeder::class,     // Pengaturan profil toko
         ]);
     }
 }

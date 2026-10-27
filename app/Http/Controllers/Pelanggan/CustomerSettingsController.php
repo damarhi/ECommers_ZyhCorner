@@ -14,7 +14,15 @@ class CustomerSettingsController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        if (!$user->alamat) {
+        $defaultAddress = \App\Models\UserAddress::where('user_id', $user->user_id)->where('is_default', true)->first();
+
+        // If user has default address in user_addresses, ensure $user->alamat is synced
+        if ($defaultAddress && $defaultAddress->street_address) {
+            if ($user->alamat !== $defaultAddress->street_address) {
+                $user->update(['alamat' => $defaultAddress->street_address]);
+                $user->alamat = $defaultAddress->street_address;
+            }
+        } elseif (!$user->alamat) {
             $customer = Customer::where('user_id', $user->user_id)
                 ->orWhere('contact', $user->no_hp)
                 ->orWhere('name', $user->nama)
@@ -25,10 +33,26 @@ class CustomerSettingsController extends Controller
                 }
                 if ($customer->location) {
                     $user->update(['alamat' => $customer->location]);
+                    $user->alamat = $customer->location;
                 }
             }
         }
-        return view('Pelanggan.settings', compact('user'));
+
+        // If user has alamat but no user_addresses record yet, auto-seed default address
+        if ($user->alamat && !$defaultAddress) {
+            $defaultAddress = \App\Models\UserAddress::create([
+                'user_id' => $user->user_id,
+                'label' => 'Alamat Utama',
+                'recipient_name' => $user->nama,
+                'recipient_phone' => $user->no_hp ?? '',
+                'street_address' => $user->alamat,
+                'is_default' => true,
+            ]);
+        }
+
+        $allAddresses = \App\Models\UserAddress::where('user_id', $user->user_id)->orderByDesc('is_default')->get();
+
+        return view('Pelanggan.settings', compact('user', 'defaultAddress', 'allAddresses'));
     }
 
     public function updateAccount(Request $request)
@@ -87,12 +111,35 @@ class CustomerSettingsController extends Controller
         $user = Auth::user();
         $request->validate([
             'alamat' => 'required|string',
+            'notes' => 'nullable|string',
         ]);
-
         $user->update([
             'alamat' => $request->alamat,
         ]);
 
+        $customer = Customer::where('user_id', $user->user_id)->first();
+        if ($customer) {
+            $customer->update(['location' => $request->alamat]);
+        }
+        // Sync or update default address in user_addresses
+        $defaultAddr = \App\Models\UserAddress::where('user_id', $user->user_id)->where('is_default', true)->first();
+        if ($defaultAddr) {
+            $dataToUpdate = ['street_address' => $request->alamat];
+            if ($request->has('notes')) {
+                $dataToUpdate['notes'] = $request->notes;
+            }
+            $defaultAddr->update($dataToUpdate);
+        } else {
+            \App\Models\UserAddress::create([
+                'user_id' => $user->user_id,
+                'label' => 'Alamat Utama',
+                'recipient_name' => $user->nama,
+                'recipient_phone' => $user->no_hp ?? '',
+                'street_address' => $request->alamat,
+                'notes' => $request->notes ?? null,
+                'is_default' => true,
+            ]);
+        }
         return response()->json([
             'success' => true,
             'message' => 'Alamat tagihan berhasil diperbarui!',

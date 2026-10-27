@@ -34,7 +34,7 @@ class PesananController extends Controller
         $request->validate([
             'customer_name' => 'required|string|max:255',
             'payment_status' => 'required|string|in:Pending,Paid',
-            'order_status' => 'required|string|in:menunggu pembayaran,dikemas,dikirim,selesai',
+            'order_status' => 'required|string|in:menunggu pembayaran,menunggu konfirmasi,dikemas,dikirim,selesai,batal',
             'total' => 'required|numeric|min:0',
         ]);
 
@@ -61,7 +61,7 @@ class PesananController extends Controller
         $request->validate([
             'customer_name' => 'required|string|max:255',
             'payment_status' => 'required|string|in:Pending,Paid',
-            'order_status' => 'required|string|in:menunggu pembayaran,dikemas,dikirim,selesai',
+            'order_status' => 'required|string|in:menunggu pembayaran,menunggu konfirmasi,dikemas,dikirim,selesai,batal',
             'total' => 'required|numeric|min:0',
         ]);
 
@@ -82,6 +82,44 @@ class PesananController extends Controller
         return redirect()->route('orders.index')->with('success', 'Order deleted successfully.');
     }
 
+    /**
+     * Quick confirm an unconfirmed order and change status to dikemas (kitchen prep).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int|string  $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function quickConfirm(Request $request, $id)
+    {
+        $order = Pesanan::findOrFail($id);
+
+        if (!in_array(strtolower($order->order_status ?? ''), ['menunggu konfirmasi', 'unconfirmed'])) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan ini sudah dikonfirmasi atau statusnya bukan Menunggu Konfirmasi.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Status pesanan bukan Menunggu Konfirmasi.');
+        }
+
+        $order->update([
+            'order_status' => 'dikemas',
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan ' . $order->order_number . ' berhasil dikonfirmasi dan masuk antrean dapur!',
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'order_status' => 'dikemas',
+                'status_label' => 'Sedang Dikemas',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Pesanan ' . $order->order_number . ' berhasil dikonfirmasi dan masuk antrean dapur!');
+    }
     public function allSales(Request $request)
     {
         $query = Pesanan::query();

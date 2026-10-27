@@ -13,6 +13,12 @@ class AdminBannerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+    }
+
     public function test_admin_can_access_banners_page(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -73,7 +79,6 @@ class AdminBannerTest extends TestCase
             'urutan' => 2,
             'status' => 'Nonaktif',
         ]);
-
         $response->assertRedirect(route('banners.index'));
 
         $this->assertDatabaseHas('banners', [
@@ -138,5 +143,74 @@ class AdminBannerTest extends TestCase
         $response->assertRedirect(route('banners.index'));
         $this->assertDatabaseMissing('banners', ['id_banner' => $b1->id_banner]);
         $this->assertDatabaseMissing('banners', ['id_banner' => $b2->id_banner]);
+    }
+
+    public function test_banners_page_displays_all_positions_in_unified_grid(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        Banner::create(['judul_banner' => 'Hero Banner 1', 'gambar_banner' => 'banners/h1.jpg', 'posisi_banner' => 'home_hero', 'status' => 'Aktif']);
+        Banner::create(['judul_banner' => 'Shop Banner 1', 'gambar_banner' => 'banners/s1.jpg', 'posisi_banner' => 'shop_header', 'status' => 'Aktif']);
+        Banner::create(['judul_banner' => 'Custom Banner 1', 'gambar_banner' => 'banners/c1.jpg', 'posisi_banner' => 'custom_header', 'status' => 'Aktif']);
+        Banner::create(['judul_banner' => 'Promo Banner 1', 'gambar_banner' => 'banners/p1.jpg', 'posisi_banner' => 'popup_promo', 'status' => 'Aktif']);
+
+        $response = $this->actingAs($admin)->get(route('banners.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Hero Banner 1');
+        $response->assertSee('Shop Banner 1');
+        $response->assertSee('Custom Banner 1');
+        $response->assertSee('Promo Banner 1');
+        $response->assertSee('Home Hero Banner');
+        $response->assertSee('Header Produk Showcase');
+        $response->assertSee('Header Produk Kustom');
+        $response->assertSee('Pop-up Promo');
+    }
+
+    public function test_banners_page_filters_by_position(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        Banner::create(['judul_banner' => 'Hero Banner 1', 'gambar_banner' => 'banners/h1.jpg', 'posisi_banner' => 'home_hero', 'status' => 'Aktif']);
+        Banner::create(['judul_banner' => 'Shop Banner 1', 'gambar_banner' => 'banners/s1.jpg', 'posisi_banner' => 'shop_header', 'status' => 'Aktif']);
+
+        $response = $this->actingAs($admin)->get(route('banners.index', ['posisi' => 'shop_header']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Shop Banner 1');
+        $response->assertDontSee('Hero Banner 1');
+    }
+
+    public function test_modals_are_properly_isolated_and_not_nested(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $b1 = Banner::create(['judul_banner' => 'Banner A', 'gambar_banner' => 'banners/a.jpg', 'posisi_banner' => 'home_hero', 'status' => 'Aktif']);
+        $b2 = Banner::create(['judul_banner' => 'Banner B', 'gambar_banner' => 'banners/b.jpg', 'posisi_banner' => 'shop_header', 'status' => 'Aktif']);
+
+        $response = $this->actingAs($admin)->get(route('banners.index'));
+
+        $response->assertStatus(200);
+        $html = $response->getContent();
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($html);
+        $xpath = new \DOMXPath($dom);
+
+        $modalA = $xpath->query('//div[@id="previewBannerModal' . $b1->id_banner . '"]')->item(0);
+        $this->assertNotNull($modalA);
+
+        // Ensure modal for Banner B is not inside modal for Banner A
+        $nestedModalB = $xpath->query('.//div[@id="previewBannerModal' . $b2->id_banner . '"]', $modalA);
+        $this->assertEquals(0, $nestedModalB->length, 'Preview modal B must not be nested inside preview modal A');
+
+        // Ensure no banner cards are trapped inside preview modal A
+        $trappedCards = $xpath->query('.//div[contains(@class, "banner-card")]', $modalA);
+        $this->assertEquals(0, $trappedCards->length, 'No banner card should be nested inside a preview modal');
+
+        // Ensure both banner cards are at the top level
+        $allCards = $xpath->query('//div[contains(@class, "banner-card")]');
+        $this->assertEquals(2, $allCards->length);
     }
 }

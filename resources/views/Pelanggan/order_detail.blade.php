@@ -1,24 +1,26 @@
 @extends('Layout.layout_pelanggan')
 
 @php
-    $statusStep = 1;
-    $isCanceled = Str::contains(strtolower($order->order_status), ['batal', 'cancel', 'failed']);
-    
-    if (!$isCanceled) {
-        if (Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered'])) {
-            $statusStep = 4;
-        } elseif (Str::contains(strtolower($order->order_status), ['otw', 'way', 'kirim', 'sedang dikirim'])) {
-            $statusStep = 3;
-        } elseif (Str::contains(strtolower($order->order_status), ['proses', 'processing', 'ready'])) {
-            $statusStep = 2;
-        }
+    $isCanceled = $order->is_canceled;
+    $statusStep = $order->status_step;
+    $connectorWidth = match($statusStep) {
+        2 => 25,
+        3 => 50,
+        4 => 75,
+        5 => 100,
+        default => 0,
+    };
+    $rawCustPhone = (string)($user->no_hp ?? '');
+    $cleanCustPhone = preg_replace('/^(\+?62|0)/', '', $rawCustPhone);
+    $formattedCustPhone = $cleanCustPhone ? '(+62) ' . $cleanCustPhone : '-';
+
+    $sm = strtolower($order->shipping_method ?? '');
+    $courierIcon = 'fa-motorcycle';
+    if (\Illuminate\Support\Str::contains($sm, ['jne', 'sicepat', 'j&t', 'antar', 'reguler'])) {
+        $courierIcon = 'fa-truck';
+    } elseif (\Illuminate\Support\Str::contains($sm, ['ambil', 'pickup', 'pick up'])) {
+        $courierIcon = 'fa-shop';
     }
-    
-    // Connector line width percentage
-    $connectorWidth = 0;
-    if ($statusStep == 2) $connectorWidth = 33.3;
-    elseif ($statusStep == 3) $connectorWidth = 66.6;
-    elseif ($statusStep == 4) $connectorWidth = 100;
 @endphp
 
 @section('title', 'Order Details - Zyh Corner')
@@ -46,7 +48,7 @@
     }
     
     .breadcrumb-area {
-        background: linear-gradient(rgba(45, 78, 55, 0.7), rgba(45, 78, 55, 0.7)), url('https://images.unsplash.com/photo-1518843875459-f738682238a6?q=80&w=2042&auto=format&fit=crop') center/cover !important;
+        background: linear-gradient(135deg, #1b382b 0%, #244837 100%) !important;
         height: 120px !important;
         display: flex !important;
         align-items: center !important;
@@ -211,159 +213,772 @@
         padding: 0;
     }
 
+    .order-top-nav-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
     .details-header-flex {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 25px;
+        margin-bottom: 24px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #f1f5f9;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 16px;
+        width: 100%;
     }
 
     .details-title-meta {
         display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .details-title-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .details-meta-sub {
+        display: inline-flex;
         align-items: center;
         gap: 8px;
-        font-size: 14px;
-        color: #666;
+        font-size: 13px;
+        color: #64748b;
     }
 
     .details-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1a1a1a;
+        font-size: 22px;
+        font-weight: 700;
+        color: #0f172a;
         margin: 0;
+        letter-spacing: -0.3px;
+    }
+
+    .order-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        line-height: 1.4;
+    }
+    .order-status-pill.badge-status-completed {
+        background-color: #e8f8ed;
+        color: #00b207;
+        border: 1px solid #b7ebc5;
+    }
+    .order-status-pill.badge-status-shipping {
+        background-color: #e0f2fe;
+        color: #0284c7;
+        border: 1px solid #bae6fd;
+    }
+    .order-status-pill.badge-status-processing {
+        background-color: #fef3c7;
+        color: #d97706;
+        border: 1px solid #fde68a;
+    }
+    .order-status-pill.badge-status-pending {
+        background-color: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    .order-status-pill.badge-status-awaiting {
+        background-color: #fef3c7;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+    .order-status-pill.badge-status-canceled {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
     }
 
     .dot-separator {
         width: 4px;
         height: 4px;
-        background-color: #ccc;
+        background-color: #cbd5e1;
         border-radius: 50%;
     }
 
     .details-header-actions {
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 10px;
+        margin-left: auto;
     }
 
     .green-link {
         color: #00b207 !important;
         font-weight: 600;
         text-decoration: none !important;
-        transition: color 0.3s;
-        font-size: 14px;
+        transition: color 0.2s;
+        font-size: 13.5px;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 6px;
     }
 
     .green-link:hover {
-        color: #009906 !important;
+        color: #008f05 !important;
+    }
+
+    .header-actions-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+        flex-wrap: wrap;
+    }
+
+    .btn-track-order-top {
+        background-color: #00b207;
+        color: white;
+        border: 1.5px solid #00b207;
+        border-radius: 50px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 6px rgba(0, 178, 7, 0.18);
+        text-decoration: none !important;
+    }
+
+    .btn-track-order-top:hover {
+        background-color: #008f05;
+        border-color: #008f05;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 178, 7, 0.28);
     }
 
     .btn-cancel-top {
-        background: #00b207;
-        color: white;
-        padding: 10px 24px;
+        background: #ffffff;
+        color: #dc2626;
+        padding: 8px 18px;
         border-radius: 50px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        border: none;
+        border: 1.5px solid #fca5a5;
         cursor: pointer;
-        transition: background 0.3s;
-        box-shadow: 0 4px 10px rgba(0, 178, 7, 0.15);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
     }
 
     .btn-cancel-top:hover {
-        background: #009906;
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #b91c1c;
+        transform: translateY(-1px);
     }
 
     .btn-cancel-top.disabled {
-        background: #e6e6e6 !important;
-        color: #999 !important;
+        background: #f1f5f9 !important;
+        border-color: #e2e8f0 !important;
+        color: #94a3b8 !important;
         box-shadow: none !important;
         cursor: not-allowed !important;
+        transform: none !important;
     }
 
     .btn-return-top {
-        background: transparent;
-        color: #ff8a00;
-        padding: 10px 24px;
+        background: #fff;
+        color: #d97706;
+        padding: 8px 18px;
         border-radius: 50px;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        border: 2px solid #ff8a00;
+        border: 1.5px solid #f59e0b;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s;
         text-decoration: none !important;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .btn-return-top:hover {
-        background: #ff8a00;
+        background: #f59e0b;
         color: white;
     }
 
-    /* Summary cards grid styling */
-    .summary-card {
+    /* Shipping card refined elements */
+    .badge-biteship-pill {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: #0284c7;
+        margin-left: auto;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        display: inline-flex;
+        align-items: center;
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+
+    .waybill-code {
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: 0.5px;
+        background: #f8fafc;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px dashed #cbd5e1;
+    }
+
+    .btn-copy-resi {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        color: #00b207;
+        font-size: 11px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .btn-copy-resi:hover {
+        background: #00b207;
+        color: #ffffff;
+        border-color: #00b207;
+    }
+
+    .shipping-status-badge {
+        font-size: 13px;
+        font-weight: 700;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        line-height: 1.3;
+        display: inline !important;
+    }
+    .shipping-status-badge.badge-delivered {
+        color: #16a34a !important;
+    }
+    .shipping-status-badge.badge-transit {
+        color: #0284c7 !important;
+    }
+    .shipping-status-badge.badge-processing {
+        color: #d97706 !important;
+    }
+    .shipping-status-badge.badge-pending {
+        color: #64748b !important;
+    }
+    .shipping-status-badge.badge-canceled {
+        color: #dc2626 !important;
+    }
+
+    .payment-status-badge {
+        font-size: 13px;
+        font-weight: 700;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        line-height: 1.3;
+        display: inline !important;
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+    }
+    .payment-status-badge.badge-paid {
+        color: #16a34a !important;
+    }
+    .payment-status-badge.badge-pending {
+        color: #d97706 !important;
+    }
+    .payment-status-badge.badge-canceled {
+        color: #dc2626 !important;
+    }
+
+    .btn-detail-address {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 7px 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        text-align: center;
+    }
+    .btn-detail-address:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+
+    .summary-calc-row .badge,
+    .summary-calc-list .badge,
+    .summary-card .badge {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+    }
+
+    /* Biteship Tracking Modal Styles */
+    .biteship-modal-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(15, 23, 42, 0.65) !important;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: none;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 999999 !important;
+        padding: 16px;
+        margin: 0 !important;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+    .biteship-modal-backdrop.show {
+        display: flex !important;
+        opacity: 1 !important;
+    }
+
+    .biteship-modal-dialog {
+        background: #ffffff !important;
+        width: 100% !important;
+        max-width: 580px !important;
+        max-height: 90vh !important;
+        margin: auto !important;
+        position: relative !important;
+        border-radius: 16px !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalScaleUp {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .biteship-modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .biteship-modal-title-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .biteship-modal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0284c7;
+        background: #e0f2fe;
+        border: 1px solid #bae6fd;
+        padding: 2px 8px;
+        border-radius: 50px;
+        width: fit-content;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .biteship-modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 2px 0 0;
+    }
+
+    .biteship-modal-subtitle {
+        font-size: 12.5px;
+        color: #64748b;
+    }
+
+    .biteship-modal-close {
+        background: #f1f5f9;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: #64748b;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    .biteship-modal-close:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .biteship-modal-body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .tracking-summary-strip {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .summary-item .label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+    .summary-item .value {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .badge-track-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 50px;
+        font-size: 11.5px;
+        font-weight: 600;
+        width: fit-content;
+    }
+    .badge-track-pill.pill-success {
+        background: #e8f8ed;
+        color: #00b207;
+        border: 1px solid #b7ebc5;
+    }
+    .badge-track-pill.pill-info {
+        background: #e0f2fe;
+        color: #0284c7;
+        border: 1px solid #bae6fd;
+    }
+    .badge-track-pill.pill-warning {
+        background: #fef3c7;
+        color: #d97706;
+        border: 1px solid #fde68a;
+    }
+    .badge-track-pill.pill-danger {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    .badge-track-pill.pill-secondary {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .tracking-timeline-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .timeline-heading {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .tracking-timeline {
+        position: relative;
+        padding-left: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .tracking-timeline::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        bottom: 8px;
+        left: 10px;
+        width: 2px;
+        background: #e2e8f0;
+    }
+
+    .timeline-step {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -28px;
+        top: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        z-index: 2;
         background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 24px;
+    }
+    .timeline-marker.marker-success {
+        background: #00b207;
+        color: white;
+        box-shadow: 0 0 0 3px rgba(0, 178, 7, 0.15);
+    }
+    .timeline-marker.marker-active {
+        background: #0284c7;
+        color: white;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+        animation: pulseMarker 1.8s infinite;
+    }
+    .timeline-marker.marker-muted {
+        background: #ffffff;
+        border: 2px solid #cbd5e1;
+        color: #94a3b8;
+    }
+    .timeline-marker.marker-danger {
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+
+    @keyframes pulseMarker {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+
+    .timeline-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .timeline-step:not(.active) .timeline-title {
+        color: #64748b;
+    }
+
+    .timeline-time {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: #64748b;
+    }
+
+    .timeline-desc {
+        font-size: 12.5px;
+        color: #475569;
+        line-height: 1.45;
+    }
+
+    .biteship-modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: #f8fafc;
+    }
+
+    .btn-modal-close {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-modal-close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .btn-modal-wa {
+        background: #25d366;
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
+    }
+    .btn-modal-wa:hover {
+        background: #1ebc59;
+        color: white;
+        transform: translateY(-1px);
+    }
+    /* Summary cards grid styling */
+    .summary-cards-row {
+        margin-left: -7px;
+        margin-right: -7px;
+        margin-bottom: 24px;
+    }
+    .summary-cards-row > [class*="col-"] {
+        padding-left: 7px;
+        padding-right: 7px;
+        display: flex;
+        flex-direction: column;
+    }
+    .summary-card-footer {
+        border-top: 1px dashed #f1f5f9;
+        padding-top: 12px;
+        margin-top: auto;
+    }
+
+    .summary-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 18px 16px;
         height: 100%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .summary-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     }
 
     .summary-card-title {
         font-size: 12px;
-        font-weight: 600;
-        color: #999;
-        letter-spacing: 1px;
-        margin-bottom: 15px;
+        font-weight: 700;
+        color: #64748b;
+        letter-spacing: 0.6px;
+        margin-bottom: 14px;
         text-transform: uppercase;
-        border-bottom: 1px solid #f2f2f2;
+        border-bottom: 1px solid #f1f5f9;
         padding-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .summary-card-title i {
+        color: #00b207;
+        font-size: 14px;
     }
 
     .summary-card-name {
-        font-size: 16px;
-        font-weight: 600;
-        color: #1a1a1a;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
         margin-bottom: 6px;
     }
 
     .summary-card-address {
-        font-size: 13.5px;
-        color: #666;
+        font-size: 13px;
+        color: #475569;
         line-height: 1.5;
         margin-bottom: 12px;
-        min-height: 38px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .summary-card-contact {
         font-size: 13px;
-        color: #333;
-        margin-bottom: 4px;
+        color: #1e293b;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
     
-    .summary-card-contact span {
-        color: #666;
+    .summary-card-contact .label {
+        color: #64748b;
+        font-size: 12.5px;
     }
 
     /* Summary calculations card specific list */
     .summary-calc-list {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 9px;
     }
 
     .summary-calc-row {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         font-size: 13px;
-        color: #666;
-        border-bottom: 1px dashed #f2f2f2;
-        padding-bottom: 6px;
+        color: #475569;
+        border-bottom: 1px dashed #f1f5f9;
+        padding-bottom: 7px;
     }
 
     .summary-calc-row:last-child {
@@ -371,56 +986,150 @@
         padding-bottom: 0;
     }
 
+    .summary-card-footer.summary-total-footer {
+        background: #f0fdf4;
+        border: 1px solid #dcfce7;
+        border-radius: 8px;
+        padding: 9px 12px;
+        margin-top: 10px;
+    }
+
     .summary-calc-row.main-total {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1a1a1a;
-        padding-top: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        width: 100%;
+        gap: 6px;
+        border: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .summary-calc-row.main-total span:first-child {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #1e293b;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .summary-calc-row.main-total span:last-child {
         color: #00b207;
-        font-size: 16px;
-        font-weight: 700;
+        font-size: 15.5px;
+        font-weight: 800;
+        white-space: nowrap;
+        letter-spacing: -0.2px;
     }
 
     /* Visual tracking stepper styling */
     .tracking-card {
         background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        padding: 24px;
-        margin: 30px 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        width: 100%;
     }
 
-    .stepper-container {
+    .tracking-card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin: 25px 0 10px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .tracking-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .tracking-title {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stepper-live-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        padding: 3px 10px;
+        border-radius: 50px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+    }
+
+    .live-dot-pulse {
+        width: 7px;
+        height: 7px;
+        background-color: #16a34a;
+        border-radius: 50%;
+        display: inline-block;
+        animation: liveDotGlow 1.8s infinite ease-in-out;
+    }
+
+    @keyframes liveDotGlow {
+        0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6); transform: scale(0.95); }
+        70% { box-shadow: 0 0 0 5px rgba(22, 163, 74, 0); transform: scale(1); }
+        100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); transform: scale(0.95); }
+    }
+
+    .tracking-est-pill {
+        font-size: 12.5px;
+        color: #475569;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 5px 14px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .tracking-est-pill strong {
+        color: #0f172a;
+        margin-left: 4px;
+    }
+
+    .order-canceled-alert {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        border-radius: 8px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .order-canceled-alert i {
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    /* Option B: Clean Dashed Step Trail with Micro-Checkpoint Dots */
+    .stepper-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin: 20px 0 10px;
         position: relative;
-        padding: 0 40px;
-    }
-    
-    .stepper-line-bg {
-        position: absolute;
-        top: 24px;
-        left: 100px;
-        right: 100px;
-        height: 4px;
-        background-color: #e6e6e6;
-        z-index: 1;
-    }
-    
-    .stepper-line-active {
-        position: absolute;
-        top: 24px;
-        left: 100px;
-        height: 4px;
-        background-color: #00b207;
-        z-index: 2;
-        transition: width 0.3s;
+        padding: 0;
+        width: 100%;
     }
 
     .step-item {
@@ -428,48 +1137,147 @@
         flex-direction: column;
         align-items: center;
         position: relative;
-        z-index: 3;
-        width: 120px;
+        flex: 1 1 20%;
+        max-width: 20%;
+        padding: 0 4px;
     }
 
-    .step-circle {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background-color: white;
-        border: 2px solid #e6e6e6;
+    .step-node-wrap {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-        color: #bbb;
-        transition: all 0.3s;
+        width: 100%;
+        height: 28px;
     }
 
-    .step-item.active .step-circle {
-        border-color: #00b207;
-        color: #00b207;
-        background-color: white;
+    .step-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: #f8fafc;
+        border: 1.5px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 11px;
+        color: #94a3b8;
+        position: relative;
+        z-index: 2;
+        transition: all 0.25s ease;
     }
 
     .step-item.completed .step-circle {
         background-color: #00b207;
         border-color: #00b207;
-        color: white;
+        color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0, 178, 7, 0.25);
+    }
+
+    .step-item.active .step-circle {
+        background-color: #ffffff;
+        border: 2px solid #00b207;
+        color: #00b207;
+        box-shadow: 0 0 0 4px rgba(0, 178, 7, 0.12);
+    }
+
+    .micro-active-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #00b207;
+        border-radius: 50%;
+        display: inline-block;
+        animation: microPulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes microPulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.3);
+            opacity: 0.75;
+        }
+    }
+
+    .step-trail-line {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 0;
+        z-index: 1;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .step-trail-line.trail-solid {
+        border-top: 2px solid #00b207;
+    }
+
+    .step-trail-line.trail-dashed {
+        border-top: 2px dashed #cbd5e1;
+    }
+
+    .step-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        text-align: center;
+        margin-top: 8px;
     }
 
     .step-label {
-        margin-top: 10px;
-        font-size: 13px;
-        font-weight: 500;
-        color: #999;
-        transition: color 0.3s;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #64748b;
+        line-height: 1.35;
         text-align: center;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.25s ease;
     }
 
-    .step-item.active .step-label,
+    .step-item.active .step-label {
+        color: #00b207;
+        font-weight: 700;
+    }
+
     .step-item.completed .step-label {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .step-sub-wrap {
+        min-height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 3px;
+        width: 100%;
+    }
+
+    .step-sub-meta {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        line-height: 1.3;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .step-item.active .step-sub-meta {
         color: #00b207;
         font-weight: 600;
     }
@@ -477,10 +1285,22 @@
     /* Products Details List Table */
     .products-table-card {
         background: white;
-        border: 1px solid #e6e6e6;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         overflow: hidden;
+        margin-bottom: 24px;
+        width: 100%;
+    }
+    .products-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #ffffff;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .products-table {
@@ -491,18 +1311,19 @@
 
     .products-table th {
         font-size: 12px;
-        font-weight: 600;
-        color: #888;
+        font-weight: 700;
+        color: #64748b;
         text-transform: uppercase;
-        padding: 16px 24px;
-        border-bottom: 1px solid #e6e6e6;
-        background-color: #fafafa;
+        padding: 14px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+        letter-spacing: 0.5px;
     }
 
     .products-table td {
-        padding: 20px 24px;
+        padding: 18px 24px;
         vertical-align: middle;
-        border-bottom: 1px solid #f2f2f2;
+        border-bottom: 1px solid #f1f5f9;
     }
 
     .products-table tr:last-child td {
@@ -512,55 +1333,72 @@
     .product-cell {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 14px;
     }
 
     .product-img-wrap {
-        width: 65px;
-        height: 65px;
-        border-radius: 4px;
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
         overflow: hidden;
-        border: 1px solid #e6e6e6;
-        background: #f9f9f9;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 3px;
+        padding: 2px;
         flex-shrink: 0;
     }
 
     .product-img-wrap img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
     }
 
     .product-title {
         font-size: 14.5px;
-        font-weight: 500;
-        color: #1a1a1a;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.4;
+        display: block;
+    }
+
+    .custom-cake-text-pill {
+        margin-top: 5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #e8f8ed;
+        color: #00b207;
+        border: 1px solid #b7ebc5;
+        padding: 3px 9px;
+        border-radius: 4px;
+        font-size: 11.5px;
+        font-weight: 600;
     }
 
     .product-price-col {
         font-size: 14px;
-        color: #1a1a1a;
+        color: #334155;
         font-weight: 500;
     }
 
-    .product-qty-col {
-        font-size: 14px;
-        color: #666;
+    .qty-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        background: #f1f5f9;
+        color: #334155;
+        border-radius: 4px;
+        font-size: 12.5px;
+        font-weight: 600;
     }
 
     .product-subtotal-col {
-        font-size: 14px;
-        color: #1a1a1a;
-        font-weight: 600;
-    }
-    
-    .products-table-card {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        font-size: 14.5px;
+        color: #0f172a;
+        font-weight: 700;
     }
 
     @media (max-width: 768px) {
@@ -570,6 +1408,11 @@
         .details-header-flex {
             flex-direction: column;
             align-items: flex-start;
+            gap: 14px;
+        }
+        .details-title-meta {
+            flex-wrap: wrap;
+            gap: 6px;
         }
         .details-header-actions {
             width: 100%;
@@ -577,67 +1420,392 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-        .details-header-actions a, .details-header-actions button {
-            flex: 1;
+        .details-header-actions a,
+        .details-header-actions button,
+        .details-header-actions span {
+            flex: 1 1 auto;
             text-align: center;
-            padding: 8px 12px;
-            font-size: 13px;
+            justify-content: center;
         }
         .stepper-container {
             flex-direction: column;
             align-items: flex-start;
-            padding: 10px 20px;
-            gap: 30px;
-        }
-        .stepper-line-bg {
-            top: 20px;
-            bottom: 20px;
-            left: 42px;
-            width: 4px;
-            height: auto;
-            right: auto;
-        }
-        .stepper-line-active {
-            top: 20px;
-            left: 42px;
-            width: 4px !important;
-            height: calc(({{ $connectorWidth }} / 100) * (100% - 40px)) !important;
-            right: auto;
+            padding: 10px 10px;
+            gap: 20px;
         }
         .step-item {
             flex-direction: row;
             width: 100%;
-            align-items: center;
+            max-width: 100%;
+            align-items: flex-start;
             justify-content: flex-start;
-            gap: 20px;
+            gap: 14px;
             text-align: left;
+            padding: 0;
+            position: relative;
+        }
+        .step-node-wrap {
+            width: 28px;
+            height: auto;
+            flex-shrink: 0;
+            justify-content: center;
+            position: relative;
+        }
+        .step-trail-line {
+            top: 28px;
+            left: 13px;
+            width: 0;
+            height: calc(100% + 20px);
+            transform: none;
+        }
+        .step-trail-line.trail-solid {
+            border-top: none;
+            border-left: 2px solid #00b207;
+        }
+        .step-trail-line.trail-dashed {
+            border-top: none;
+            border-left: 2px dashed #cbd5e1;
+        }
+        .step-content {
+            align-items: flex-start;
+            text-align: left;
+            margin-top: 2px;
+            flex: 1;
+            min-width: 0;
         }
         .step-label {
             margin-top: 0;
+            min-height: auto;
             text-align: left;
+            justify-content: flex-start;
+            font-size: 13.5px;
         }
-    }
+        .step-sub-wrap {
+            justify-content: flex-start;
+            min-height: auto;
+            margin-top: 2px;
+        }
+        .step-sub-meta {
+            justify-content: flex-start;
+        }
     
     .btn-pay-now-solid {
         background-color: #00b207 !important;
         color: white !important;
         border: none !important;
-        border-radius: 4px !important;
-        padding: 8px 16px !important;
+        border-radius: 50px !important;
+        padding: 9px 20px !important;
         font-size: 13px !important;
         font-weight: 600 !important;
         cursor: pointer !important;
-        transition: 0.3s !important;
+        transition: 0.2s !important;
         display: inline-flex !important;
         align-items: center !important;
         gap: 6px !important;
         text-decoration: none !important;
+        box-shadow: 0 2px 6px rgba(0, 178, 7, 0.2) !important;
     }
     .btn-pay-now-solid:hover {
         background-color: #008f05 !important;
         color: white !important;
     }
+
+    /* Status and Alert Banners */
+    .return-status-banner {
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        transition: all 0.2s ease;
+    }
+    .return-status-banner.return-success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-left: 5px solid #16a34a;
+    }
+    .return-status-banner.return-success i {
+        font-size: 24px;
+        color: #16a34a;
+        flex-shrink: 0;
+    }
+    .return-status-banner.return-success h4 {
+        margin: 0;
+        font-size: 14.5px;
+        color: #14532d;
+        font-weight: 700;
+    }
+    .return-status-banner.return-success p {
+        margin: 3px 0 0;
+        font-size: 13px;
+        color: #166534;
+    }
+    .return-status-banner.return-expired {
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-left: 5px solid #f59e0b;
+    }
+    .return-status-banner.return-expired i {
+        font-size: 24px;
+        color: #d97706;
+        flex-shrink: 0;
+    }
+    .return-status-banner.return-expired h4 {
+        margin: 0;
+        font-size: 14.5px;
+        color: #78350f;
+        font-weight: 700;
+    }
+    .return-status-banner.return-expired p {
+        margin: 3px 0 0;
+        font-size: 13px;
+        color: #92400e;
+    }
+    .btn-return-disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        pointer-events: none;
+        background: #94a3b8 !important;
+        border-color: #94a3b8 !important;
+        color: white !important;
+    }
+    .payment-countdown-banner {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1px solid #fde68a;
+        border-left: 5px solid #f59e0b;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    .payment-countdown-content {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .payment-countdown-content i {
+        font-size: 24px;
+        color: #d97706;
+        animation: clockPulse 2s infinite ease-in-out;
+        flex-shrink: 0;
+    }
+    .payment-countdown-content h4 {
+        margin: 0;
+        font-size: 14.5px;
+        color: #78350f;
+        font-weight: 700;
+    }
+    .payment-countdown-content p {
+        margin: 3px 0 0;
+        font-size: 13px;
+        color: #92400e;
+    }
+    .countdown-timer-wrapper {
+        text-align: right;
+        flex-shrink: 0;
+    }
+    .countdown-timer-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #92400e;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 3px;
+    }
+    .countdown-timer-clock {
+        font-size: 20px;
+        font-weight: 800;
+        color: #991b1b;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        display: inline-block;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    @keyframes clockPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    /* Address Modal Minimalist Card Design */
+    .modal-address-dialog {
+        max-width: 490px;
+        border-radius: 16px !important;
+        overflow: hidden;
+    }
+    .modal-address-dialog .biteship-modal-header {
+        padding: 18px 22px;
+        background: #ffffff;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .modal-address-dialog .biteship-modal-body.modal-address-body {
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: #f8fafc;
+    }
+    .modal-address-dialog .biteship-modal-footer {
+        padding: 14px 20px;
+        background: #ffffff;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+    }
+    .modal-section-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .modal-section-card.note-card {
+        background: #fffdf5;
+        border-color: #fef08a;
+    }
+    .section-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2px;
+    }
+    .section-card-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #1e293b;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .section-card-title.text-amber {
+        color: #92400e;
+    }
+    .section-card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .section-card-divider {
+        height: 1px;
+        background: #f1f5f9;
+        margin: 2px 0;
+    }
+    .modal-kv-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .modal-kv-label {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .modal-kv-value {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+    .modal-kv-box {
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.55;
+        padding: 0;
+        background: transparent;
+        border: none;
+    }
+    .modal-kv-box.address-box {
+        color: #1e293b;
+        font-weight: 500;
+    }
+    .modal-kv-box.notes-box {
+        color: #78350f;
+        font-size: 12.5px;
+        line-height: 1.5;
+        background: transparent;
+        border: none;
+        padding: 0;
+    }
+    @media (max-width: 576px) {
+        .modal-section-card {
+            padding: 12px 14px;
+        }
+        .section-card-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+    }
+    /* Products Table Column Hierarchy */
+    .products-card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .products-card-total {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .products-card-total strong {
+        color: #00b207;
+        font-size: 15px;
+    }
+    .col-product-main {
+        width: 50%;
+    }
+    .col-product-price {
+        width: 15%;
+        text-align: right;
+    }
+    .col-product-qty {
+        width: 15%;
+        text-align: center;
+    }
+    .col-product-subtotal {
+        width: 20%;
+        text-align: right;
+    }
+    .products-table-empty {
+        text-align: center;
+        padding: 36px 16px;
+        color: #64748b;
+    }
+    .products-table-empty i {
+        font-size: 32px;
+        color: #cbd5e1;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    /* Focus States for Accessibility */
+    .btn-detail-address:focus-visible,
+    .btn-track-order-top:focus-visible,
+    .btn-cancel-top:focus-visible,
+    .btn-copy-resi:focus-visible,
+    .biteship-modal-close:focus-visible {
+        outline: 2px solid #00b207;
+        outline-offset: 2px;
+    }
 </style>
+
 @endsection
 
 @section('content')
@@ -690,240 +1858,448 @@
             <div class="details-container">
                 
                 @php
-                    $isPending = Str::contains(strtolower($order->order_status), ['menunggu', 'pending']);
+                    $isCanceled = $order->is_canceled;
+                    $isCompleted = $order->is_completed;
+                    $isShipping = $order->is_shipping;
+                    $isProcessing = $order->is_processing;
+                    $isAwaitingConfirmation = $order->is_awaiting_confirmation;
+                    $isPending = $order->is_pending;
+                    $canBeCanceled = $order->can_be_canceled;
+                    $statusStep = $order->status_step;
+
+                    $pillClass = 'badge-status-processing';
+                    $pillIcon = 'fa-box-open';
+                    $pillLabel = 'Sedang Diproses';
+
+                    if ($isCompleted) {
+                        $pillClass = 'badge-status-completed';
+                        $pillIcon = 'fa-circle-check';
+                        $pillLabel = 'Pesanan Selesai';
+                    } elseif ($isShipping) {
+                        $pillClass = 'badge-status-shipping';
+                        $pillIcon = 'fa-truck-fast';
+                        $pillLabel = 'Sedang Dikirim';
+                    } elseif ($isProcessing) {
+                        $pillClass = 'badge-status-processing';
+                        $pillIcon = 'fa-box-open';
+                        $pillLabel = 'Sedang Diproses';
+                    } elseif ($isAwaitingConfirmation) {
+                        $pillClass = 'badge-status-awaiting';
+                        $pillIcon = 'fa-clock-rotate-left';
+                        $pillLabel = 'Menunggu Konfirmasi';
+                    } elseif ($isPending) {
+                        $pillClass = 'badge-status-pending';
+                        $pillIcon = 'fa-hourglass-half';
+                        $pillLabel = 'Menunggu Pembayaran';
+                    } elseif ($isCanceled) {
+                        $pillClass = 'badge-status-canceled';
+                        $pillIcon = 'fa-circle-xmark';
+                        $pillLabel = 'Pesanan Dibatalkan';
+                    }
+
+                    $connectorWidth = match($statusStep) {
+                        2 => 25,
+                        3 => 50,
+                        4 => 75,
+                        5 => 100,
+                        default => 0,
+                    };
                 @endphp
                 
+                <!-- Order Top Navigation -->
+                <div class="order-top-nav-bar">
+                    <a href="{{ route('order.history') }}" class="green-link">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Kembali ke Riwayat
+                    </a>
+                </div>
+
                 <div class="details-header-flex">
                     <div class="details-title-meta">
-                        <h2 class="details-title">Order Details</h2>
-                        <div class="dot-separator"></div>
-                        <div>{{ $order->created_at->format('M d, Y') }}</div>
-                        <div class="dot-separator"></div>
-                        <div>{{ count($items) }} Products</div>
+                        <div class="details-title-row">
+                            <h2 class="details-title">Pesanan {{ $order->order_number }}</h2>
+                            <span class="order-status-pill {{ $pillClass }}">
+                                <i class="fa-solid {{ $pillIcon }}"></i> {{ $pillLabel }}
+                            </span>
+                        </div>
+                        <div class="details-meta-sub">
+                            <span><i class="fa-regular fa-calendar-days me-1"></i> {{ $order->created_at->format('d M Y, H:i') }}</span>
+                            <span class="dot-separator"></span>
+                            <span><i class="fa-solid fa-basket-shopping me-1"></i> {{ count($items) }} Produk</span>
+                        </div>
                     </div>
                     
                     <div class="details-header-actions">
-                        <a href="{{ route('order.history') }}" class="green-link">Back to List</a>
-                        
-                        @if($isPending)
-                            @if (strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
-                                <button onclick="payOrderNow('{{ $order->id }}')"
-                                    class="btn-pay-now-solid" style="margin-right: 10px;"><i class="fa-solid fa-credit-card"></i> Pay Now</button>
+                        <div class="header-actions-group">
+                            @if($isPending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
+                                <button onclick="payOrderNow('{{ $order->id }}')" class="btn-pay-now-solid">
+                                    <i class="fa-solid fa-credit-card me-1"></i> Bayar Sekarang
+                                </button>
                             @endif
-                            <button onclick="cancelOrderDetail('{{ $order->id }}', '{{ $order->order_number }}')" class="btn-cancel-top">Cancel Order</button>
-                        @elseif(Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
-                            @php
-                                $existingReturRecord = \App\Models\Retur::where('order_id', $order->order_number)->first();
-                                $alreadyReturned = !is_null($existingReturRecord);
-                                $returnExpired = $order->updated_at && \Carbon\Carbon::parse($order->updated_at)->addDay()->isPast();
-                            @endphp
-                            @if (!$alreadyReturned && !$returnExpired)
-                                <a href="{{ route('order.return', $order->id) }}" class="btn-return-top"><i class="fa-solid fa-rotate-left" style="margin-right: 6px;"></i>Return Order</a>
-                            @elseif ($alreadyReturned)
-                                <span class="btn-return-top" style="opacity: 0.65; cursor: not-allowed; pointer-events: none; background: #6c757d; border-color: #6c757d;">
-                                    <i class="fa-solid fa-check" style="margin-right: 6px;"></i>Sudah Diretur
-                                </span>
-                            @else
-                                <span class="btn-return-top" style="opacity: 0.65; cursor: not-allowed; pointer-events: none; background: #6c757d; border-color: #6c757d;">
-                                    <i class="fa-solid fa-clock" style="margin-right: 6px;"></i>Retur Kadaluarsa
-                                </span>
+
+                            <button type="button" onclick="openBiteshipTrackingModal()" class="btn-track-order-top">
+                                <i class="fa-solid fa-location-crosshairs me-1"></i> Lacak Pesanan
+                            </button>
+
+                            @if($isCompleted)
+                                @php
+                                    $existingReturRecord = \App\Models\Retur::where('order_id', $order->order_number)->first();
+                                    $alreadyReturned = !is_null($existingReturRecord);
+                                    $returnExpired = $order->updated_at && \Carbon\Carbon::parse($order->updated_at)->addDay()->isPast();
+                                @endphp
+                                @if (!$alreadyReturned && !$returnExpired)
+                                    <a href="{{ route('order.return', $order->id) }}" class="btn-return-top"><i class="fa-solid fa-rotate-left me-1"></i>Ajukan Retur</a>
+                                @elseif ($alreadyReturned)
+                                    <span class="btn-return-top btn-return-disabled">
+                                        <i class="fa-solid fa-check me-1"></i>Sudah Diretur
+                                    </span>
+                                @else
+                                    <span class="btn-return-top btn-return-disabled">
+                                        <i class="fa-solid fa-clock me-1"></i>Batas Retur Lewat
+                                    </span>
+                                @endif
                             @endif
-                        @else
-                            <button class="btn-cancel-top disabled" disabled>Cancel Order</button>
-                        @endif
+
+                            @if($canBeCanceled)
+                                <button onclick="cancelOrderDetail('{{ $order->id }}', '{{ $order->order_number }}')" class="btn-cancel-top">
+                                    <i class="fa-solid fa-ban me-1"></i> Batalkan Pesanan
+                                </button>
+                            @elseif(!$isCanceled)
+                                <button class="btn-cancel-top disabled" disabled title="Pesanan tidak dapat dibatalkan"><i class="fa-solid fa-ban me-1"></i> Batalkan Pesanan</button>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
                 @if(isset($alreadyReturned) && $alreadyReturned)
-                    <div class="return-status-banner" style="background: #e8f5e9; border-left: 5px solid #2e7d32; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div class="return-status-banner return-success">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fa-solid fa-circle-check" style="font-size: 24px; color: #2e7d32;"></i>
+                            <i class="fa-solid fa-circle-check"></i>
                             <div>
-                                <h4 style="margin: 0; font-size: 15px; color: #1b5e20; font-weight: 700;">Pengajuan Retur Telah Diterima</h4>
-                                <p style="margin: 3px 0 0 0; font-size: 13px; color: #2e7d32;">Pengembalian untuk pesanan ini telah diajukan (Status: <strong>{{ $existingReturRecord->status }}</strong>). Anda dapat memantau status retur di menu Riwayat Retur.</p>
+                                <h4>Pengajuan Retur Telah Diterima</h4>
+                                <p>Pengembalian untuk pesanan ini telah diajukan (Status: <strong>{{ $existingReturRecord->status }}</strong>). Anda dapat memantau status retur di menu Riwayat Retur.</p>
                             </div>
                         </div>
                         <a href="{{ route('return.detail', $existingReturRecord->id) }}" class="btn btn-sm btn-outline-success" style="border-radius: 6px; font-weight: 600; white-space: nowrap;">Lihat Detail Retur</a>
                     </div>
-                @elseif(isset($returnExpired) && $returnExpired && !$alreadyReturned && Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
-                    <div class="return-status-banner" style="background: #fff3cd; border-left: 5px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; color: #856404;"></i>
+                @elseif(isset($returnExpired) && $returnExpired && !$alreadyReturned && $isCompleted)
+                    <div class="return-status-banner return-expired">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
                         <div>
-                            <h4 style="margin: 0; font-size: 15px; color: #856404; font-weight: 700;">Batas Waktu Retur Berakhir</h4>
-                            <p style="margin: 3px 0 0 0; font-size: 13px; color: #665014;">Batas waktu pengajuan retur (24 jam setelah pesanan selesai) telah berakhir.</p>
+                            <h4>Batas Waktu Retur Berakhir</h4>
+                            <p>Batas waktu pengajuan retur (24 jam setelah pesanan selesai) telah berakhir.</p>
                         </div>
                     </div>
                 @endif
 
-                @if ($isPending)
-                    <div class="payment-countdown-banner" style="background: linear-gradient(135deg, #fff3cd, #ffeeba); border-left: 5px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fa-solid fa-clock-rotate-left" style="font-size: 24px; color: #856404; animation: pulse 2s infinite;"></i>
+                @if ($isPending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
+                    <div class="payment-countdown-banner">
+                        <div class="payment-countdown-content">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
                             <div>
-                                <h4 style="margin: 0; font-size: 15px; color: #856404; font-weight: 700;">Selesaikan Pembayaran Anda</h4>
-                                <p style="margin: 3px 0 0 0; font-size: 13px; color: #665014;">Silakan lakukan pembayaran sebelum waktu habis agar pesanan tidak otomatis dibatalkan.</p>
+                                <h4>Selesaikan Pembayaran Anda</h4>
+                                <p>Silakan lakukan pembayaran sebelum waktu habis agar pesanan tidak otomatis dibatalkan.</p>
                             </div>
                         </div>
-                        <div class="countdown-timer-wrapper" style="text-align: right; flex-shrink: 0;">
-                            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #856404; font-weight: 600; display: block; margin-bottom: 2px;">Sisa Waktu</span>
-                            <span id="paymentCountdown" class="countdown-timer-clock" style="font-size: 20px; font-weight: 800; color: #721c24; font-family: monospace; background: rgba(255,255,255,0.7); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.05); display: inline-block;">00:00:00</span>
+                        <div class="countdown-timer-wrapper">
+                            <span class="countdown-timer-label">Sisa Waktu</span>
+                            <span id="paymentCountdown" class="countdown-timer-clock">00:00:00</span>
                         </div>
                     </div>
-                    <style>
-                        @keyframes pulse {
-                            0% { transform: scale(1); }
-                            50% { transform: scale(1.1); }
-                            100% { transform: scale(1); }
-                        }
-                    </style>
                 @endif
-                
-                <div class="row">
+
+                <!-- Three Information Summary Cards -->
+                <div class="row summary-cards-row mb-4">
                     <!-- Address Card -->
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <div class="summary-card">
-                            <div class="summary-card-title">Address</div>
-                            <div class="summary-card-name" id="displayBillingName">{{ $user->nama }}</div>
-                            <div class="summary-card-address" id="displayBillingAddress">pekanbaru, Rumbai, Umban Sari</div>
-                            <div class="summary-card-contact">
-                                <span>Email:</span> <span id="displayBillingEmail">{{ $user->email }}</span>
+                            <div>
+                                <div class="summary-card-title">
+                                    <i class="fa-solid fa-location-dot"></i> Alamat Pengiriman
+                                </div>
+                                <div class="summary-card-name" id="displayBillingName">{{ $order->customer_name ?? $user->nama }}</div>
+                                <div class="summary-card-address" id="displayBillingAddress">{{ $order->alamat_pengiriman ?? $user->alamat ?? '-' }}</div>
                             </div>
-                            <div class="summary-card-contact">
-                                <span>Phone:</span> <span id="displayBillingPhone">(+62) {{ $user->no_hp }}</span>
+                            <div class="summary-card-footer">
+                                <button type="button" class="btn-detail-address" onclick="openAddressDetailModal()">
+                                    <i class="fa-regular fa-id-card me-1"></i> Lihat Detail Alamat
+                                </button>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Estimated Arrival Card -->
-                    <div class="col-md-4 mb-4">
+
+                    <!-- Estimated Arrival & Shipping Card -->
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <div class="summary-card">
-                            <div class="summary-card-title">Estimated Arrival</div>
-                            @if(Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered']))
-                                <div class="summary-card-name" style="color: #00b207;">Delivered</div>
-                                <div class="summary-card-address">Your order has been safely delivered to your address.</div>
-                            @elseif(Str::contains(strtolower($order->order_status), ['batal', 'cancel', 'failed']))
-                                <div class="summary-card-name" style="color: #ea4b48;">Canceled</div>
-                                <div class="summary-card-address">This order was canceled and is not scheduled for arrival.</div>
-                            @else
-                                <div class="summary-card-name">{{ $estimatedArrival }}</div>
-                                <div class="summary-card-address">Order is currently scheduled to arrive during this window.</div>
-                            @endif
+                            <div>
+                                <div class="summary-card-title">
+                                    <span><i class="fa-solid fa-truck-fast"></i> Info Pengiriman</span>
+                                </div>
+                                
+                                @php
+                                    $resiCode = $order->resi_code;
+                                @endphp
+
+                                <div class="summary-calc-list">
+                                    <div class="summary-calc-row">
+                                        <span>Kurir:</span>
+                                        <span style="font-weight: 600; color: #0f172a; text-align: right;">
+                                            {{ $order->shipping_method ?? 'Kurir Toko / Pengiriman Standar' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="summary-calc-row">
+                                        <span>No. Resi:</span>
+                                        <span style="display: flex; align-items: center; gap: 6px;">
+                                            <span class="waybill-code" id="orderResiCode">{{ $resiCode }}</span>
+                                            <button type="button" class="btn-copy-resi" onclick="copyTrackingResi('{{ $resiCode }}')" title="Salin nomor resi">
+                                                <i class="fa-regular fa-copy"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+
+                                    <div class="summary-calc-row">
+                                        <span>Status Kirim:</span>
+                                        <div>
+                                            @if($isCompleted)
+                                                <span class="shipping-status-badge badge-delivered">Sampai di Tujuan</span>
+                                            @elseif($isCanceled)
+                                                <span class="shipping-status-badge badge-canceled">Batal Kirim</span>
+                                            @elseif($isShipping)
+                                                <span class="shipping-status-badge badge-transit">Dalam Perjalanan</span>
+                                            @elseif($isProcessing)
+                                                <span class="shipping-status-badge badge-processing">Sedang Dikemas</span>
+                                            @elseif($isAwaitingConfirmation)
+                                                <span class="shipping-status-badge badge-processing" style="color: #d97706 !important;">Menunggu Konfirmasi</span>
+                                            @else
+                                                <span class="shipping-status-badge badge-pending">Menunggu Proses</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="summary-calc-row">
+                                        <span>Perkiraan Tiba:</span>
+                                        <span style="font-weight: 600; color: #0f172a; text-align: right;">
+                                            @if($isCompleted)
+                                                <span class="shipping-status-badge badge-delivered">Diterima</span>
+                                            @elseif($isCanceled)
+                                                <span class="shipping-status-badge badge-canceled">Batal</span>
+                                            @else
+                                                {{ $estimatedArrival }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Order ID & Pricing Card -->
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <div class="summary-card">
-                            <div class="summary-card-title">Summary</div>
-                            <div class="summary-calc-list">
-                                <div class="summary-calc-row">
-                                    <span>Order ID:</span>
-                                    <span style="font-weight: 600; color: #1a1a1a;">{{ $order->order_number }}</span>
+                            <div>
+                                <div class="summary-card-title">
+                                    <i class="fa-solid fa-receipt"></i> Rincian Pembayaran
                                 </div>
-                                <div class="summary-calc-row">
-                                    <span>Payment Method:</span>
-                                    <span style="font-weight: 500;">{{ Str::contains(strtolower($order->order_status), ['selesai', 'completed']) ? 'Paypal' : 'COD' }}</span>
+                                <div class="summary-calc-list">
+                                    <div class="summary-calc-row">
+                                        <span>ID Pesanan:</span>
+                                        <span style="font-weight: 700; color: #0f172a;">{{ $order->order_number }}</span>
+                                    </div>
+                                    <div class="summary-calc-row">
+                                        <span>Metode Bayar:</span>
+                                        <span style="font-weight: 600; color: #0f172a;">{{ strtoupper($order->payment_method ?? 'COD') }}</span>
+                                    </div>
+                                    <div class="summary-calc-row">
+                                        <span>Status Bayar:</span>
+                                        @if(strtoupper($order->payment_status) === 'PAID')
+                                            <span class="payment-status-badge badge-paid">Lunas</span>
+                                        @elseif(strtoupper($order->payment_status) === 'CANCELLED')
+                                            <span class="payment-status-badge badge-canceled">Batal</span>
+                                        @else
+                                            <span class="payment-status-badge badge-pending">Menunggu</span>
+                                        @endif
+                                    </div>
+                                    <div class="summary-calc-row">
+                                        <span>Ongkos Kirim:</span>
+                                        @if(($shippingCost ?? 0) > 0)
+                                            <span style="color: #0f172a; font-weight: 600;">Rp. {{ number_format($shippingCost, 0, ',', '.') }}</span>
+                                        @else
+                                            <span style="color: #00b207; font-weight: 600;">Gratis</span>
+                                        @endif
+                                    </div>
                                 </div>
-                                <div class="summary-calc-row" style="margin-top: 5px;">
-                                    <span>Subtotal:</span>
-                                    <span>Rp. {{ number_format($order->total, 0, ',', '.') }}</span>
-                                </div>
-                                <div class="summary-calc-row">
-                                    <span>Discount:</span>
-                                    <span>0%</span>
-                                </div>
-                                <div class="summary-calc-row">
-                                    <span>Shipping:</span>
-                                    <span>Free</span>
-                                </div>
+                            </div>
+                            <div class="summary-card-footer summary-total-footer">
                                 <div class="summary-calc-row main-total">
-                                    <span>Total:</span>
+                                    <span>Total Tagihan:</span>
                                     <span>Rp. {{ number_format($order->total, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
+
                 <!-- Tracking Status Card -->
-                <div class="tracking-card">
-                    @php
-                        $statusStep = 1;
-                        $isCanceled = Str::contains(strtolower($order->order_status), ['batal', 'cancel', 'failed']);
-                        
-                        if (!$isCanceled) {
-                            if (Str::contains(strtolower($order->order_status), ['selesai', 'completed', 'delivered'])) {
-                                $statusStep = 4;
-                            } elseif (Str::contains(strtolower($order->order_status), ['otw', 'way', 'kirim', 'sedang dikirim'])) {
-                                $statusStep = 3;
-                            } elseif (Str::contains(strtolower($order->order_status), ['proses', 'processing', 'ready'])) {
-                                $statusStep = 2;
-                            }
-                        }
-                        
-                        // Connector line width percentage
-                        $connectorWidth = 0;
-                        if ($statusStep == 2) $connectorWidth = 33.3;
-                        elseif ($statusStep == 3) $connectorWidth = 66.6;
-                        elseif ($statusStep == 4) $connectorWidth = 100;
-                    @endphp
+                <div class="tracking-card mb-4" role="region" aria-label="Status Progres Pengiriman">
+                    <div class="tracking-card-header">
+                        <div class="tracking-title-wrap">
+                            <div class="tracking-title">
+                                <i class="fa-solid fa-route text-success me-1"></i> Status Progres Pengiriman
+                            </div>
+                            @if(!$isCanceled)
+                                <span class="stepper-live-chip">
+                                    <span class="live-dot-pulse"></span>
+                                    {{ $pillLabel }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="tracking-est-pill">
+                            <i class="fa-regular fa-clock me-1 text-muted"></i> Estimasi Tiba: <strong>{{ $estimatedArrival }}</strong>
+                        </div>
+                    </div>
                     
                     @if($isCanceled)
-                        <div style="background-color: #fdf0ea; color: #ea4b48; border-radius: 6px; padding: 15px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px;">
-                            <i class="fa-solid fa-circle-xmark" style="font-size: 18px;"></i>
-                            <span>This order has been Canceled</span>
+                        <div class="order-canceled-alert">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <div>
+                                <strong style="display: block; font-size: 14px;">Pesanan Dibatalkan</strong>
+                                <span style="font-size: 13px; font-weight: 400; opacity: 0.9;">Pesanan ini telah dibatalkan dan pengiriman dihentikan.</span>
+                            </div>
                         </div>
                     @else
-                        <div class="stepper-container">
-                            <div class="stepper-line-bg"></div>
-                            <div class="stepper-line-active" style="width: calc(({{ $connectorWidth }} / 100) * (100% - 200px));"></div>
-                            
-                            <!-- Step 1: Order received -->
-                            <div class="step-item {{ $statusStep >= 1 ? ($statusStep > 1 ? 'completed' : 'active') : '' }}">
-                                <div class="step-circle">
-                                    @if($statusStep > 1)
-                                        <i class="fa-solid fa-check"></i>
-                                    @else
-                                        01
-                                    @endif
+                        @php
+                            $isCod = strtoupper($order->payment_method ?? '') === 'COD';
+                            $isPaid = strtoupper($order->payment_status ?? '') === 'PAID';
+                        @endphp
+                        <div class="stepper-container" role="progressbar" aria-valuenow="{{ $statusStep }}" aria-valuemin="1" aria-valuemax="5">
+                            <!-- Step 1: Pesanan Dibuat -->
+                            <div class="step-item {{ $statusStep >= 1 ? ($statusStep > 1 ? 'completed' : 'active') : '' }}" aria-current="{{ $statusStep === 1 ? 'step' : 'false' }}">
+                                <div class="step-node-wrap">
+                                    <div class="step-circle">
+                                        @if($statusStep > 1)
+                                            <i class="fa-solid fa-check"></i>
+                                        @elseif($statusStep === 1)
+                                            <span class="micro-active-dot"></span>
+                                        @else
+                                            <i class="fa-solid fa-receipt"></i>
+                                        @endif
+                                    </div>
+                                    <div class="step-trail-line {{ $statusStep >= 2 ? 'trail-solid' : 'trail-dashed' }}"></div>
                                 </div>
-                                <div class="step-label">Order received</div>
+                                <div class="step-content">
+                                    <div class="step-label">Pesanan Dibuat</div>
+                                    <div class="step-sub-wrap">
+                                        <span class="step-sub-meta">
+                                            <i class="fa-regular fa-calendar-check me-1"></i>{{ $order->created_at ? $order->created_at->format('d M, H:i') : 'Tercatat' }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Step 2: Processing -->
-                            <div class="step-item {{ $statusStep >= 2 ? ($statusStep > 2 ? 'completed' : 'active') : '' }}">
-                                <div class="step-circle">
-                                    @if($statusStep > 2)
-                                        <i class="fa-solid fa-check"></i>
-                                    @else
-                                        02
-                                    @endif
+                            <!-- Step 2: Verifikasi Pembayaran -->
+                            <div class="step-item {{ $statusStep >= 2 ? ($statusStep > 2 ? 'completed' : 'active') : '' }}" aria-current="{{ $statusStep === 2 ? 'step' : 'false' }}">
+                                <div class="step-node-wrap">
+                                    <div class="step-circle">
+                                        @if($statusStep > 2)
+                                            <i class="fa-solid fa-check"></i>
+                                        @elseif($statusStep === 2)
+                                            <span class="micro-active-dot"></span>
+                                        @else
+                                            <i class="fa-solid fa-credit-card"></i>
+                                        @endif
+                                    </div>
+                                    <div class="step-trail-line {{ $statusStep >= 3 ? 'trail-solid' : 'trail-dashed' }}"></div>
                                 </div>
-                                <div class="step-label">Processing</div>
+                                <div class="step-content">
+                                    <div class="step-label">Verifikasi Pembayaran</div>
+                                    <div class="step-sub-wrap">
+                                        @if($isCod)
+                                            <span class="step-sub-meta"><i class="fa-solid fa-hand-holding-dollar me-1"></i>Bayar saat diterima</span>
+                                        @elseif($isPaid)
+                                            <span class="step-sub-meta text-success"><i class="fa-solid fa-circle-check me-1"></i>Lunas</span>
+                                        @else
+                                            <span class="step-sub-meta"><i class="fa-regular fa-clock me-1"></i>Menunggu</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Step 3: On the way -->
-                            <div class="step-item {{ $statusStep >= 3 ? ($statusStep > 3 ? 'completed' : 'active') : '' }}">
-                                <div class="step-circle">
-                                    @if($statusStep > 3)
-                                        <i class="fa-solid fa-check"></i>
-                                    @else
-                                        03
-                                    @endif
+                            <!-- Step 3: Dikonfirmasi & Dikemas -->
+                            <div class="step-item {{ $statusStep >= 3 ? ($statusStep > 3 ? 'completed' : 'active') : '' }}" aria-current="{{ $statusStep === 3 ? 'step' : 'false' }}">
+                                <div class="step-node-wrap">
+                                    <div class="step-circle">
+                                        @if($statusStep > 3)
+                                            <i class="fa-solid fa-check"></i>
+                                        @elseif($statusStep === 3)
+                                            <span class="micro-active-dot"></span>
+                                        @else
+                                            <i class="fa-solid fa-box-open"></i>
+                                        @endif
+                                    </div>
+                                    <div class="step-trail-line {{ $statusStep >= 4 ? 'trail-solid' : 'trail-dashed' }}"></div>
                                 </div>
-                                <div class="step-label">On the way</div>
+                                <div class="step-content">
+                                    <div class="step-label">Dikonfirmasi &amp; Dikemas</div>
+                                    <div class="step-sub-wrap">
+                                        @if($statusStep >= 3)
+                                            <span class="step-sub-meta {{ $statusStep === 3 ? 'text-success' : '' }}"><i class="fa-solid fa-kitchen-set me-1"></i>Dapur Zyh Corner</span>
+                                        @elseif($statusStep == 2)
+                                            <span class="step-sub-meta"><i class="fa-solid fa-clock-rotate-left me-1"></i>Menunggu Konfirmasi</span>
+                                        @else
+                                            <span class="step-sub-meta">Persiapan</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Step 4: Delivered -->
-                            <div class="step-item {{ $statusStep >= 4 ? 'completed' : '' }}">
-                                <div class="step-circle">
-                                    @if($statusStep >= 4)
-                                        <i class="fa-solid fa-check"></i>
-                                    @else
-                                        04
-                                    @endif
+                            <!-- Step 4: Sedang Dikirim -->
+                            <div class="step-item {{ $statusStep >= 4 ? ($statusStep > 4 ? 'completed' : 'active') : '' }}" aria-current="{{ $statusStep === 4 ? 'step' : 'false' }}">
+                                <div class="step-node-wrap">
+                                    <div class="step-circle">
+                                        @if($statusStep > 4)
+                                            <i class="fa-solid fa-check"></i>
+                                        @elseif($statusStep === 4)
+                                            <span class="micro-active-dot"></span>
+                                        @else
+                                            <i class="fa-solid fa-truck-fast"></i>
+                                        @endif
+                                    </div>
+                                    <div class="step-trail-line {{ $statusStep >= 5 ? 'trail-solid' : 'trail-dashed' }}"></div>
                                 </div>
-                                <div class="step-label">Delivered</div>
+                                <div class="step-content">
+                                    <div class="step-label">Sedang Dikirim</div>
+                                    <div class="step-sub-wrap">
+                                        @if($statusStep >= 4)
+                                            <span class="step-sub-meta {{ $statusStep === 4 ? 'text-success' : '' }}"><i class="fa-solid fa-truck-arrow-right me-1"></i>{{ Str::limit($order->shipping_method ?? 'Kurir Pengantaran', 18) }}</span>
+                                        @else
+                                            <span class="step-sub-meta"><i class="fa-solid fa-truck me-1"></i>{{ Str::limit($order->shipping_method ?? 'Kurir Pengantaran', 18) }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 5: Pesanan Selesai -->
+                            <div class="step-item {{ $statusStep >= 5 ? 'completed' : '' }}" aria-current="{{ $statusStep >= 5 ? 'step' : 'false' }}">
+                                <div class="step-node-wrap">
+                                    <div class="step-circle">
+                                        @if($statusStep >= 5)
+                                            <i class="fa-solid fa-check"></i>
+                                        @else
+                                            <i class="fa-solid fa-house-chimney"></i>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="step-content">
+                                    <div class="step-label">Pesanan Selesai</div>
+                                    <div class="step-sub-wrap">
+                                        @if($statusStep >= 5)
+                                            <span class="step-sub-meta text-success"><i class="fa-solid fa-circle-check me-1"></i>Tiba di Tujuan</span>
+                                        @else
+                                            <span class="step-sub-meta"><i class="fa-solid fa-location-dot me-1"></i>Tujuan Alamat</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -931,105 +2307,404 @@
                 
                 <!-- Products Details List Card -->
                 <div class="products-table-card">
-                    <table class="products-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 50%;">Product</th>
-                                <th style="width: 15%;">Price</th>
-                                <th style="width: 15%;">Quantity</th>
-                                <th style="width: 20%;">Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($items as $item)
+                    <div class="products-card-header">
+                        <div class="products-card-title">
+                            <i class="fa-solid fa-bag-shopping text-success"></i> Rincian Produk Dipesan ({{ count($items) }})
+                        </div>
+                        <div class="products-card-total">
+                            Total Pesanan: <strong>Rp. {{ number_format($order->total, 0, ',', '.') }}</strong>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="products-table">
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <div class="product-cell">
-                                            <div class="product-img-wrap">
-                                                @if($item['product']->foto_1)
-                                                    <img src="{{ asset('storage/' . $item['product']->foto_1) }}" alt="{{ $item['product']->nama_produk }}">
-                                                @else
-                                                    <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop" alt="Placeholder">
-                                                @endif
-                                            </div>
-                                            <div>
-                                                <span class="product-title">{{ $item['product']->nama_produk }}</span>
-                                                @if(!empty($item['custom_text']))
-                                                    <div class="mt-1" style="font-size: 12px; color: #00b207; font-weight: 500;">
-                                                        <i class="fa-solid fa-pen-nib me-1"></i> Tulisan Kue: "{{ $item['custom_text'] }}"
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="product-price-col">Rp. {{ number_format($item['price'], 0, ',', '.') }}</td>
-                                    <td class="product-qty-col">x{{ $item['qty'] }}</td>
-                                    <td class="product-subtotal-col">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                                    <th class="col-product-main">Produk</th>
+                                    <th class="col-product-price">Harga Satuan</th>
+                                    <th class="col-product-qty">Jumlah</th>
+                                    <th class="col-product-subtotal">Subtotal</th>
                                 </tr>
-                            @empty
-                                <!-- Mock products table matching the screenshot if no products in DB -->
-                                <tr>
-                                    <td>
-                                        <div class="product-cell">
-                                            <div class="product-img-wrap">
-                                                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop" alt="Mock Product">
+                            </thead>
+                            <tbody>
+                                @forelse($items as $item)
+                                    <tr>
+                                        <td>
+                                            <div class="product-cell">
+                                                <div class="product-img-wrap">
+                                                    @if($item['product']->foto_1)
+                                                        <img src="{{ asset('storage/' . $item['product']->foto_1) }}" alt="{{ $item['product']->nama_produk }}">
+                                                    @else
+                                                        <img src="{{ asset('image/logo_circle.png') }}" alt="{{ $item['product']->nama_produk }}">
+                                                    @endif
+                                                </div>
+                                                <div class="product-info-wrap">
+                                                    <span class="product-title">{{ $item['product']->nama_produk }}</span>
+                                                    @if(!empty($item['custom_text']))
+                                                        <div class="custom-cake-text-pill">
+                                                            <i class="fa-solid fa-pen-nib me-1"></i> Tulisan Kue: "{{ $item['custom_text'] }}"
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             </div>
-                                            <span class="product-title">Red Capsicum</span>
-                                        </div>
-                                    </td>
-                                    <td class="product-price-col">Rp. 64.000</td>
-                                    <td class="product-qty-col">x2</td>
-                                    <td class="product-subtotal-col">Rp. 128.000</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="product-cell">
-                                            <div class="product-img-wrap">
-                                                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop" alt="Mock Product">
-                                            </div>
-                                            <span class="product-title">Green Capsicum</span>
-                                        </div>
-                                    </td>
-                                    <td class="product-price-col">Rp. 64.000</td>
-                                    <td class="product-qty-col">x2</td>
-                                    <td class="product-subtotal-col">Rp. 128.000</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="product-cell">
-                                            <div class="product-img-wrap">
-                                                <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop" alt="Mock Product">
-                                            </div>
-                                            <span class="product-title">Green Chili</span>
-                                        </div>
-                                    </td>
-                                    <td class="product-price-col">Rp. 64.000</td>
-                                    <td class="product-qty-col">x2</td>
-                                    <td class="product-subtotal-col">Rp. 128.000</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                        </td>
+                                        <td class="product-price-col" style="text-align: right;">Rp. {{ number_format($item['price'], 0, ',', '.') }}</td>
+                                        <td class="product-qty-col" style="text-align: center;">
+                                            <span class="qty-badge">x{{ $item['qty'] }}</span>
+                                        </td>
+                                        <td class="product-subtotal-col" style="text-align: right;">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="products-table-empty">
+                                            <i class="fa-solid fa-box-open"></i>
+                                            Tidak ada rincian produk untuk pesanan ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                
+
             </div>
         </div>
         
     </div>
 </div>
 
+<!-- Delivery Address Detail Modal -->
+<div class="biteship-modal-backdrop" id="orderAddressDetailModal" onclick="if(event.target === this) closeAddressDetailModal();">
+    <div class="biteship-modal-dialog modal-address-dialog" role="dialog" aria-modal="true" aria-labelledby="modalAddressTitle">
+        <div class="biteship-modal-header">
+            <div class="biteship-modal-title-group">
+                <h3 id="modalAddressTitle" class="biteship-modal-title" style="font-size: 15.5px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-map-location-dot text-success"></i> Informasi Alamat Pengiriman
+                </h3>
+                <div class="biteship-modal-subtitle">Pesanan <strong>{{ $order->order_number }}</strong></div>
+            </div>
+            <button type="button" class="biteship-modal-close" onclick="closeAddressDetailModal()" aria-label="Tutup modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="biteship-modal-body modal-address-body">
+            <!-- Card 1: Penerima & Kontak -->
+            <div class="modal-section-card">
+                <div class="section-card-head">
+                    <span class="section-card-title">
+                        <i class="fa-regular fa-user text-success me-1"></i> Kontak Penerima
+                    </span>
+                </div>
+                <div class="section-card-grid">
+                    <div class="modal-kv-item">
+                        <span class="modal-kv-label">Nama Penerima</span>
+                        <span class="modal-kv-value font-semibold">{{ $order->customer_name ?? $user->nama }}</span>
+                    </div>
+                    <div class="modal-kv-item">
+                        <span class="modal-kv-label">Nomor Telepon</span>
+                        <span id="displayBillingPhoneModal" class="modal-kv-value">
+                            <i class="fa-solid fa-phone text-muted me-1" style="font-size: 11px;"></i>{{ $formattedCustPhone }}
+                        </span>
+                    </div>
+                </div>
+                <div class="section-card-divider"></div>
+                <div class="modal-kv-item">
+                    <span class="modal-kv-label">Email Pembeli</span>
+                    <span id="displayBillingEmailModal" class="modal-kv-value" style="font-weight: 500; font-size: 13px;">
+                        <i class="fa-regular fa-envelope text-muted me-1" style="font-size: 11px;"></i>{{ $order->email_pembeli ?? $user->email }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Card 2: Alamat Pengiriman -->
+            <div class="modal-section-card">
+                <div class="section-card-head">
+                    <span class="section-card-title">
+                        <i class="fa-solid fa-location-dot text-danger me-1"></i> Alamat Lengkap
+                    </span>
+                </div>
+                <div class="modal-kv-box address-box">{{ $order->alamat_pengiriman ?? $user->alamat ?? '-' }}</div>
+            </div>
+
+            <!-- Card 3: Catatan Pengiriman (Kondisional) -->
+            @if(!empty($order->catatan_pesanan))
+                <div class="modal-section-card note-card">
+                    <div class="section-card-head">
+                        <span class="section-card-title text-amber">
+                            <i class="fa-regular fa-note-sticky text-amber me-1"></i> Catatan Pengiriman
+                        </span>
+                    </div>
+                    <div class="modal-kv-box notes-box">{{ $order->catatan_pesanan }}</div>
+                </div>
+            @endif
+        </div>
+
+        <div class="biteship-modal-footer">
+            <button type="button" class="btn-modal-close" onclick="closeAddressDetailModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Biteship Tracking Modal -->
+<div class="biteship-modal-backdrop" id="biteshipTrackingModal" onclick="if(event.target === this) closeBiteshipTrackingModal();">
+    <div class="biteship-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTrackingTitle">
+        <div class="biteship-modal-header">
+            <div class="biteship-modal-title-group">
+                <span class="visually-hidden">Powered by Biteship</span>
+                <h3 id="modalTrackingTitle" class="biteship-modal-title">Pelacakan Pengiriman</h3>
+                <div class="biteship-modal-subtitle">Pesanan <strong>{{ $order->order_number }}</strong> • Resi: <strong id="modalResiCodeDisplay">{{ $resiCode }}</strong></div>
+            </div>
+            <button type="button" class="biteship-modal-close" onclick="closeBiteshipTrackingModal()" aria-label="Tutup modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="biteship-modal-body">
+            <!-- Order & Courier Info Strip -->
+            <div class="tracking-summary-strip">
+                <div class="summary-item">
+                    <span class="label">Kurir Pengiriman</span>
+                    <span class="value"><i class="fa-solid {{ $courierIcon }} text-success me-1"></i> {{ $order->shipping_method ?? 'Kurir Toko / Pengiriman Standar' }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Nomor Resi</span>
+                    <span class="value" style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-family: monospace; font-size: 12.5px;">{{ $resiCode }}</span>
+                        <button type="button" class="btn-copy-resi" onclick="copyTrackingResi('{{ $resiCode }}')" title="Salin resi">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Penerima</span>
+                    <span class="value">{{ $order->customer_name ?? $user->nama }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Status Pengiriman</span>
+                    <span class="value">
+                        @if($isCompleted)
+                            <span class="badge-track-pill pill-success"><i class="fa-solid fa-circle-check me-1"></i> Sampai di Tujuan</span>
+                        @elseif($isCanceled)
+                            <span class="badge-track-pill pill-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Pengiriman Batal</span>
+                        @elseif($isShipping)
+                            <span class="badge-track-pill pill-info"><i class="fa-solid fa-truck-fast me-1"></i> Sedang Dikirim</span>
+                        @elseif($isProcessing)
+                            <span class="badge-track-pill pill-warning"><i class="fa-solid fa-box me-1"></i> Sedang Dikemas</span>
+                        @else
+                            <span class="badge-track-pill pill-secondary"><i class="fa-regular fa-clock me-1"></i> Menunggu Proses</span>
+                        @endif
+                    </span>
+                </div>
+            </div>
+
+            <!-- Checkpoint Timeline -->
+            <div class="tracking-timeline-container">
+                <h4 class="timeline-heading"><i class="fa-solid fa-route me-2 text-success"></i> Status Perjalanan Paket</h4>
+                
+                <div class="tracking-timeline">
+                    @if($isCanceled)
+                        <!-- Step 1: Pesanan Dibuat -->
+                        <div class="timeline-step active">
+                            <div class="timeline-marker marker-success">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Pesanan Dikonfirmasi</div>
+                                <div class="timeline-time">{{ $order->created_at->format('d M Y, H:i') }} WIB</div>
+                                <div class="timeline-desc">Pesanan sempat terdaftar di sistem Zyh Corner.</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Dibatalkan -->
+                        <div class="timeline-step active">
+                            <div class="timeline-marker marker-danger">
+                                <i class="fa-solid fa-ban"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title text-danger">Pengiriman Dibatalkan</div>
+                                <div class="timeline-time">{{ $order->updated_at ? $order->updated_at->format('d M Y, H:i') . ' WIB' : 'Hari ini' }}</div>
+                                <div class="timeline-desc">Proses pengiriman dihentikan karena pesanan dibatalkan.</div>
+                            </div>
+                        </div>
+                    @else
+                        <!-- Step 1: Pesanan Dikonfirmasi & Sedang Disiapkan (Paling Atas) -->
+                        <div class="timeline-step active">
+                            <div class="timeline-marker marker-success">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">{{ $isAwaitingConfirmation ? 'Menunggu Konfirmasi Toko' : ($isPending ? 'Menunggu Pembayaran' : 'Pesanan Dikonfirmasi & Sedang Disiapkan') }}</div>
+                                <div class="timeline-time">{{ $order->created_at->format('d M Y, H:i') }} WIB</div>
+                                <div class="timeline-desc">{{ $isAwaitingConfirmation ? 'Pesanan telah diterima dan sedang menunggu konfirmasi staf kasir/dapur Zyh Corner. Anda masih dapat membatalkan pesanan ini jika diperlukan.' : ($isPending ? 'Menunggu penyelesaian pembayaran sebelum diteruskan ke dapur.' : 'Dapur Zyh Corner telah mengonfirmasi pesanan dan menyiapkan hidangan dengan higienis.') }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Kurir Dialokasikan (Driver Assigned) -->
+                        <div class="timeline-step {{ $statusStep >= 2 ? 'active' : '' }}">
+                            <div class="timeline-marker {{ $statusStep >= 2 ? 'marker-success' : 'marker-muted' }}">
+                                <i class="fa-solid {{ $statusStep >= 2 ? 'fa-check' : 'fa-user-check' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Kurir Dialokasikan (Driver Assigned)</div>
+                                <div class="timeline-time">{{ $statusStep >= 2 ? $order->created_at->addMinutes(15)->format('d M Y, H:i') . ' WIB' : 'Menunggu pesanan siap' }}</div>
+                                <div class="timeline-desc">Sistem logistik Biteship menetapkan kurir terdekat untuk penjemputan paket.</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Paket Diambil oleh Kurir (Picked Up) -->
+                        <div class="timeline-step {{ $statusStep >= 3 ? 'active' : '' }}">
+                            <div class="timeline-marker {{ $statusStep >= 3 ? 'marker-success' : ($statusStep == 2 ? 'marker-active' : 'marker-muted') }}">
+                                <i class="fa-solid {{ $statusStep >= 3 ? 'fa-check' : 'fa-box' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Paket Telah Diambil oleh Kurir</div>
+                                <div class="timeline-time">{{ $statusStep >= 3 ? $order->created_at->addMinutes(30)->format('d M Y, H:i') . ' WIB' : 'Menunggu penjemputan' }}</div>
+                                <div class="timeline-desc">Driver telah mengambil paket dari outlet Zyh Corner dalam kondisi aman dan tersegel.</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Dalam Perjalanan (In Transit) -->
+                        <div class="timeline-step {{ $statusStep >= 3 ? 'active' : '' }}">
+                            <div class="timeline-marker {{ $statusStep >= 4 ? 'marker-success' : ($statusStep == 3 ? 'marker-active' : 'marker-muted') }}">
+                                <i class="fa-solid {{ $statusStep >= 4 ? 'fa-check' : 'fa-motorcycle' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Paket Sedang Diantar ke Alamat Tujuan</div>
+                                <div class="timeline-time">{{ $statusStep >= 3 ? $order->created_at->addMinutes(45)->format('d M Y, H:i') . ' WIB' : 'Menunggu kurir membawa paket' }}</div>
+                                <div class="timeline-desc">Kurir Biteship sedang dalam perjalanan mengantarkan paket menuju alamat pelanggan.</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Paket Sampai di Tujuan / Pesanan Diterima (Paling Bawah) -->
+                        <div class="timeline-step {{ $isCompleted ? 'active' : '' }}">
+                            <div class="timeline-marker {{ $isCompleted ? 'marker-success' : 'marker-muted' }}">
+                                <i class="fa-solid {{ $isCompleted ? 'fa-check' : 'fa-house-chimney' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Paket Sampai di Tujuan (Pesanan Diterima)</div>
+                                <div class="timeline-time">{{ $isCompleted ? ($order->updated_at ? $order->updated_at->format('d M Y, H:i') . ' WIB' : 'Hari ini') : 'Estimasi: ' . $estimatedArrival }}</div>
+                                <div class="timeline-desc">Pesanan telah sampai di lokasi tujuan dan diterima dengan baik oleh pelanggan.</div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="biteship-modal-footer">
+            <button type="button" class="btn-modal-close" onclick="closeBiteshipTrackingModal()">Tutup</button>
+            <a href="https://wa.me/{{ $storePhone ?? '6281298765432' }}?text={{ urlencode('Halo ' . ($storeName ?? 'Zyh Corner') . ', saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $resiCode . ')') }}" target="_blank" class="btn-modal-wa">
+                <i class="fa-brands fa-whatsapp me-1"></i> Hubungi CS Toko
+            </a>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Load profile/address sync from localStorage
+    // Biteship Tracking Modal Handlers
+    function openBiteshipTrackingModal() {
+        const modal = document.getElementById('biteshipTrackingModal');
+        if (modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeBiteshipTrackingModal() {
+        const modal = document.getElementById('biteshipTrackingModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Address Detail Modal Handlers
+    function openAddressDetailModal() {
+        const modal = document.getElementById('orderAddressDetailModal');
+        if (modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    function closeAddressDetailModal() {
+        const modal = document.getElementById('orderAddressDetailModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeBiteshipTrackingModal();
+            closeAddressDetailModal();
+        }
+    });
+
+    // Auto-open modal if URL has ?track=1
     document.addEventListener('DOMContentLoaded', function() {
-        const storedName = localStorage.getItem('zyh_cust_name') || "{{ $user->nama }}";
-        const storedAddress = localStorage.getItem('zyh_cust_address') || "pekanbaru, Rumbai, Umban Sari";
-        const storedEmail = localStorage.getItem('zyh_cust_email') || "{{ $user->email }}";
-        const storedPhone = localStorage.getItem('zyh_cust_phone') || "(+62) {{ $user->no_hp }}";
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('track') === '1') {
+            openBiteshipTrackingModal();
+        }
+    });
+
+    // Copy Tracking Waybill / Resi
+    function copyTrackingResi(code) {
+        if (!code) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(() => {
+                showResiToast(code);
+            }).catch(() => fallbackCopyResi(code));
+        } else {
+            fallbackCopyResi(code);
+        }
+    }
+
+    function fallbackCopyResi(code) {
+        const temp = document.createElement('input');
+        temp.value = code;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        showResiToast(code);
+    }
+
+    function showResiToast(code) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'No. Resi Disalin!',
+                text: code,
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+        }
+    }
+    // Profile/address sync: preserve order-specific address
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderName = @json($order->customer_name ?? $user->nama);
+        const orderEmail = @json($order->email_pembeli ?? $user->email);
+        const orderPhone = @json($formattedCustPhone ?? ($user->no_hp ? '(+62) ' . $user->no_hp : ''));
         
-        document.querySelectorAll('#displayBillingName').forEach(el => el.textContent = storedName);
-        document.querySelectorAll('#displayBillingAddress').forEach(el => el.textContent = storedAddress);
-        document.querySelectorAll('#displayBillingEmail').forEach(el => el.textContent = storedEmail);
-        document.querySelectorAll('#displayBillingPhone').forEach(el => el.textContent = storedPhone);
+        const storedName = orderName || localStorage.getItem('zyh_cust_name');
+        const storedEmail = orderEmail || localStorage.getItem('zyh_cust_email');
+        const storedPhone = orderPhone || localStorage.getItem('zyh_cust_phone');
+        
+        if (storedName) document.querySelectorAll('#displayBillingName').forEach(el => el.textContent = storedName);
+        if (storedEmail) document.querySelectorAll('#displayBillingEmail').forEach(el => el.textContent = storedEmail);
+        if (storedPhone) document.querySelectorAll('#displayBillingPhone').forEach(el => el.textContent = storedPhone);
     });
 
     // Tab Alerts for settings
@@ -1046,34 +2721,34 @@
     // Cancel Order Handler with Reason Modal
     function cancelOrderDetail(id, orderNumber) {
         Swal.fire({
-            title: 'REASON FOR CANCEL ORDERS',
+            title: 'ALASAN PEMBATALAN PESANAN',
             html: `
                 <div style="text-align: left; margin-top: 10px;">
                     <label class="cancel-reason-option selected" onclick="selectCancelReason(this)">
-                        <input type="radio" name="cancel_reason" value="Wrong choice of delivery address" checked>
-                        <span>Wrong choice of delivery address</span>
+                        <input type="radio" name="cancel_reason" value="Salah memilih alamat pengiriman" checked>
+                        <span>Salah memilih alamat pengiriman</span>
                     </label>
                     <label class="cancel-reason-option" onclick="selectCancelReason(this)">
-                        <input type="radio" name="cancel_reason" value="Wrong choice of product">
-                        <span>Wrong choice of product</span>
+                        <input type="radio" name="cancel_reason" value="Salah memilih produk atau varian kue">
+                        <span>Salah memilih produk atau varian kue</span>
                     </label>
                     <label class="cancel-reason-option" onclick="selectCancelReason(this)">
-                        <input type="radio" name="cancel_reason" value="Want to change payment method">
-                        <span>Want to change payment method</span>
+                        <input type="radio" name="cancel_reason" value="Ingin mengganti metode pembayaran">
+                        <span>Ingin mengganti metode pembayaran</span>
                     </label>
                     <label class="cancel-reason-option" onclick="selectCancelReason(this)">
-                        <input type="radio" name="cancel_reason" value="Want to replace or add a product">
-                        <span>Want to replace or add a product</span>
+                        <input type="radio" name="cancel_reason" value="Ingin mengubah atau menambah pesanan">
+                        <span>Ingin mengubah atau menambah pesanan</span>
                     </label>
                     <label class="cancel-reason-option" onclick="selectCancelReason(this)">
-                        <input type="radio" name="cancel_reason" value="Others">
-                        <span>Others</span>
+                        <input type="radio" name="cancel_reason" value="Lainnya">
+                        <span>Lainnya (Alasan pribadi)</span>
                     </label>
                 </div>
             `,
             showCancelButton: true,
-            confirmButtonText: 'Confirm',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: 'Konfirmasi Batal',
+            cancelButtonText: 'Kembali',
             confirmButtonColor: '#00b207',
             cancelButtonColor: '#ffffff',
             customClass: {
@@ -1177,6 +2852,9 @@
             }
         }).then((result) => {
             if (result.isConfirmed) {
+                const selectedRadio = document.querySelector('input[name="cancel_reason"]:checked');
+                const cancelReason = selectedRadio ? selectedRadio.value : 'Lainnya';
+
                 Swal.fire({
                     title: 'Memproses...',
                     allowOutsideClick: false,
@@ -1184,12 +2862,14 @@
                     didOpen: () => { Swal.showLoading(); }
                 });
                 
-                fetch(`/order-history/${id}/cancel`, {
+                const cancelUrl = `{{ route('order.cancel', ':id') }}`.replace(':id', id);
+                fetch(cancelUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
+                    },
+                    body: JSON.stringify({ cancel_reason: cancelReason })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -1250,14 +2930,17 @@
             }
         });
 
-        fetch(`/order-history/${orderId}/pay`)
+        const payUrl = `{{ route('order.pay', ':id') }}`.replace(':id', orderId);
+        const checkPaymentUrl = `{{ route('order.checkPayment', ':id') }}`.replace(':id', orderId);
+
+        fetch(payUrl)
             .then(response => response.json())
             .then(data => {
                 Swal.close();
                 if (data.success && data.snap_token) {
                     snap.pay(data.snap_token, {
                         onSuccess: function(result) {
-                            fetch(`/order-history/${orderId}/check-payment`)
+                            fetch(checkPaymentUrl)
                                 .then(() => {
                                     Swal.fire({
                                         title: 'Berhasil!',
@@ -1270,7 +2953,7 @@
                                 });
                         },
                         onPending: function(result) {
-                            fetch(`/order-history/${orderId}/check-payment`)
+                            fetch(checkPaymentUrl)
                                 .then(res => res.json())
                                 .then(resData => {
                                     if (resData.success && resData.status === 'Paid') {
@@ -1303,7 +2986,7 @@
                             });
                         },
                         onClose: function() {
-                            fetch(`/order-history/${orderId}/check-payment`)
+                            fetch(checkPaymentUrl)
                                 .then(res => res.json())
                                 .then(resData => {
                                     if (resData.success && resData.status === 'Paid') {

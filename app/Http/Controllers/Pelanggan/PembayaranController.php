@@ -138,18 +138,16 @@ class PembayaranController extends Controller
                 } else {
                     $order->update([
                         'payment_status' => 'Paid',
-                        'order_status' => 'dikemas'
+                        'order_status' => 'menunggu konfirmasi'
                     ]);
-                    Produk::reduceStockForOrder($order);
                     NotificationService::sendToKasir(new PesananBaruKasirMail($order));
                 }
             }
         } elseif ($transactionStatus == 'settlement') {
             $order->update([
                 'payment_status' => 'Paid',
-                'order_status' => 'dikemas'
+                'order_status' => 'menunggu konfirmasi'
             ]);
-            Produk::reduceStockForOrder($order);
             NotificationService::sendToKasir(new PesananBaruKasirMail($order));
         } elseif (in_array($transactionStatus, ['pending'])) {
             $order->update([
@@ -161,6 +159,7 @@ class PembayaranController extends Controller
                 'payment_status' => 'Failed',
                 'order_status' => 'batal'
             ]);
+            Produk::restoreStockForOrder($order);
         }
 
         return response()->json(['message' => 'Callback processed successfully']);
@@ -239,9 +238,8 @@ class PembayaranController extends Controller
                 if (in_array($transactionStatus, ['capture', 'settlement'])) {
                     $order->update([
                         'payment_status' => 'Paid',
-                        'order_status' => 'dikemas'
+                        'order_status' => 'menunggu konfirmasi'
                     ]);
-                    Produk::reduceStockForOrder($order);
                     NotificationService::sendToKasir(new PesananBaruKasirMail($order));
                     return true;
                 } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
@@ -249,6 +247,7 @@ class PembayaranController extends Controller
                         'payment_status' => 'Failed',
                         'order_status' => 'batal'
                     ]);
+                    Produk::restoreStockForOrder($order);
                     return false;
                 }
             }

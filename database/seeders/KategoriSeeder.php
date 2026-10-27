@@ -60,8 +60,17 @@ class KategoriSeeder extends Seeder
             if ($jenis === 'kustom' || str_contains($nameLower, 'custom') || str_contains($nameLower, 'kustom')) {
                 $product->id_kategori = $kustomId;
             } elseif (
-                str_contains($nameLower, 'cake') || 
+                str_contains($nameLower, 'salad') || 
+                str_contains($nameLower, 'fruit') || 
                 str_contains($nameLower, 'tiramisu') || 
+                str_contains($nameLower, 'parfait') || 
+                str_contains($nameLower, 'dessert') ||
+                str_contains($nameLower, 'pudding') ||
+                str_contains($nameLower, 'yogurt')
+            ) {
+                $product->id_kategori = $dessertId;
+            } elseif (
+                str_contains($nameLower, 'cake') || 
                 str_contains($nameLower, 'cheesecake') || 
                 str_contains($nameLower, 'chiffon') || 
                 str_contains($nameLower, 'red velvet')
@@ -78,17 +87,11 @@ class KategoriSeeder extends Seeder
                 str_contains($nameLower, 'roll') || 
                 str_contains($nameLower, 'donut') || 
                 str_contains($nameLower, 'croissant') ||
-                str_contains($nameLower, 'bread')
+                str_contains($nameLower, 'bread') ||
+                str_contains($nameLower, 'pastry') ||
+                str_contains($nameLower, 'pain')
             ) {
                 $product->id_kategori = $rotiPastryId;
-            } elseif (
-                str_contains($nameLower, 'salad') || 
-                str_contains($nameLower, 'fruit') || 
-                str_contains($nameLower, 'parfait') || 
-                str_contains($nameLower, 'dessert') ||
-                str_contains($nameLower, 'yogurt')
-            ) {
-                $product->id_kategori = $dessertId;
             } else {
                 // Default ke Kue & Cake atau Snack jika tidak cocok kata kunci
                 $product->id_kategori = ($product->id_produk % 2 === 0) ? $snackId : $kueCakeId;

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Zyh Corner')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,6 +52,10 @@
             background-color: #e6f7ec !important;
         }
     </style>
+    <script>
+        window.storePhone = "{{ $storeSettings['wa_number'] ?? '628123456789' }}";
+        window.storeName = "{!! addslashes($storeSettings['store_name'] ?? 'Zyh Corner') !!}";
+    </script>
 </head>
 
 <body>
@@ -65,7 +70,7 @@
                 </button>
                 <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo"
                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
-                <div class="logo-text">Zyh Corner</div>
+                <div class="logo-text">{{ $storeSettings['store_name'] ?? 'Zyh Corner' }}</div>
             </div>
 
             <form id="headerSearchForm" action="{{ request()->routeIs('custom-products') ? route('custom-products') : route('shop') }}" method="GET" class="search-bar" style="margin: 0; position: relative; overflow: visible !important;">
@@ -78,7 +83,6 @@
             </form>
 
             <div class="header-actions">
-                <i class="fa-regular fa-heart action-icon"></i>
                 <div class="cart-info" style="cursor: pointer;" onclick="toggleCart(true)">
                     <div class="cart-icon-wrapper">
                         <i class="fa-solid fa-bag-shopping action-icon"></i>
@@ -104,7 +108,13 @@
                         @auth
                             <div class="profile-dropdown-item profile-dropdown-name">{{ Auth::user()->nama ?? 'User' }}
                             </div>
-                            <a href="{{ route('dashboard') }}" class="profile-dropdown-item">Dashboard</a>
+                            @if(Auth::user()->role === 'admin')
+                                <a href="{{ url('/admin/dashboard') }}" class="profile-dropdown-item"><i class="fa-solid fa-gauge-high me-1"></i> Dashboard Admin</a>
+                            @elseif(Auth::user()->role === 'kasir')
+                                <a href="{{ route('orders.index') }}" class="profile-dropdown-item"><i class="fa-solid fa-cash-register me-1"></i> Kelola Pesanan</a>
+                            @else
+                                <a href="{{ route('dashboard') }}" class="profile-dropdown-item">Dashboard</a>
+                            @endif
                             <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="margin: 0;">
                                 @csrf
                                 <button type="button" onclick="confirmLogout()" class="profile-dropdown-item"
@@ -167,32 +177,34 @@
                     <div class="logo" style="color: white;">
                         <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo"
                             style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
-                        <div class="logo-text">Zyh Corner</div>
+                        <div class="logo-text">{{ $storeSettings['store_name'] ?? 'Zyh Corner' }}</div>
                     </div>
-                    <p style="margin: 15px 0; color: #999; font-size: 14px; line-height: 1.6; max-width: 320px;">Toko Pastry & Bakery pilihan terbaik di Pekanbaru. Menyediakan aneka cake, kue ulang tahun, dessert, dan pesanan kue kustom berkualitas tinggi.</p>
+                    <p style="margin: 15px 0; color: #999; font-size: 14px; line-height: 1.6; max-width: 320px;">{{ $storeSettings['store_tagline'] ?? 'Toko Pastry & Bakery pilihan terbaik di Pekanbaru. Menyediakan aneka cake, kue ulang tahun, dessert, dan pesanan kue kustom berkualitas tinggi.' }}</p>
                     <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
-                        <a href="tel:+628123456789" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                        <a href="tel:+{{ $storeSettings['wa_number'] ?? '628123456789' }}" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
                             <i class="fa-solid fa-phone-volume" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
-                            <span>(+62) 812-3456-789</span>
+                            <span>{{ $storeSettings['store_phone'] ?? '(+62) 812-3456-789' }}</span>
                         </a>
-                        <a href="mailto:zyhcorner@gmail.com" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                        <a href="mailto:{{ $storeSettings['store_email'] ?? 'contact@zyhcorner.com' }}" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
                             <i class="fa-regular fa-envelope" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
-                            <span>zyhcorner@gmail.com</span>
+                            <span>{{ $storeSettings['store_email'] ?? 'contact@zyhcorner.com' }}</span>
                         </a>
-                        <a href="https://www.instagram.com/zyh_corner/?hl=en" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                        @if (!empty($storeSettings['social_instagram']))
+                        <a href="{{ $storeSettings['social_instagram'] }}" target="_blank" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
                             <i class="fa-brands fa-instagram" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
-                            <span>@zyh_corner</span>
+                            <span>Instagram</span>
                         </a>
+                        @endif
                     </div>
                 </div>
 
                 <div class="footer-col">
                     <h3>Akun Saya</h3>
                     <div class="footer-links">
-                        <a href="{{ route('dashboard') }}">Akun Saya</a>
-                        <a href="{{ route('dashboard') }}">Riwayat Pesanan</a>
+                        <a href="{{ Auth::check() && in_array(Auth::user()->role, ['admin', 'kasir']) ? url('/admin/dashboard') : route('dashboard') }}">Akun Saya</a>
+                        <a href="{{ Auth::check() && in_array(Auth::user()->role, ['admin', 'kasir']) ? route('orders.index') : route('order.history') }}">Riwayat Pesanan</a>
                         <a href="{{ route('userChart') }}">Keranjang Belanja</a>
-                        <a href="{{ route('dashboard') }}">Pengaturan Profil</a>
+                        <a href="{{ Auth::check() && in_array(Auth::user()->role, ['admin', 'kasir']) ? route('settings.index') : route('settings') }}">Pengaturan Profil</a>
                     </div>
                 </div>
 
@@ -206,7 +218,7 @@
                 </div>
 
                 <div class="footer-col">
-                    <h3>Zyh Corner</h3>
+                    <h3>{{ $storeSettings['store_name'] ?? 'Zyh Corner' }}</h3>
                     <div class="footer-links">
                         <a href="{{ route('about') }}">Tentang Kami</a>
                         <a href="{{ route('shop') }}">Katalog Produk</a>
@@ -217,7 +229,7 @@
 
             <div class="footer-bottom" style="justify-content: center; text-align: center; border-top: 1px solid #262626; padding: 20px 0;">
                 <div style="color: #888; font-size: 13.5px;">
-                    Zyh Corner eCommerce © {{ date('Y') }}. All Rights Reserved
+                    {{ $storeSettings['store_name'] ?? 'Zyh Corner' }} eCommerce © {{ date('Y') }}. All Rights Reserved
                 </div>
             </div>
         </div>
@@ -230,7 +242,7 @@
             <div class="logo">
                 <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo"
                     style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%;">
-                <div class="logo-text" style="font-size: 18px;">Zyh Corner</div>
+                <div class="logo-text" style="font-size: 18px;">{{ $storeSettings['store_name'] ?? 'Zyh Corner' }}</div>
             </div>
             <button class="close-mobile-menu" onclick="toggleMobileMenu(false)"><i
                     class="fa-solid fa-xmark"></i></button>
@@ -277,88 +289,126 @@
                 <span id="cartSubtotal">Rp. 0</span>
             </div>
             <div class="cart-btns">
-                <a href="{{ route('userChart') }}" class="btn-checkout">Checkout</a>
-                <a href="{{ route('userChart') }}" class="btn-view-cart">Go To Cart</a>
+                @if(Auth::check() && in_array(Auth::user()->role, ['admin', 'kasir']))
+                    <button type="button" class="btn-checkout" onclick="showAdminShoppingNotice()" style="cursor: pointer; border: none; font-family: inherit;">Checkout</button>
+                    <button type="button" class="btn-view-cart" onclick="showAdminShoppingNotice()" style="cursor: pointer; border: none; font-family: inherit;">Go To Cart</button>
+                @else
+                    <a href="{{ route('userChart') }}" class="btn-checkout">Checkout</a>
+                    <a href="{{ route('userChart') }}" class="btn-view-cart">Go To Cart</a>
+                @endif
             </div>
         </div>
     </div>
 
-    <!-- Product Modal -->
-    <div class="product-modal-overlay" id="productModal">
-        <div class="product-modal">
-            <button class="close-modal" onclick="closeProductModal()"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Product Quick View Modal -->
+    <div class="product-modal-overlay" id="productModal" onclick="if(event.target === this) closeProductModal();">
+        <div class="product-modal" role="dialog" aria-modal="true" aria-labelledby="pmName">
+            <button type="button" class="close-modal" onclick="closeProductModal()" aria-label="Tutup preview modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
             <div class="product-modal-content">
+                <!-- Gallery Section -->
                 <div class="pm-gallery">
-                    <div class="pm-thumbnails-container">
-                        <button class="pm-thumb-nav"><i class="fa-solid fa-chevron-up"></i></button>
+                    <div class="pm-thumbnails-container" id="pmThumbnailsContainer">
+                        <button type="button" class="pm-thumb-nav" id="pmThumbPrev" onclick="scrollModalThumbs(-1)" aria-label="Foto sebelumnya">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
                         <div class="pm-thumbnails" id="pmThumbnails">
-                            <!-- Thumbnails injected here -->
+                            <!-- Thumbnails injected dynamically -->
                         </div>
-                        <button class="pm-thumb-nav"><i class="fa-solid fa-chevron-down"></i></button>
+                        <button type="button" class="pm-thumb-nav" id="pmThumbNext" onclick="scrollModalThumbs(1)" aria-label="Foto berikutnya">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
                     </div>
                     <div class="pm-main-image">
-                        <img id="pmMainImage" src="" alt="Product">
+                        <img id="pmMainImage" src="" alt="Product Preview">
                     </div>
                 </div>
+
+                <!-- Product Details Section -->
                 <div class="pm-details">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px; flex-wrap: wrap;">
-                        <h2 id="pmName" style="margin:0;">Product Name</h2>
-                        <span class="pm-stock-badge" id="pmStock">In Stock</span>
-                    </div>
-                    <div class="pm-meta">
-                        <span class="pm-sku">SKU: <span id="pmSku"
-                                style="color: #1a1a1a; font-weight: 500;">2,51,594</span></span>
-                    </div>
-                    <div class="pm-price-area">
-                        <span class="pm-old-price" id="pmOldPrice"
-                            style="color: #999; text-decoration: line-through; font-size: 18px;"></span>
-                        <span class="pm-new-price" id="pmNewPrice"
-                            style="color: #00b207; font-size: 28px; font-weight: 600;"></span>
-                        <span class="pm-discount-badge" id="pmDiscountBadge"
-                            style="display:none; background: #fdf0ea; color: #ea4b48; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;"></span>
-                    </div>
-                    <div class="pm-desc" id="pmDesc"
-                        style="margin-bottom: 25px; border-top: 1px solid #f2f2f2; padding-top: 20px;"></div>
-                    <div class="pm-actions"
-                        style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #f2f2f2;">
-                        <div class="pm-qty"
-                            style="border: 1.5px solid #e6e6e6; border-radius: 50px; padding: 4px; width: 140px; display: flex; align-items: center; justify-content: space-between;">
-                            <button class="pm-qty-btn" onclick="updateModalQty(-1)"
-                                style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #f2f2f2; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i
-                                    class="fa-solid fa-minus"></i></button>
-                            <input type="text" value="1" id="pmQtyInput" class="pm-qty-input"
-                                style="width: 40px; border: none; text-align: center; font-weight: 600; font-size: 16px; outline: none;">
-                            <button class="pm-qty-btn" onclick="updateModalQty(1)"
-                                style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #f2f2f2; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i
-                                    class="fa-solid fa-plus"></i></button>
+                    <div class="pm-header-group">
+                        <span class="pm-eyebrow" id="pmEyebrow">Kategori Produk</span>
+                        <h2 class="pm-title" id="pmName">Product Name</h2>
+                        <div class="pm-meta-row">
+                            <span class="pm-stock-pill" id="pmStock">
+                                <span class="pm-status-dot"></span>
+                                <span class="pm-stock-text">Tersedia</span>
+                            </span>
+                            <span class="pm-meta-separator">•</span>
+                            <span class="pm-sku-text">SKU: <strong id="pmSku">ZYH-0001</strong></span>
                         </div>
-                        <button class="pm-buy-btn" id="pmBuyBtn"
-                            style="background: #00b207; color: white; border: none; border-radius: 50px; padding: 0 40px; height: 50px; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.3s; flex: 1;">
-                            Buy Now <i class="fa-solid fa-bag-shopping"></i>
+                    </div>
+
+                    <!-- Price Box -->
+                    <div class="pm-price-area">
+                        <span class="pm-new-price" id="pmNewPrice"></span>
+                        <span class="pm-old-price" id="pmOldPrice" style="display: none;"></span>
+                        <span class="pm-discount-badge" id="pmDiscountBadge" style="display: none;"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="pm-desc" id="pmDesc"></div>
+
+                    <!-- Action Controls (Aligned 48px Height) -->
+                    <div class="pm-actions">
+                        <div class="pm-qty">
+                            <button type="button" class="pm-qty-btn" onclick="updateModalQty(-1)" aria-label="Kurangi kuantitas">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <input type="text" value="1" id="pmQtyInput" class="pm-qty-input" readonly aria-label="Jumlah pesanan">
+                            <button type="button" class="pm-qty-btn" onclick="updateModalQty(1)" aria-label="Tambah kuantitas">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        @php
+                            $isCustomContext = request()->query('custom') == 1 || request()->routeIs('custom-products') || (isset($product) && isset($product->jenis_produk) && $product->jenis_produk === 'kustom');
+                        @endphp
+                        <button type="button" class="pm-buy-btn" id="pmBuyBtn" style="{{ $isCustomContext ? 'background-color: #25d366;' : '' }}">
+                            @if ($isCustomContext)
+                                Pesan via WhatsApp <i class="fa-brands fa-whatsapp"></i>
+                            @else
+                                Beli Sekarang <i class="fa-solid fa-bag-shopping"></i>
+                            @endif
                         </button>
-                        <button class="pm-cart-btn" id="pmCartBtn"
-                            style="width: 50px; height: 50px; border-radius: 50%; border: none; background: #f2f8f4; color: #1a1a1a; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.3s;">
+                        <button type="button" class="pm-cart-btn" id="pmCartBtn" title="Tambah ke Keranjang" aria-label="Tambah ke keranjang">
                             <i class="fa-solid fa-cart-shopping"></i>
                         </button>
+                        <div id="pmStockWarning" class="pm-stock-warning" style="display: none;">
+                            <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok produk tercapai
+                        </div>
                     </div>
-                    <div class="pm-info">
-                        <p><strong>Category:</strong> <span id="pmCategory" style="color: #666;"></span></p>
-                        <p><strong>Tag:</strong> <span id="pmTag" style="color: #666;"></span></p>
+
+                    <!-- Metadata Footer -->
+                    <div class="pm-info-footer">
+                        <div class="pm-info-item">
+                            <span class="pm-info-label">Kategori:</span>
+                            <span class="pm-chip pm-chip-primary" id="pmCategory">-</span>
+                        </div>
+                        <div class="pm-info-item pm-tags-item">
+                            <span class="pm-info-label">Tags:</span>
+                            <div class="pm-tags-list" id="pmTag">
+                                <!-- Tag chips injected dynamically -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
         window.layoutConfig = {
             isLoggedIn: {{ Auth::check() ? 'true' : 'false' }},
+            userRole: "{{ Auth::check() ? Auth::user()->role : 'guest' }}",
             loginRoute: "{{ route('login') }}",
             checkoutRoute: "{{ route('checkout') }}",
+            cartRoute: "{{ route('userChart') }}",
+            posRoute: "{{ route('pos.index') }}",
+            adminDashboardRoute: "{{ url('/admin/dashboard') }}",
             successMessage: "{{ session('success') }}",
-            searchSuggestionsRoute: "{{ route('search.suggestions') }}"
+            searchSuggestionsRoute: "{{ route('search.suggestions') }}",
+            productsStockMap: @json(\App\Models\Produk::all()->pluck('stok', 'id_produk'))
         };
-
         // Inline Fail-proof Search Suggestions Handler
         document.addEventListener('DOMContentLoaded', function() {
             function initSearch(inputId, dropdownId, formId) {
@@ -446,6 +496,15 @@
 
             initSearch('headerSearchInput', 'headerSearchSuggestions', 'headerSearchForm');
             initSearch('mobileSearchInput', 'mobileSearchSuggestions', 'mobileSearchForm');
+        });
+    </script>
+
+    <!-- Anti-bfcache Back Button Protection -->
+    <script>
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
         });
     </script>
     @yield('scripts')

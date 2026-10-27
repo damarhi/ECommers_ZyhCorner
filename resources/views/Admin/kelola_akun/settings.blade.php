@@ -144,30 +144,53 @@
                             <div class="tab-pane fade" id="store-tab" role="tabpanel" aria-labelledby="store-tab-btn">
                                 <form action="{{ route('settings.store.update') }}" method="POST">
                                     @csrf
-                                    <div class="form-group mb-3">
-                                        <label class="font-weight-500 mb-1">Nama Toko</label>
-                                        <input type="text" name="store_name" class="form-control" value="{{ session('store_name', $storeInfo['name']) }}" required>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="font-weight-500 mb-1">Nama Toko</label>
+                                            <input type="text" name="store_name" class="form-control" value="{{ old('store_name', $storeInfo['name']) }}" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="font-weight-500 mb-1">Slogan / Tagline Toko</label>
+                                            <input type="text" name="store_tagline" class="form-control" value="{{ old('store_tagline', $storeInfo['tagline'] ?? '') }}" placeholder="Contoh: Pastry & Bakery Berkualitas">
+                                        </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="font-weight-500 mb-1">No. WhatsApp Toko</label>
-                                            <input type="text" name="store_phone" class="form-control" value="{{ session('store_phone', $storeInfo['phone']) }}" required>
+                                            <input type="text" name="store_phone" class="form-control" value="{{ old('store_phone', $storeInfo['phone']) }}" placeholder="Contoh: 08123456789" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="font-weight-500 mb-1">Email Layanan Pelanggan</label>
-                                            <input type="email" name="store_email" class="form-control" value="{{ session('store_email', $storeInfo['email']) }}" required>
+                                            <input type="email" name="store_email" class="form-control" value="{{ old('store_email', $storeInfo['email']) }}" placeholder="Contoh: contact@zyhcorner.com" required>
                                         </div>
                                     </div>
 
                                     <div class="form-group mb-3">
                                         <label class="font-weight-500 mb-1">Jam Operasional Toko</label>
-                                        <input type="text" name="store_hours" class="form-control" value="{{ session('store_hours', $storeInfo['operating_hours']) }}" placeholder="Contoh: Senin - Minggu (08:00 - 21:00)">
-                                    </div>
+                                        <input type="text" name="store_hours" class="form-control" value="{{ old('store_hours', $storeInfo['operating_hours']) }}" placeholder="Contoh: Senin - Minggu (08:00 - 21:00)">
 
                                     <div class="form-group mb-4">
                                         <label class="font-weight-500 mb-1">Alamat Lengkap Toko</label>
-                                        <textarea name="store_address" class="form-control" rows="3" required>{{ session('store_address', $storeInfo['address']) }}</textarea>
+                                        <textarea name="store_address" class="form-control" rows="3" required>{{ old('store_address', $storeInfo['address']) }}</textarea>
+                                    </div>
+
+                                    <h6 class="font-weight-bold text-dark mt-4 mb-3" style="font-size: 14px;">
+                                        <i class="mdi mdi-share-variant me-1 text-primary"></i> Media Sosial Toko (Opsional)
+                                    </h6>
+                                    <div class="row mb-4">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="font-weight-500 mb-1" style="font-size: 12.5px;"><i class="mdi mdi-instagram text-danger me-1"></i>Instagram URL</label>
+                                            <input type="url" name="social_instagram" class="form-control" value="{{ old('social_instagram', $storeInfo['social_instagram'] ?? '') }}" placeholder="https://instagram.com/...">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="font-weight-500 mb-1" style="font-size: 12.5px;"><i class="mdi mdi-facebook text-primary me-1"></i>Facebook URL</label>
+                                            <input type="url" name="social_facebook" class="form-control" value="{{ old('social_facebook', $storeInfo['social_facebook'] ?? '') }}" placeholder="https://facebook.com/...">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="font-weight-500 mb-1" style="font-size: 12.5px;"><i class="mdi mdi-music-note text-dark me-1"></i>TikTok URL</label>
+                                            <input type="url" name="social_tiktok" class="form-control" value="{{ old('social_tiktok', $storeInfo['social_tiktok'] ?? '') }}" placeholder="https://tiktok.com/@...">
+                                        </div>
                                     </div>
 
                                     <div class="d-flex justify-content-end">
@@ -183,4 +206,31 @@
             </div>
         </div>
     </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle URL hash for tab activation
+        const hash = window.location.hash;
+        if (hash) {
+            const triggerEl = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (triggerEl && typeof bootstrap !== 'undefined') {
+                const tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+
+        // When a tab is shown, update window location hash
+        const tabButtons = document.querySelectorAll('#settingsTab button[data-bs-toggle="tab"]');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('shown.bs.tab', function(e) {
+                const target = e.target.getAttribute('data-bs-target');
+                if (target) {
+                    history.replaceState(null, null, target);
+                }
+            });
+        });
+    });
+</script>
+@endpush
 @endsection

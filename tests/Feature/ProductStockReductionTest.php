@@ -44,9 +44,7 @@ class ProductStockReductionTest extends TestCase
             'payment_method' => 'COD',
             'address' => 'Jl. Merdeka No 1',
         ]);
-
         $response->assertStatus(200);
-
         $product->refresh();
         $this->assertEquals(7, $product->stok);
     }

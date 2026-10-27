@@ -81,6 +81,44 @@ class Produk extends Model
             }
         }
     }
+    /**
+     * Add stock back to the product.
+     *
+     * @param int $qty
+     * @return void
+     */
+    public function addStock(int $qty = 1)
+    {
+        $currentStok = $this->stok;
+        $newStok = $currentStok + $qty;
+        $this->status_produk = (string) $newStok;
+        $this->save();
+    }
+
+    /**
+     * Restore stock for all items in an order.
+     *
+     * @param \App\Models\Pesanan $pesanan
+     * @return void
+     */
+    public static function restoreStockForOrder($pesanan)
+    {
+        if (!$pesanan || empty($pesanan->items) || !is_array($pesanan->items)) {
+            return;
+        }
+
+        foreach ($pesanan->items as $item) {
+            $productId = $item['id'] ?? $item['id_produk'] ?? null;
+            $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
+
+            if ($productId && $qty > 0) {
+                $produk = self::find($productId);
+                if ($produk) {
+                    $produk->addStock($qty);
+                }
+            }
+        }
+    }
 
     public function kategori()
     {
@@ -90,6 +128,101 @@ class Produk extends Model
     public function kadaluarsa()
     {
         return $this->hasOne(ProdukKadaluarsa::class, 'id_produk', 'id_produk');
+    }
+
+    public function diskons()
+    {
+        return $this->hasMany(Diskon::class, 'id_produk', 'id_produk');
+    }
+
+    public function diskonAktif()
+    {
+        $today = \Carbon\Carbon::today()->toDateString();
+        return $this->hasOne(Diskon::class, 'id_produk', 'id_produk')
+            ->where('status', 'Aktif')
+            ->where(function ($q) use ($today) {
+                $q->whereNull('tanggal_mulai')
+                  ->orWhere('tanggal_mulai', '<=', $today);
+            })
+            ->where(function ($q) use ($today) {
+                $q->whereNull('tanggal_selesai')
+                  ->orWhere('tanggal_selesai', '>=', $today);
+            });
+    }
+
+    public function getHargaDiskonAttribute()
+    {
+        if ($this->diskonAktif) {
+            return $this->diskonAktif->harga_setelah_diskon;
+        }
+        return (float) $this->harga;
+    }
+
+    public function getHasDiskonAttribute()
+    {
+        return $this->diskonAktif !== null;
+    }
+
+    public function getDiskonBadgeAttribute()
+    {
+        if (!$this->diskonAktif) {
+            return null;
+        }
+        $diskon = $this->diskonAktif;
+        if ($diskon->tipe_diskon === 'persen') {
+            return (int) $diskon->nilai_diskon . '% OFF';
+        }
+        return 'Hemat Rp ' . number_format($diskon->nilai_diskon, 0, ',', '.');
+    }
+
+    public static function getBestSellers(int $limit = 3)
+    {
+        $productSales = [];
+        $orders = Pesanan::where('payment_status', 'Paid')
+            ->whereNotNull('items')
+            ->get(['items']);
+
+        foreach ($orders as $order) {
+            if (is_array($order->items)) {
+                foreach ($order->items as $item) {
+                    $pid = $item['id'] ?? $item['id_produk'] ?? null;
+                    $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
+                    if ($pid) {
+                        $productSales[$pid] = ($productSales[$pid] ?? 0) + $qty;
+                    }
+                }
+            }
+        }
+
+        $topProducts = collect();
+        if (!empty($productSales)) {
+            arsort($productSales);
+            $topIds = array_slice(array_keys($productSales), 0, $limit);
+            $topProducts = self::with(['kategori', 'diskonAktif'])
+                ->whereIn('id_produk', $topIds)
+                ->get()
+                ->sortBy(function ($p) use ($productSales) {
+                    return -($productSales[$p->id_produk] ?? 0);
+                })
+                ->values();
+
+            if ($topProducts->count() >= $limit) {
+                return $topProducts;
+            }
+        }
+
+        $excludeIds = $topProducts->pluck('id_produk')->toArray();
+        $fallback = self::with(['kategori', 'diskonAktif'])
+            ->whereNotIn('id_produk', $excludeIds)
+            ->where(function($q) {
+                $q->where('jenis_produk', 'showcase')
+                  ->orWhereNull('jenis_produk');
+            })
+            ->orderBy('id_produk', 'asc')
+            ->limit($limit - $topProducts->count())
+            ->get();
+
+        return $topProducts->concat($fallback);
     }
 
     public static function checkAndEmptyExpiredProducts()

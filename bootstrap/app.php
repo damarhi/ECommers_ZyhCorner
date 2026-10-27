@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'blockKasir' => \App\Http\Middleware\CheckKasirRole::class,
+            'preventBackHistory' => \App\Http\Middleware\PreventBackHistory::class,
+            'role' => \App\Http\Middleware\EnsureUserRole::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             '/midtrans-callback',

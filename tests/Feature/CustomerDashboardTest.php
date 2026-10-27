@@ -92,4 +92,48 @@ class CustomerDashboardTest extends TestCase
             @unlink(public_path($user->avatar));
         }
     }
+
+    public function test_dashboard_renders_saved_addresses_modal_and_hides_extra_addresses_from_main_card(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'pelanggan',
+            'nama' => 'Rina Nose',
+            'alamat' => 'Jl. Sudirman No. 1, Pekanbaru',
+            'no_hp' => '081234567890',
+        ]);
+
+        \App\Models\UserAddress::create([
+            'user_id' => $user->user_id,
+            'label' => 'Rumah Utama',
+            'recipient_name' => 'Rina Nose',
+            'recipient_phone' => '081234567890',
+            'street_address' => 'Jl. Sudirman No. 1, Pekanbaru',
+            'notes' => 'Pagar putih',
+            'is_default' => true,
+        ]);
+
+        \App\Models\UserAddress::create([
+            'user_id' => $user->user_id,
+            'label' => 'Kantor Cabang',
+            'recipient_name' => 'Rina Kantor',
+            'recipient_phone' => '081299990000',
+            'street_address' => 'Jl. Tuanku Tambusai No. 88',
+            'notes' => 'Lantai 2',
+            'is_default' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertStatus(200);
+        // Detail button & modal detail should be removed
+        $response->assertDontSee('btn-detail-address');
+        $response->assertDontSee('id="modalDetailAddress"', false);
+        $response->assertDontSee('Detail & Buku Alamat Pengiriman', false);
+        // Saved addresses modal and view other addresses button should exist
+        $response->assertSee('Lihat Alamat Lainnya (1)');
+        $response->assertSee('id="modalSavedAddresses"', false);
+        $response->assertSee('Alamat Tersimpan Lainnya');
+        $response->assertSee('Kantor Cabang');
+        $response->assertSee('Jl. Tuanku Tambusai No. 88');
+    }
 }
