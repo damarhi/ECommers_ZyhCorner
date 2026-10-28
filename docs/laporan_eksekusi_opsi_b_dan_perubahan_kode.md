@@ -360,6 +360,29 @@ public function detail($id)
 }
 ```
 
+### 2.5. Penyelarasan Desain Tombol "Bayar Sekarang" dengan Tombol "Lacak Pesanan"
+
+**Lokasi**: 
+- `resources/views/Pelanggan/order_detail.blade.php:344-367, 1490-1495, 1918-1925`
+- `resources/css/pelanggan_pages.css:6288-6318`
+
+**Masalah**:
+- Pada berkas `order_detail.blade.php`, blok media query `@media (max-width: 768px)` sebelumnya tidak memiliki kurung kurawal penutup `}` di baris 1490, sehingga seluruh styling CSS setelahnya (termasuk kelas `.btn-pay-now-solid`) terperangkap di dalam media query mobile dan tidak diaplikasikan pada layar desktop (> 768px).
+- Akibatnya, pada tampilan desktop, tombol "Bayar Sekarang" ter-render sebagai tombol default browser abu-abu tanpa styling pill hijau yang konsisten dengan tombol "Lacak Pesanan".
+
+**Solusi**:
+1. Menutup blok `@media (max-width: 768px)` dengan tanda `}` yang benar di baris 1495 sehingga CSS kembali seimbang (250 open braces, 250 close braces).
+2. Menyelaraskan kelas `.btn-pay-now-top` dan `.btn-pay-now-solid` dengan styling pill `.btn-track-order-top`:
+   - Background: `#00b207`
+   - Border: `1.5px solid #00b207`
+   - Border radius: `50px`
+   - Padding: `8px 18px`
+   - Font size & weight: `13px, 600`
+   - Box shadow: `0 2px 6px rgba(0, 178, 7, 0.18)`
+   - Hover effect: `transform: translateY(-1px)`, `box-shadow: 0 4px 10px rgba(0, 178, 7, 0.28)`, background `#008f05`.
+3. Menambahkan kelas `btn-track-order-top btn-pay-now-top btn-pay-now-solid` pada elemen `<button>` Bayar Sekarang di header rincian pesanan.
+4. Menambahkan automated regression test `test_order_detail_renders_consistent_pay_now_and_track_order_buttons` pada `OrderDetailLayoutTest.php`.
+
 ---
 
 ## 3. Hasil Pengujian & Kompilasi
@@ -382,7 +405,7 @@ public/build/assets/pelanggan_pages-CTr8yAde.js    66.25 kB │ gzip: 13.98 kB
 php artisan test
 ```
 ```text
-Tests:    130 passed (653 assertions)
-Duration: 25.60s
+Tests:    131 passed (658 assertions)
+Duration: 22.57s
 ```
-Semua 130 pengujian pada seluruh modul sistem lulus 100% tanpa ada regresi atau galat.
+Semua 131 pengujian pada seluruh modul sistem lulus 100% tanpa ada regresi atau galat.

@@ -307,4 +307,35 @@ class OrderDetailLayoutTest extends TestCase
         // Card 2 does not have [Lacak Live Biteship] button
         $response->assertDontSee('Lacak Live Biteship');
     }
+
+    public function test_order_detail_renders_consistent_pay_now_and_track_order_buttons(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'unpaid.customer@example.com',
+            'role' => 'pelanggan',
+            'nama' => 'Dewi Pembeli',
+        ]);
+
+        $order = Pesanan::create([
+            'order_number' => '#UNPAID-01',
+            'customer_name' => 'Dewi Pembeli',
+            'email_pembeli' => $user->email,
+            'payment_status' => 'Pending',
+            'order_status' => 'menunggu pembayaran',
+            'total' => 125000,
+            'payment_method' => 'Midtrans (BCA)',
+            'shipping_method' => 'Kurir Toko',
+            'alamat_pengiriman' => 'Jl. Sudirman No. 45, Pekanbaru',
+            'items' => [],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('order.detail', $order->id));
+
+        $response->assertStatus(200);
+        // Both buttons use consistent pill design matching btn-track-order-top
+        $response->assertSee('Bayar Sekarang');
+        $response->assertSee('Lacak Pesanan');
+        $response->assertSee('btn-track-order-top btn-pay-now-top btn-pay-now-solid', false);
+        $response->assertSee('btn-track-order-top', false);
+    }
 }

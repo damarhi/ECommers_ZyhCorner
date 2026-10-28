@@ -341,7 +341,9 @@
         flex-wrap: wrap;
     }
 
-    .btn-track-order-top {
+    .btn-track-order-top,
+    .btn-pay-now-top,
+    .btn-pay-now-solid {
         background-color: #00b207;
         color: white;
         border: 1.5px solid #00b207;
@@ -358,7 +360,9 @@
         text-decoration: none !important;
     }
 
-    .btn-track-order-top:hover {
+    .btn-track-order-top:hover,
+    .btn-pay-now-top:hover,
+    .btn-pay-now-solid:hover {
         background-color: #008f05;
         border-color: #008f05;
         color: white;
@@ -1488,26 +1492,6 @@
         .step-sub-meta {
             justify-content: flex-start;
         }
-    
-    .btn-pay-now-solid {
-        background-color: #00b207 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 50px !important;
-        padding: 9px 20px !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
-        cursor: pointer !important;
-        transition: 0.2s !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        text-decoration: none !important;
-        box-shadow: 0 2px 6px rgba(0, 178, 7, 0.2) !important;
-    }
-    .btn-pay-now-solid:hover {
-        background-color: #008f05 !important;
-        color: white !important;
     }
 
     /* Status and Alert Banners */
@@ -1798,6 +1782,8 @@
     /* Focus States for Accessibility */
     .btn-detail-address:focus-visible,
     .btn-track-order-top:focus-visible,
+    .btn-pay-now-top:focus-visible,
+    .btn-pay-now-solid:focus-visible,
     .btn-cancel-top:focus-visible,
     .btn-copy-resi:focus-visible,
     .biteship-modal-close:focus-visible {
@@ -1931,7 +1917,7 @@
                     <div class="details-header-actions">
                         <div class="header-actions-group">
                             @if($isPending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
-                                <button onclick="payOrderNow('{{ $order->id }}')" class="btn-pay-now-solid">
+                                <button type="button" onclick="payOrderNow('{{ $order->id }}')" class="btn-track-order-top btn-pay-now-top btn-pay-now-solid">
                                     <i class="fa-solid fa-credit-card me-1"></i> Bayar Sekarang
                                 </button>
                             @endif
