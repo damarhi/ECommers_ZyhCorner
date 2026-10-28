@@ -38,6 +38,8 @@ class CustomProductsTest extends TestCase
         $response->assertDontSee('breadcrumb-wrapper');
         // Assert we see the link to product detail for Nastar Premium
         $response->assertSee(route('product.detail', $produk->id_produk));
+        // Ensure product-card is not animated by GSAP to prevent opacity: 0 freeze
+        $response->assertDontSee("gsap.from('.product-card'");
     }
 
     public function test_custom_product_detail_page_renders_whatsapp_button(): void

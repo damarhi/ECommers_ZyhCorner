@@ -231,15 +231,6 @@
                     ease: 'back.out(1.6)',
                     delay: 0.2
                 });
-
-                gsap.from('.product-card', {
-                    y: 35,
-                    opacity: 0,
-                    duration: 0.75,
-                    stagger: 0.08,
-                    ease: 'power3.out',
-                    delay: 0.3
-                });
             }
         });
     </script>
