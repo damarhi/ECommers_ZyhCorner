@@ -2579,7 +2579,7 @@
 
         <div class="biteship-modal-footer">
             <button type="button" class="btn-modal-close" onclick="closeBiteshipTrackingModal()">Tutup</button>
-            <a href="https://wa.me/{{ $storePhone ?? '6281298765432' }}?text={{ urlencode('Halo ' . ($storeName ?? 'Zyh Corner') . ', saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $resiCode . ')') }}" target="_blank" class="btn-modal-wa">
+            <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? ($storePhone ?? \App\Models\StoreSetting::getWaNumber()) }}?text={{ urlencode('Halo ' . ($storeSettings['store_name'] ?? ($storeName ?? 'Zyh Corner')) . ', saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $resiCode . ')') }}" target="_blank" class="btn-modal-wa">
                 <i class="fa-brands fa-whatsapp me-1"></i> Hubungi CS Toko
             </a>
         </div>
@@ -2924,6 +2924,31 @@
             .then(data => {
                 Swal.close();
                 if (data.success && data.snap_token) {
+                    if (data.snap_token.startsWith('MOCK-SNAP-')) {
+                        Swal.fire({
+                            title: 'Simulasi Pembayaran (Mock Mode)',
+                            text: 'Sistem berjalan dalam mode simulasi pengujian. Apakah Anda ingin mensimulasikan pembayaran lunas?',
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonColor: '#00b207',
+                            confirmButtonText: 'Ya, Tandai Lunas',
+                            cancelButtonText: 'Batal'
+                        }).then((mockRes) => {
+                            if (mockRes.isConfirmed) {
+                                fetch(checkPaymentUrl).then(() => window.location.reload());
+                            }
+                        });
+                        return;
+                    }
+                    if (typeof snap === 'undefined' || !snap || typeof snap.pay !== 'function') {
+                        Swal.fire({
+                            title: 'Midtrans Belum Siap',
+                            text: 'SDK Midtrans Snap belum termuat sempurna. Pastikan variabel MIDTRANS_CLIENT_KEY telah diisi di file .env dan koneksi internet aktif.',
+                            icon: 'warning',
+                            confirmButtonColor: '#00b207'
+                        });
+                        return;
+                    }
                     snap.pay(data.snap_token, {
                         onSuccess: function(result) {
                             fetch(checkPaymentUrl)

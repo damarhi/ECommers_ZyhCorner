@@ -16,9 +16,9 @@ class AdminSettingsController extends Controller
         // Ambil informasi toko langsung dari database store_settings
         $storeInfo = [
             'name' => StoreSetting::get('store_name', config('app.store_name', 'Zyh Corner')),
-            'phone' => StoreSetting::get('store_phone', config('app.store_phone', '08123456789')),
+            'phone' => StoreSetting::get('store_phone', $admin->no_hp ?? config('app.store_phone', '08123456789')),
             'email' => StoreSetting::get('store_email', config('app.store_email', 'contact@zyhcorner.com')),
-            'address' => StoreSetting::get('store_address', config('app.store_address', 'Jl. Utama No. 123, Kota Subang')),
+            'address' => StoreSetting::get('store_address', config('app.store_address', 'Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654')),
             'operating_hours' => StoreSetting::get('store_hours', config('app.store_hours', 'Senin - Minggu (08:00 - 21:00)')),
             'tagline' => StoreSetting::get('store_tagline', 'Pastry & Bakery Berkualitas'),
             'social_instagram' => StoreSetting::get('social_instagram', 'https://instagram.com/zyhcorner'),
@@ -48,9 +48,13 @@ class AdminSettingsController extends Controller
 
         $admin->update($validated);
 
+        if (!empty($validated['no_hp'])) {
+            StoreSetting::set('store_phone', $validated['no_hp'], 'Nomor WhatsApp / Telepon', 'contact');
+            session(['store_phone' => $validated['no_hp']]);
+        }
+
         return redirect()->route('settings.index')->with('success', 'Profil Admin berhasil diperbarui.');
     }
-
     public function updatePassword(Request $request)
     {
         $admin = auth()->user();
@@ -103,6 +107,12 @@ class AdminSettingsController extends Controller
         }
         if ($request->has('social_tiktok')) {
             StoreSetting::set('social_tiktok', $validated['social_tiktok'] ?? '', 'TikTok', 'social');
+        }
+
+        // Sinkronkan nomor toko ke profil admin yang sedang login
+        $admin = auth()->user();
+        if ($admin && !empty($validated['store_phone'])) {
+            $admin->update(['no_hp' => $validated['store_phone']]);
         }
 
         // Tetap sinkronkan session untuk kompatibilitas

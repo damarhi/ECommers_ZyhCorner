@@ -29,7 +29,14 @@ class PembayaranController extends Controller
 
         $serverKey = config('services.midtrans.server_key');
         if (!$serverKey) {
-            throw new \Exception('Midtrans Server Key is not configured in .env / config.');
+            throw new \Exception('Midtrans Server Key belum dikonfigurasi di file .env (MIDTRANS_SERVER_KEY). Silakan masukkan Server Key dari dashboard Midtrans.');
+        }
+
+        // Support local sandbox demo/mock mode if specified
+        if (in_array(strtolower($serverKey), ['mock', 'sandbox-demo', 'demo'])) {
+            $mockToken = 'MOCK-SNAP-' . strtoupper(bin2hex(random_bytes(8)));
+            $pesanan->update(['snap_token' => $mockToken]);
+            return $mockToken;
         }
 
         $isProduction = filter_var(config('services.midtrans.is_production', false), FILTER_VALIDATE_BOOLEAN);
@@ -210,7 +217,7 @@ class PembayaranController extends Controller
         }
 
         $serverKey = config('services.midtrans.server_key');
-        if (!$serverKey) {
+        if (!$serverKey || in_array(strtolower($serverKey), ['mock', 'sandbox-demo', 'demo'])) {
             return false;
         }
 

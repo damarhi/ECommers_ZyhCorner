@@ -85,8 +85,8 @@ function initModalLeafletMap(type, latVal, lngVal) {
         return;
     }
 
-    const defaultLat = 0.5071; // Pekanbaru
-    const defaultLng = 101.4478;
+    const defaultLat = 0.40384; // Pangkalan Kerinci, Pelalawan (Zyh Corner)
+    const defaultLng = 101.85588;
 
     const lat = (latVal !== null && latVal !== undefined && !isNaN(parseFloat(latVal))) ? parseFloat(latVal) : defaultLat;
     const lng = (lngVal !== null && lngVal !== undefined && !isNaN(parseFloat(lngVal))) ? parseFloat(lngVal) : defaultLng;
@@ -559,6 +559,13 @@ window.deleteAddress = function(id) {
 // Init area autocompletes on dashboard modals
 document.addEventListener('DOMContentLoaded', function() {
     const sampleAreas = [
+        { id: 'ID_PLW_01', name: 'Pangkalan Kerinci Kota', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+        { id: 'ID_PLW_02', name: 'Pangkalan Kerinci Barat', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28381' },
+        { id: 'ID_PLW_03', name: 'Pangkalan Kerinci Timur', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+        { id: 'ID_PLW_04', name: 'Kuala Terusan', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+        { id: 'ID_PLW_05', name: 'Makmur', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+        { id: 'ID_PLW_06', name: 'Bandar Seikijang', city: 'Pelalawan, Riau', postal: '28383' },
+        { id: 'ID_PLW_07', name: 'Pangkalan Kuras / Sorek', city: 'Pelalawan, Riau', postal: '28382' },
         { id: 'ID_PKU_01', name: 'Sukajadi', city: 'Pekanbaru, Riau', postal: '28121' },
         { id: 'ID_PKU_02', name: 'Tampan / Tuah Madani', city: 'Pekanbaru, Riau', postal: '28292' },
         { id: 'ID_PKU_03', name: 'Marpoyan Damai', city: 'Pekanbaru, Riau', postal: '28282' },
@@ -573,18 +580,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function bindAreaAutocomplete(inputEl, idEl, postalEl, dropdownEl) {
         if (!inputEl || !dropdownEl) return;
-        inputEl.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            if (query.length < 2) {
-                dropdownEl.style.display = 'none';
-                return;
-            }
-            const matches = sampleAreas.filter(a =>
-                a.name.toLowerCase().includes(query) ||
-                a.city.toLowerCase().includes(query) ||
-                a.postal.includes(query)
-            );
-            if (matches.length === 0) {
+        let debounceTimer = null;
+
+        function renderItems(matches) {
+            if (!matches || matches.length === 0) {
                 dropdownEl.innerHTML = `<div class="area-dropdown-item" style="color: #64748b; cursor: default;">Wilayah tidak ada di daftar cepat.</div>`;
                 dropdownEl.style.display = 'block';
                 return;
@@ -605,6 +604,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     dropdownEl.style.display = 'none';
                 });
             });
+        }
+
+        inputEl.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                dropdownEl.style.display = 'none';
+                return;
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetch(`/biteship/areas?search=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            renderItems(data);
+                        } else {
+                            const qLower = query.toLowerCase();
+                            const localMatches = sampleAreas.filter(a =>
+                                a.name.toLowerCase().includes(qLower) ||
+                                a.city.toLowerCase().includes(qLower) ||
+                                a.postal.includes(qLower)
+                            );
+                            renderItems(localMatches);
+                        }
+                    })
+                    .catch(() => {
+                        const qLower = query.toLowerCase();
+                        const localMatches = sampleAreas.filter(a =>
+                            a.name.toLowerCase().includes(qLower) ||
+                            a.city.toLowerCase().includes(qLower) ||
+                            a.postal.includes(qLower)
+                        );
+                        renderItems(localMatches);
+                    });
+            }, 250);
         });
 
         document.addEventListener('click', function(e) {

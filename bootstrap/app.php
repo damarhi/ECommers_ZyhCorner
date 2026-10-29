@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'blockKasir' => \App\Http\Middleware\CheckKasirRole::class,
             'preventBackHistory' => \App\Http\Middleware\PreventBackHistory::class,
             'role' => \App\Http\Middleware\EnsureUserRole::class,
+            'checkBlockedCustomer' => \App\Http\Middleware\CheckBlockedCustomer::class,
+        ]);
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\CheckBlockedCustomer::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             '/midtrans-callback',

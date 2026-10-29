@@ -92,7 +92,7 @@
                                 </div>
                             </div>
                             <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
-                                <input type="text" name="search" value="{{ request('search') }}"
+                                <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                     class="form-control form-control-sm ps-5 pe-3" placeholder="Cari transaksi penjualan..."
                                     style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
@@ -102,62 +102,105 @@
 
                     <!-- Table -->
                     <div class="table-responsive">
-                        <table class="table" style="border-bottom: 1px solid #e4e4e4;">
+                        <table class="table table-hover align-middle">
                             <thead>
-                                <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pesanan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Tanggal</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Jenis</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pelanggan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Email/Username</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status Pembayaran</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status Pesanan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Total</th>
+                                <tr>
+                                    <th>Pesanan</th>
+                                    <th>Tanggal</th>
+                                    <th>Jenis</th>
+                                    <th>Pelanggan</th>
+                                    <th>Status Pembayaran</th>
+                                    <th>Metode Bayar</th>
+                                    <th>Status Pesanan</th>
+                                    <th>Total</th>
+                                    <th class="text-center" style="width: 95px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($sales as $order)
-                                <tr>
-                                    <td style="padding: 15px 10px; font-weight: 500; font-size: 14px;">
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" class="text-primary text-decoration-none font-weight-bold" title="Detail Pesanan">
+                                <tr data-search="{{ strtolower($order->order_number . ' ' . $order->customer_name . ' ' . $order->jenis_penjualan . ' ' . $order->metode_pembayaran . ' ' . $order->status_pembayaran . ' ' . $order->status_pesanan) }}">
+                                    <td>
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" class="text-primary text-decoration-none font-weight-600" title="Detail Pesanan">
                                             {{ $order->order_number }}
                                         </a>
                                     </td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->created_at->format('M j, g:i A') }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">
+                                    <td class="text-muted">{{ $order->created_at->format('M j, g:i A') }}</td>
+                                    <td>
                                         @if($order->jenis_penjualan == 'Online')
                                             <span class="badge badge-soft-info">Online</span>
                                         @else
                                             <span class="badge badge-soft-dark">Offline</span>
                                         @endif
                                     </td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->customer_name }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->email_pembeli ?? '-' }}</td>
-                                    <td style="padding: 15px 10px;">
+                                    <td>
+                                        <div class="d-flex flex-column" style="line-height: 1.35;">
+                                            <span class="font-weight-600 text-dark" style="font-size: 13px;">
+                                                {{ $order->customer_name }}
+                                            </span>
+                                            <small class="text-muted" style="font-size: 11.5px;">
+                                                {{ $order->email_pembeli ?? '-' }}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
                                         @if($order->payment_status == 'Paid')
                                             <span class="badge badge-soft-success">Dibayar</span>
                                         @else
                                             <span class="badge badge-soft-warning">Tertunda</span>
                                         @endif
                                     </td>
-                                    <td style="padding: 15px 10px;">
+                                    <td>
+                                        @php
+                                            $method = $order->payment_method ?: ($order->jenis_penjualan === 'Offline' ? 'Cash' : 'Transfer');
+                                            $mLower = strtolower($method);
+                                        @endphp
+                                        <span class="d-inline-flex align-items-center text-dark font-weight-500" style="font-size: 12.5px; gap: 5px;">
+                                            @if(str_contains($mLower, 'cash') || str_contains($mLower, 'tunai'))
+                                                <i class="mdi mdi-cash text-success" style="font-size: 16px; line-height: 1;"></i>
+                                            @elseif(str_contains($mLower, 'transfer') || str_contains($mLower, 'bank'))
+                                                <i class="mdi mdi-bank-transfer text-primary" style="font-size: 16px; line-height: 1;"></i>
+                                            @elseif(str_contains($mLower, 'wallet') || str_contains($mLower, 'qris') || str_contains($mLower, 'midtrans'))
+                                                <i class="mdi mdi-wallet-outline text-info" style="font-size: 16px; line-height: 1;"></i>
+                                            @elseif(str_contains($mLower, 'cod'))
+                                                <i class="mdi mdi-truck-delivery-outline text-warning" style="font-size: 16px; line-height: 1;"></i>
+                                            @else
+                                                <i class="mdi mdi-credit-card-outline text-secondary" style="font-size: 16px; line-height: 1;"></i>
+                                            @endif
+                                            <span>{{ $method }}</span>
+                                        </span>
+                                    </td>
+                                    <td>
                                         @if($order->order_status == 'menunggu pembayaran')
                                             <span class="badge badge-soft-warning">Menunggu Pembayaran</span>
+                                        @elseif($order->order_status == 'menunggu konfirmasi')
+                                            <span class="badge badge-pulse-amber">Menunggu Konfirmasi</span>
                                         @elseif($order->order_status == 'dikemas')
                                             <span class="badge badge-soft-info">Dikemas</span>
                                         @elseif($order->order_status == 'dikirim')
                                             <span class="badge badge-soft-primary">Dikirim</span>
                                         @elseif($order->order_status == 'selesai')
                                             <span class="badge badge-soft-success">Selesai</span>
+                                        @elseif($order->order_status == 'batal')
+                                            <span class="badge badge-soft-danger">Dibatalkan</span>
                                         @else
                                             <span class="badge badge-soft-dark">{{ $order->order_status }}</span>
                                         @endif
                                     </td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
+                                    <td class="font-weight-600 text-dark">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <button type="button" class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 6px;" title="Detail Penjualan" aria-label="Detail Penjualan">
+                                                <i class="mdi mdi-eye" style="font-size: 16px;"></i>
+                                            </button>
+                                            <a href="{{ route('orders.invoice', $order->id) }}" target="_blank" class="btn btn-sm btn-inverse-primary d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0; border-radius: 6px;" title="Cetak Invoice" aria-label="Cetak Invoice">
+                                                <i class="mdi mdi-printer" style="font-size: 16px;"></i>
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-5">
+                                    <td colspan="9" class="text-center py-5">
                                         <div class="d-flex flex-column align-items-center justify-content-center">
                                             <i class="mdi mdi-cart-outline text-muted mb-2" style="font-size: 64px;"></i>
                                             <h5 class="text-muted font-weight-bold">Belum Ada Data Penjualan</h5>

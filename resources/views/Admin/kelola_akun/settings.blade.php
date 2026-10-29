@@ -169,6 +169,7 @@
                                     <div class="form-group mb-3">
                                         <label class="font-weight-500 mb-1">Jam Operasional Toko</label>
                                         <input type="text" name="store_hours" class="form-control" value="{{ old('store_hours', $storeInfo['operating_hours']) }}" placeholder="Contoh: Senin - Minggu (08:00 - 21:00)">
+                                    </div>
 
                                     <div class="form-group mb-4">
                                         <label class="font-weight-500 mb-1">Alamat Lengkap Toko</label>

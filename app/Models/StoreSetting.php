@@ -59,18 +59,83 @@ class StoreSetting extends Model
     }
 
     /**
+     * Get primary registered admin's phone number if available.
+     */
+    public static function getAdminPhone(): ?string
+    {
+        try {
+            return \App\Models\User::where('role', 'admin')
+                ->whereNotNull('no_hp')
+                ->where('no_hp', '!=', '')
+                ->orderBy('user_id', 'asc')
+                ->value('no_hp');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Get clean WhatsApp international phone number (e.g. 628123456789).
      */
     public static function getWaNumber(?string $phone = null): string
     {
-        $phone = $phone ?? static::get('store_phone', '08123456789');
+        if ($phone === null || trim($phone) === '') {
+            $phone = static::get('store_phone');
+        }
+
+        if ($phone === null || trim((string)$phone) === '') {
+            $phone = static::getAdminPhone();
+        }
+
         $cleaned = preg_replace('/[^0-9]/', '', (string)$phone);
+        if ($cleaned === '') {
+            return '628123456789';
+        }
+
         if (str_starts_with($cleaned, '0')) {
             return '62' . substr($cleaned, 1);
         }
-        return $cleaned ?: '628123456789';
+
+        if (str_starts_with($cleaned, '62')) {
+            return $cleaned;
+        }
+
+        if (str_starts_with($cleaned, '8')) {
+            return '62' . $cleaned;
+        }
+
+        return $cleaned;
     }
 
+    /**
+     * Get valid Instagram profile URL.
+     */
+    public static function getInstagramUrl(?string $url = null): ?string
+    {
+        if ($url === null || trim($url) === '') {
+            $url = static::get('social_instagram');
+        }
+
+        if ($url === null || trim((string)$url) === '') {
+            return null;
+        }
+
+        $trimmed = trim((string)$url);
+        $trimmed = rtrim($trimmed, '/');
+
+        if (preg_match('/^http:\/\//i', $trimmed)) {
+            $trimmed = 'https://' . substr($trimmed, 7);
+        }
+
+        if (preg_match('/^https:\/\//i', $trimmed)) {
+            return $trimmed;
+        }
+
+        $username = ltrim($trimmed, '@');
+        $username = trim($username, '/');
+
+        return 'https://instagram.com/' . $username;
+    }
     /**
      * Clear all store settings cache.
      */

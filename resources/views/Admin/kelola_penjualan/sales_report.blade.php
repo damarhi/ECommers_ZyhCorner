@@ -475,8 +475,8 @@
             <div class="brand-logo">
                 <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo">
                 <div>
-                    <h1 class="brand-title">ZYH CORNER</h1>
-                    <p class="brand-subtitle">Pastry & Bakery Specialist Pekanbaru | Telp: (+62) 812-3456-789</p>
+                    <h1 class="brand-title">{{ strtoupper(\App\Models\StoreSetting::get('store_name', 'ZYH CORNER')) }}</h1>
+                    <p class="brand-subtitle">{{ \App\Models\StoreSetting::get('store_tagline', 'Pastry & Bakery Specialist') }} | Telp: {{ \App\Models\StoreSetting::get('store_phone', '(+62) 812-3456-789') }}</p>
                 </div>
             </div>
             <div class="report-meta">
@@ -718,7 +718,7 @@
         <!-- Signature Section -->
         <div class="signature-section">
             <div class="signature-box">
-                <div class="signature-date">Pekanbaru, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
+                <div class="signature-date">Pangkalan Kerinci, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</div>
                 <div style="font-size: 12px; color: #4a5568;">Mengetahui,</div>
                 <div class="signature-space"></div>
                 <div class="signature-name">Manager Toko Zyh Corner</div>

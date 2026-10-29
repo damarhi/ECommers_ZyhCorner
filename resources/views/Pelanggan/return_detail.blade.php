@@ -158,6 +158,17 @@
                             <span class="info-label" style="font-size: 13px;">Reason:</span>
                             <div class="return-reason-box">{{ $retur->reason }}</div>
                         </div>
+                        @if($retur->catatan_admin)
+                            <div style="margin-top: 14px; padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                                <div style="font-size: 12.5px; font-weight: 600; color: #166534; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                    <i class="fa-solid fa-store"></i>
+                                    <span>Tanggapan / Catatan Toko:</span>
+                                </div>
+                                <div style="font-size: 13px; color: #1f2937; line-height: 1.45;">
+                                    {{ $retur->catatan_admin }}
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Order Info -->

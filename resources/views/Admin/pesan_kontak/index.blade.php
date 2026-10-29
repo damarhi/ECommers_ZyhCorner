@@ -18,30 +18,50 @@
 
     <!-- KPI Summary Cards -->
     <div class="row mb-4">
-        <div class="col-md-4 stretch-card grid-margin mb-3 mb-md-0">
-            <div class="card bg-gradient-info card-img-holder text-white border-0 shadow-sm" style="border-radius: 12px;">
-                <div class="card-body p-4">
-                    <h4 class="font-weight-normal mb-2" style="font-size: 15px;">Total Pesan Masuk <i class="mdi mdi-email-outline mdi-24px float-end"></i></h4>
-                    <h2 class="mb-1 font-weight-bold">{{ number_format($totalMessages, 0, ',', '.') }}</h2>
-                    <small style="opacity: 0.85;">Akumulasi seluruh pesan kontak</small>
+        <!-- Total Pesan Masuk -->
+        <div class="col-12 col-md-4 stretch-card grid-margin mb-3 mb-md-0">
+            <div class="card stat-card stat-card-indigo border-0 text-white shadow-sm w-100 h-100" style="border-radius: 12px; min-height: 108px;">
+                <div class="card-body d-flex align-items-center gap-3 p-3 p-sm-4 h-100">
+                    <div class="stat-icon flex-shrink-0">
+                        <i class="mdi mdi-email-multiple-outline"></i>
+                    </div>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <p class="stat-label mb-0 text-truncate" title="Total Pesan Masuk">Total Pesan Masuk</p>
+                        <h3 class="stat-value my-1">{{ number_format($totalMessages, 0, ',', '.') }}</h3>
+                        <p class="stat-change mb-0 text-truncate" title="Akumulasi seluruh pesan kontak">Akumulasi seluruh pesan kontak</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 stretch-card grid-margin mb-3 mb-md-0">
-            <div class="card bg-gradient-warning card-img-holder text-white border-0 shadow-sm" style="border-radius: 12px;">
-                <div class="card-body p-4">
-                    <h4 class="font-weight-normal mb-2" style="font-size: 15px;">Belum Dibaca <i class="mdi mdi-email-alert-outline mdi-24px float-end"></i></h4>
-                    <h2 class="mb-1 font-weight-bold">{{ number_format($unreadMessages, 0, ',', '.') }}</h2>
-                    <small style="opacity: 0.85;">Memerlukan perhatian admin</small>
+
+        <!-- Belum Dibaca (Urgensi Perhatian) -->
+        <div class="col-12 col-md-4 stretch-card grid-margin mb-3 mb-md-0">
+            <div class="card stat-card stat-card-coral border-0 text-white shadow-sm w-100 h-100" style="border-radius: 12px; min-height: 108px;">
+                <div class="card-body d-flex align-items-center gap-3 p-3 p-sm-4 h-100">
+                    <div class="stat-icon flex-shrink-0">
+                        <i class="mdi mdi-email-alert-outline"></i>
+                    </div>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <p class="stat-label mb-0 text-truncate" title="Belum Dibaca">Belum Dibaca</p>
+                        <h3 class="stat-value my-1">{{ number_format($unreadMessages, 0, ',', '.') }}</h3>
+                        <p class="stat-change mb-0 text-truncate" title="Memerlukan respon admin">Memerlukan respon admin</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 stretch-card grid-margin">
-            <div class="card bg-gradient-success card-img-holder text-white border-0 shadow-sm" style="border-radius: 12px;">
-                <div class="card-body p-4">
-                    <h4 class="font-weight-normal mb-2" style="font-size: 15px;">Sudah Dibalas <i class="mdi mdi-email-check-outline mdi-24px float-end"></i></h4>
-                    <h2 class="mb-1 font-weight-bold">{{ number_format($repliedMessages, 0, ',', '.') }}</h2>
-                    <small style="opacity: 0.85;">Pesan yang telah ditindaklanjuti</small>
+
+        <!-- Sudah Dibalas -->
+        <div class="col-12 col-md-4 stretch-card grid-margin mb-3 mb-md-0">
+            <div class="card stat-card stat-card-teal border-0 text-white shadow-sm w-100 h-100" style="border-radius: 12px; min-height: 108px;">
+                <div class="card-body d-flex align-items-center gap-3 p-3 p-sm-4 h-100">
+                    <div class="stat-icon flex-shrink-0">
+                        <i class="mdi mdi-email-check-outline"></i>
+                    </div>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <p class="stat-label mb-0 text-truncate" title="Sudah Dibalas">Sudah Dibalas</p>
+                        <h3 class="stat-value my-1">{{ number_format($repliedMessages, 0, ',', '.') }}</h3>
+                        <p class="stat-change mb-0 text-truncate" title="Pesan yang telah ditindaklanjuti">Pesan yang telah ditindaklanjuti</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -71,7 +91,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ $currentStatus === 'Dibaca' ? 'active text-primary font-weight-bold border-bottom border-primary border-2' : 'text-muted border-0' }} px-2 pb-2"
                        href="{{ route('messages.index', array_filter(['status' => 'Dibaca', 'search' => request('search')])) }}">
-                        Sudah Dibaca
+                        Sudah Dibaca ({{ $readMessages ?? 0 }})
                     </a>
                 </li>
                 <li class="nav-item">
@@ -88,12 +108,12 @@
                     <input type="hidden" name="status" value="{{ request('status') }}">
                 @endif
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" id="btnBulkDelete" class="btn btn-outline-danger btn-sm d-none align-items-center" onclick="confirmBulkDelete()">
-                        <i class="mdi mdi-delete-outline me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+                    <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center px-3" style="height: 38px;" onclick="confirmBulkDelete()">
+                        <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                     </button>
                 </div>
                 <div class="position-relative w-100 w-md-auto" style="min-width: 280px;">
-                    <input type="text" name="search" value="{{ request('search') }}"
+                    <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                         class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama, email, subjek, pesan..."
                         style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2;">
                     <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;"></i>
@@ -107,9 +127,9 @@
             </form>
 
             <!-- Messages Table -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
-                    <thead class="bg-light">
+            <div class="table-responsive" style="min-height: 220px;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
                         <tr>
                             <th style="width: 40px;" class="text-center">
                                 <input type="checkbox" id="selectAllCheckbox" class="form-check-input" style="cursor: pointer;">
@@ -118,12 +138,12 @@
                             <th>Subjek & Pesan</th>
                             <th class="text-center" style="width: 130px;">Status</th>
                             <th style="width: 150px;">Waktu</th>
-                            <th class="text-center" style="width: 140px;">Aksi</th>
+                            <th class="text-center" style="width: 110px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($messages as $msg)
-                            <tr class="{{ $msg->status === 'Belum Dibaca' ? 'table-warning bg-opacity-10 fw-bold' : '' }}" id="row-msg-{{ $msg->id }}">
+                            <tr class="{{ $msg->status === 'Belum Dibaca' ? 'table-warning bg-opacity-10 fw-bold' : '' }}" id="row-msg-{{ $msg->id }}" data-search="{{ strtolower($msg->nama . ' ' . $msg->email . ' ' . $msg->subjek . ' ' . $msg->pesan . ' ' . $msg->status) }}">
                                 <td class="text-center">
                                     <input type="checkbox" class="form-check-input message-checkbox" value="{{ $msg->id }}" style="cursor: pointer;" onchange="updateBulkDeleteState()">
                                 </td>
@@ -147,45 +167,58 @@
                                 </td>
                                 <td class="text-center">
                                     @if($msg->status === 'Belum Dibaca')
-                                        <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 20px; font-size: 11px;">
+                                        <span class="badge badge-soft-warning">
                                             <i class="mdi mdi-email-alert-outline me-1"></i> Belum Dibaca
                                         </span>
                                     @elseif($msg->status === 'Dibaca')
-                                        <span class="badge bg-info text-white px-3 py-2" style="border-radius: 20px; font-size: 11px;">
+                                        <span class="badge badge-soft-info">
                                             <i class="mdi mdi-email-open-outline me-1"></i> Dibaca
                                         </span>
                                     @else
-                                        <span class="badge bg-success text-white px-3 py-2" style="border-radius: 20px; font-size: 11px;">
+                                        <span class="badge badge-soft-success">
                                             <i class="mdi mdi-check-all me-1"></i> Dibalas
                                         </span>
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="text-dark" style="font-size: 12.5px;">{{ $msg->created_at->format('d M Y') }}</div>
+                                    <div class="text-dark font-weight-500">{{ $msg->created_at->format('d M Y') }}</div>
                                     <small class="text-muted">{{ $msg->created_at->format('H:i') }} WIB</small>
                                 </td>
                                 <td class="text-center">
-                                    <div class="d-inline-flex gap-1">
+                                    <div class="d-inline-flex align-items-center justify-content-center" style="gap: 6px;">
                                         <!-- Tombol Baca Modal -->
-                                        <button type="button" class="btn btn-sm btn-gradient-primary px-2 py-1"
+                                        <button type="button" class="btn btn-sm btn-inverse-success d-inline-flex align-items-center justify-content-center"
+                                                style="width: 32px; height: 32px; padding: 0; border-radius: 6px;"
                                                 onclick="openMessageDetail({{ $msg->id }}, '{{ addslashes($msg->nama) }}', '{{ addslashes($msg->email) }}', '{{ addslashes($msg->subjek) }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $msg->pesan)) }}', '{{ $msg->status }}', '{{ $msg->created_at->format('d M Y, H:i') }} WIB')"
                                                 title="Lihat Detail Pesan">
-                                            <i class="mdi mdi-eye"></i>
+                                            <i class="mdi mdi-eye" style="font-size: 16px; margin: 0;"></i>
                                         </button>
 
                                         <!-- Dropdown Ubah Status -->
                                         <div class="dropdown d-inline">
-                                            <button class="btn btn-sm btn-outline-secondary px-2 py-1 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Ubah Status">
-                                                <i class="mdi mdi-list-status"></i>
+                                            <button class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown"
+                                                    data-bs-popper-config='{"strategy":"fixed"}'
+                                                    data-bs-boundary="viewport"
+                                                    aria-expanded="false"
+                                                    style="width: 32px; height: 32px; padding: 0; border-radius: 6px;"
+                                                    title="Ubah Status">
+                                                <i class="mdi mdi-format-list-bulleted" style="font-size: 16px; margin: 0;"></i>
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 12.5px; border-radius: 8px;">
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 12.5px; border-radius: 8px; min-width: 175px; padding: 6px;">
                                                 <li>
                                                     <form action="{{ route('messages.update-status', $msg->id) }}" method="POST">
                                                         @csrf
                                                         @method('PATCH')
                                                         <input type="hidden" name="status" value="Belum Dibaca">
-                                                        <button type="submit" class="dropdown-item py-2 {{ $msg->status === 'Belum Dibaca' ? 'active' : '' }}">
-                                                            <i class="mdi mdi-email-alert-outline text-warning me-2"></i> Belum Dibaca
+                                                        <button type="submit" class="dropdown-item d-flex align-items-center justify-content-between py-2 px-2.5 {{ $msg->status === 'Belum Dibaca' ? 'active status-active-warning' : '' }}">
+                                                            <span class="d-flex align-items-center">
+                                                                <i class="mdi mdi-email-alert-outline text-warning me-2" style="font-size: 15px;"></i> Belum Dibaca
+                                                            </span>
+                                                            @if($msg->status === 'Belum Dibaca')
+                                                                <i class="mdi mdi-check text-warning ms-2" style="font-size: 16px; font-weight: bold;"></i>
+                                                            @endif
                                                         </button>
                                                     </form>
                                                 </li>
@@ -194,8 +227,13 @@
                                                         @csrf
                                                         @method('PATCH')
                                                         <input type="hidden" name="status" value="Dibaca">
-                                                        <button type="submit" class="dropdown-item py-2 {{ $msg->status === 'Dibaca' ? 'active' : '' }}">
-                                                            <i class="mdi mdi-email-open-outline text-info me-2"></i> Dibaca
+                                                        <button type="submit" class="dropdown-item d-flex align-items-center justify-content-between py-2 px-2.5 {{ $msg->status === 'Dibaca' ? 'active status-active-info' : '' }}">
+                                                            <span class="d-flex align-items-center">
+                                                                <i class="mdi mdi-email-open-outline text-info me-2" style="font-size: 15px;"></i> Dibaca
+                                                            </span>
+                                                            @if($msg->status === 'Dibaca')
+                                                                <i class="mdi mdi-check text-info ms-2" style="font-size: 16px; font-weight: bold;"></i>
+                                                            @endif
                                                         </button>
                                                     </form>
                                                 </li>
@@ -204,8 +242,13 @@
                                                         @csrf
                                                         @method('PATCH')
                                                         <input type="hidden" name="status" value="Dibalas">
-                                                        <button type="submit" class="dropdown-item py-2 {{ $msg->status === 'Dibalas' ? 'active' : '' }}">
-                                                            <i class="mdi mdi-check-all text-success me-2"></i> Dibalas
+                                                        <button type="submit" class="dropdown-item d-flex align-items-center justify-content-between py-2 px-2.5 {{ $msg->status === 'Dibalas' ? 'active status-active-success' : '' }}">
+                                                            <span class="d-flex align-items-center">
+                                                                <i class="mdi mdi-check-all text-success me-2" style="font-size: 15px;"></i> Dibalas
+                                                            </span>
+                                                            @if($msg->status === 'Dibalas')
+                                                                <i class="mdi mdi-check text-success ms-2" style="font-size: 16px; font-weight: bold;"></i>
+                                                            @endif
                                                         </button>
                                                     </form>
                                                 </li>
@@ -213,16 +256,17 @@
                                         </div>
 
                                         <!-- Tombol Hapus -->
-                                        <form action="{{ route('messages.destroy', $msg->id) }}" method="POST" class="d-inline" id="deleteForm-{{ $msg->id }}">
+                                        <form action="{{ route('messages.destroy', $msg->id) }}" method="POST" class="d-inline delete-form" id="deleteForm-{{ $msg->id }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1" onclick="confirmDelete({{ $msg->id }})" title="Hapus Pesan">
-                                                <i class="mdi mdi-delete-outline"></i>
+                                            <button type="button" class="btn btn-sm btn-inverse-danger d-inline-flex align-items-center justify-content-center"
+                                                    style="width: 32px; height: 32px; padding: 0; border-radius: 6px;"
+                                                    onclick="confirmDelete({{ $msg->id }})" title="Hapus Pesan">
+                                                <i class="mdi mdi-delete" style="font-size: 16px; margin: 0;"></i>
                                             </button>
                                         </form>
                                     </div>
                                 </td>
-                            </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center py-5 text-muted">
@@ -253,67 +297,79 @@
 
 <!-- Modal Detail Pesan -->
 <div class="modal fade" id="messageDetailModal" tabindex="-1" aria-labelledby="messageDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow" style="border-radius: 12px; overflow: hidden;">
-            <div class="modal-header bg-gradient-primary text-white py-3">
-                <h5 class="modal-title font-weight-bold d-flex align-items-center" id="messageDetailModalLabel">
-                    <i class="mdi mdi-email-open-outline me-2"></i> Detail Pesan Kontak
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 620px; margin: 1.75rem auto; width: 95%;">
+        <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 12px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+            <!-- Header Modal -->
+            <div class="modal-header border-bottom py-2.5 px-3 px-sm-4 bg-white flex-shrink-0">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="d-inline-flex align-items-center justify-content-center text-primary rounded-circle" style="width: 34px; height: 34px; background-color: #ede9fe; color: #4f46e5 !important;">
+                        <i class="mdi mdi-email-open-outline" style="font-size: 18px;"></i>
+                    </span>
+                    <div>
+                        <h6 class="modal-title font-weight-bold mb-0 text-dark" id="messageDetailModalLabel" style="font-size: 15px;">
+                            Detail Pesan Kontak
+                        </h6>
+                        <small class="text-muted" style="font-size: 11px;">Rincian pesan masuk dari formulir kontak pelanggan.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
             </div>
-            <div class="modal-body p-4">
-                <div class="row mb-3">
-                    <div class="col-sm-6 mb-2">
-                        <small class="text-muted d-block" style="font-size: 11.5px;">Nama Pengirim</small>
-                        <h6 class="font-weight-bold text-dark mb-0" id="modalSenderName">-</h6>
-                    </div>
-                    <div class="col-sm-6 mb-2">
-                        <small class="text-muted d-block" style="font-size: 11.5px;">Email Pengirim</small>
-                        <a href="#" id="modalSenderEmailLink" class="text-primary font-weight-bold text-decoration-none">-</a>
+            <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
+                <!-- Sender Information Box -->
+                <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="row g-2">
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block" style="font-size: 11px;">Nama Pengirim</span>
+                            <strong class="text-dark" id="modalSenderName" style="font-size: 13px;">-</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block" style="font-size: 11px;">Email Pengirim</span>
+                            <a href="#" id="modalSenderEmailLink" class="text-primary font-weight-500 text-decoration-none" style="font-size: 12.5px;">-</a>
+                        </div>
+                        <div class="col-sm-6 pt-1 border-top">
+                            <span class="text-muted d-block" style="font-size: 11px;">Waktu Terkirim</span>
+                            <span class="text-dark" id="modalMessageTime" style="font-size: 12px;">-</span>
+                        </div>
+                        <div class="col-sm-6 pt-1 border-top">
+                            <span class="text-muted d-block" style="font-size: 11px;">Status Pesan</span>
+                            <div id="modalMessageStatusBadge" class="mt-0.5">-</div>
+                        </div>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-sm-6 mb-2">
-                        <small class="text-muted d-block" style="font-size: 11.5px;">Waktu Terkirim</small>
-                        <span class="text-dark" id="modalMessageTime">-</span>
-                    </div>
-                    <div class="col-sm-6 mb-2">
-                        <small class="text-muted d-block" style="font-size: 11.5px;">Status Saat Ini</small>
-                        <span id="modalMessageStatusBadge">-</span>
+
+                <!-- Subjek Pesan -->
+                <div class="mb-2.5">
+                    <span class="text-muted d-block mb-1" style="font-size: 11px; font-weight: 500;">Subjek Pesan</span>
+                    <div class="p-2 rounded-2 border font-weight-bold text-dark" style="background: #ffffff; border-color: #e2e8f0 !important; font-size: 13px;" id="modalMessageSubject">
+                        -
                     </div>
                 </div>
 
-                <hr class="my-3 text-muted" style="opacity: 0.15;">
-
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1" style="font-size: 11.5px;">Subjek Pesan</small>
-                    <h6 class="font-weight-bold text-dark p-2 rounded" style="background: #f8f9fa;" id="modalMessageSubject">-</h6>
-                </div>
-
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1" style="font-size: 11.5px;">Isi Pesan Lengkap</small>
-                    <div class="p-3 rounded border text-dark" style="background: #fafbfc; min-height: 120px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6;" id="modalMessageBody">
+                <!-- Isi Pesan -->
+                <div class="mb-1">
+                    <span class="text-muted d-block mb-1" style="font-size: 11px; font-weight: 500;">Isi Pesan Lengkap</span>
+                    <div class="p-3 rounded-3 border text-dark" style="background: #ffffff; border-color: #e2e8f0 !important; min-height: 110px; max-height: 220px; overflow-y: auto; white-space: pre-wrap; font-size: 12.5px; line-height: 1.6;" id="modalMessageBody">
                         -
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light py-3 px-4 d-flex justify-content-between">
+            <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-between align-items-center" style="border-radius: 0 0 12px 12px;">
                 <div>
                     <!-- Mark as replied form -->
                     <form id="markRepliedForm" action="#" method="POST" class="d-inline">
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="Dibalas">
-                        <button type="submit" class="btn btn-outline-success btn-sm">
+                        <button type="submit" class="btn btn-xs btn-outline-success py-1 px-2.5 d-inline-flex align-items-center" style="border-radius: 6px; font-size: 11.5px; font-weight: 500;">
                             <i class="mdi mdi-check-all me-1"></i> Tandai Sudah Dibalas
                         </button>
                     </form>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="#" id="modalReplyMailto" class="btn btn-gradient-primary btn-sm px-3 d-inline-flex align-items-center">
-                        <i class="mdi mdi-reply me-1"></i> Balas via Email
+                    <a href="#" id="modalReplyMailto" class="btn btn-gradient-primary btn-sm px-3 py-1 d-inline-flex align-items-center shadow-sm" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
+                        <i class="mdi mdi-reply me-1" style="font-size: 14px;"></i> Balas via Email
                     </a>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Tutup</button>
                 </div>
             </div>
         </div>

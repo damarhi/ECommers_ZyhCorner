@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Retur;
+use App\Models\Pesanan;
+use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,12 +18,30 @@ class ReturController extends Controller
     {
         $query = Retur::query();
         
-        if ($request->has('search') && $request->search != '') {
-            $searchTerm = '%' . $request->search . '%';
-            $query->where(function($q) use ($searchTerm) {
+        if ($request->filled('search')) {
+            $rawTerm = trim($request->search);
+            $searchTerm = '%' . $rawTerm . '%';
+            
+            $statusMap = [
+                'baru'      => 'New',
+                'diproses'  => 'Processed',
+                'diterima'  => 'Accepted',
+                'disetujui' => 'Accepted',
+                'ditolak'   => 'Rejected',
+                'selesai'   => 'Done',
+            ];
+            $mappedStatus = $statusMap[strtolower($rawTerm)] ?? null;
+
+            $query->where(function($q) use ($searchTerm, $mappedStatus) {
                 $q->where('customer_name', 'like', $searchTerm)
                   ->orWhere('order_id', 'like', $searchTerm)
-                  ->orWhere('product_name', 'like', $searchTerm);
+                  ->orWhere('product_name', 'like', $searchTerm)
+                  ->orWhere('reason', 'like', $searchTerm)
+                  ->orWhere('status', 'like', $searchTerm);
+                  
+                if ($mappedStatus) {
+                    $q->orWhere('status', $mappedStatus);
+                }
             });
         }
 
@@ -32,7 +52,27 @@ class ReturController extends Controller
         }
 
         $returs = $query->latest()->paginate(10);
-        return view('Admin.kelola_penjualan.returs', compact('returs'));
+
+        // Status counts for tab navigation
+        $statusCounts = [
+            'All'       => Retur::count(),
+            'New'       => Retur::where('status', 'New')->count(),
+            'Processed' => Retur::where('status', 'Processed')->count(),
+            'Accepted'  => Retur::where('status', 'Accepted')->count(),
+            'Rejected'  => Retur::where('status', 'Rejected')->count(),
+            'Done'      => Retur::where('status', 'Done')->count(),
+        ];
+
+        // Completed orders for smart selection
+        $completedOrders = Pesanan::whereIn(DB::raw('LOWER(order_status)'), ['selesai', 'completed', 'delivered'])
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        // Active products for quick selector
+        $allProducts = Produk::orderBy('nama_produk')->get();
+
+        return view('Admin.kelola_penjualan.returs', compact('returs', 'statusCounts', 'completedOrders', 'allProducts'));
     }
 
     public function store(Request $request)
@@ -43,7 +83,7 @@ class ReturController extends Controller
             'reason' => 'required|string',
             'return_date' => 'required|date',
             'product_name' => 'required|string|max:255',
-            'status' => 'required|string|in:New,Processed,rejected,Accepted,Done',
+            'status' => 'required|string|in:New,Processed,Accepted,Rejected,Done,rejected',
             'foto_retur' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
@@ -105,16 +145,38 @@ class ReturController extends Controller
         $retur = Retur::findOrFail($id);
 
         $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'order_id' => 'required|string|max:255',
-            'reason' => 'required|string',
-            'return_date' => 'required|date',
-            'product_name' => 'required|string|max:255',
-            'status' => 'required|string|in:New,Processed,rejected,Accepted,Done',
+            'status' => 'required|string|in:New,Processed,Accepted,Rejected,Done,rejected',
+            'catatan_admin' => 'nullable|string|max:2000',
+            'customer_name' => 'nullable|string|max:255',
+            'order_id' => 'nullable|string|max:255',
+            'reason' => 'nullable|string',
+            'return_date' => 'nullable|date',
+            'product_name' => 'nullable|string|max:255',
             'foto_retur' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        $data = $request->except(['foto_retur', '_token', '_method']);
+        $data = [
+            'status' => $request->status,
+            'catatan_admin' => $request->catatan_admin,
+        ];
+
+        // Fallback untuk pemanggilan legacy/test
+        if ($request->filled('customer_name')) {
+            $data['customer_name'] = $request->customer_name;
+        }
+        if ($request->filled('order_id')) {
+            $data['order_id'] = $request->order_id;
+        }
+        if ($request->filled('reason')) {
+            $data['reason'] = $request->reason;
+        }
+        if ($request->filled('return_date')) {
+            $data['return_date'] = $request->return_date;
+        }
+        if ($request->filled('product_name')) {
+            $data['product_name'] = $request->product_name;
+        }
+
         if ($request->hasFile('foto_retur')) {
             $file = $request->file('foto_retur');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
@@ -130,6 +192,27 @@ class ReturController extends Controller
 
         return redirect()->route('returs.index')->with('success', 'Return updated successfully!');
     }
+
+    /**
+     * Quick update return status from modal or detail view
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:New,Processed,Accepted,Rejected,Done,rejected',
+            'catatan_admin' => 'nullable|string|max:2000',
+        ]);
+
+        $retur = Retur::findOrFail($id);
+        $retur->status = $request->status;
+        if ($request->has('catatan_admin')) {
+            $retur->catatan_admin = $request->catatan_admin;
+        }
+        $retur->save();
+
+        return redirect()->back()->with('success', 'Status retur #' . $retur->id . ' berhasil diubah menjadi ' . $retur->status_label . '.');
+    }
+
 
     /**
      * @param  int|string  $id

@@ -22,7 +22,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Produk tidak sesuai dengan deskripsi',
                 'return_date'   => Carbon::now()->subDays(28)->toDateString(),
                 'product_name'  => 'Red Velvet Cake',
-                'status'        => 'Completed',
+                'status'        => 'Done',
             ],
             [
                 'customer_name' => 'Budi Santoso',
@@ -30,7 +30,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Kue rusak saat pengiriman',
                 'return_date'   => Carbon::now()->subDays(18)->toDateString(),
                 'product_name'  => 'Chocolate Brownies',
-                'status'        => 'Completed',
+                'status'        => 'Done',
             ],
             [
                 'customer_name' => 'Dewi Lestari',
@@ -38,7 +38,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Rasa tidak sesuai ekspektasi',
                 'return_date'   => Carbon::now()->subDays(20)->toDateString(),
                 'product_name'  => 'Cheese Cake Original',
-                'status'        => 'Completed',
+                'status'        => 'Done',
             ],
             [
                 'customer_name' => 'Fajar Pratama',
@@ -46,7 +46,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Pesanan salah / tidak sesuai order',
                 'return_date'   => Carbon::now()->subDays(13)->toDateString(),
                 'product_name'  => 'Tiramisu Cake',
-                'status'        => 'Processing',
+                'status'        => 'Processed',
             ],
             [
                 'customer_name' => 'Hendra Gunawan',
@@ -62,7 +62,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Kemasan terbuka / seal rusak',
                 'return_date'   => Carbon::now()->subDays(16)->toDateString(),
                 'product_name'  => 'Banana Cake',
-                'status'        => 'Completed',
+                'status'        => 'Done',
             ],
             [
                 'customer_name' => 'Rina Wulandari',
@@ -70,7 +70,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Alergi terhadap bahan yang tidak tercantum',
                 'return_date'   => Carbon::now()->subDays(4)->toDateString(),
                 'product_name'  => 'Peanut Butter Cookie',
-                'status'        => 'Processing',
+                'status'        => 'Processed',
             ],
             [
                 'customer_name' => 'Putri Ayu',
@@ -78,7 +78,7 @@ class ReturSeeder extends Seeder
                 'reason'        => 'Jumlah item kurang dari yang dipesan',
                 'return_date'   => Carbon::now()->subDays(12)->toDateString(),
                 'product_name'  => 'Donut Glazed',
-                'status'        => 'Completed',
+                'status'        => 'Done',
             ],
             [
                 'customer_name' => 'Fajar Pratama',

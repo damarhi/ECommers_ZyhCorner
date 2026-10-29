@@ -2078,8 +2078,8 @@ window.initCheckoutMap = function() {
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
 
-    // Del Institute coordinates as starting point
-    const initialCoords = [2.3833, 99.1500];
+    // Zyh Corner coordinates in Pangkalan Kerinci, Pelalawan as starting point
+    const initialCoords = [0.40384, 101.85588];
     
     // Check if Leaflet is loaded
     if (typeof L === 'undefined') {

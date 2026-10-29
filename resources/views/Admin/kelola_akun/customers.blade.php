@@ -10,11 +10,9 @@
                 <i class="mdi mdi-account-group-outline"></i>
             </span> Akun Pelanggan
         </h3>
-        <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
-            <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-                <i class="mdi mdi-plus me-1"></i> Tambah Pelanggan
-            </button>
-        </div>
+        <span class="badge bg-soft-primary text-primary px-3 py-2 font-weight-500 d-inline-flex align-items-center" style="font-size: 13px; border-radius: 20px;">
+            <i class="mdi mdi-sync me-1.5" style="font-size: 15px;"></i> Terdaftar Otomatis dari Pembeli Website
+        </span>
     </div>
 
 
@@ -61,12 +59,11 @@
                                 </div>
                             </div>
                             <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
-                                <input type="text" name="search" value="{{ request('search') }}"
+                                <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                     class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama / email / kontak..."
                                     style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
-                        </div>
                         </div>
                         <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center align-self-end align-self-md-center px-3" style="height: 38px;" title="Hapus Terpilih">
                             <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
@@ -80,58 +77,66 @@
 
                     <!-- Table -->
                     <div class="table-responsive">
-                        <table class="table" style="border-bottom: 1px solid #e4e4e4;">
+                        <table class="table table-hover align-middle">
                             <thead>
-                                <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
-                                     <th style="padding: 15px 10px; width: 40px;">
+                                <tr>
+                                     <th style="width: 40px;">
                                         <div class="form-check m-0">
                                             <label class="form-check-label">
                                                 <input type="checkbox" id="checkAllCustomers" class="form-check-input" style="cursor: pointer;">
                                             <i class="input-helper"></i></label>
                                         </div>
                                      </th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Nama</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Lokasi</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pesanan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pengeluaran</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Kontak</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status</th>
-                                    <th style="padding: 15px 10px; width: 100px;"></th>
+                                    <th>Nama</th>
+                                    <th>Lokasi</th>
+                                    <th>Pesanan</th>
+                                    <th>Pengeluaran</th>
+                                    <th>Kontak</th>
+                                    <th>Status</th>
+                                    <th class="text-center" style="width: 100px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($customers as $customer)
-                                <tr>
-                                     <td style="padding: 15px 10px;">
+                                <tr data-search="{{ strtolower($customer->name . ' ' . $customer->location . ' ' . $customer->contact . ' ' . $customer->status) }}">
+                                     <td>
                                         <div class="form-check m-0">
                                             <label class="form-check-label">
                                                 <input type="checkbox" name="ids[]" value="{{ $customer->id }}" class="form-check-input customer-row-checkbox" style="cursor: pointer;">
                                             <i class="input-helper"></i></label>
                                         </div>
                                      </td>
-                                    <td style="padding: 15px 10px;">
+                                    <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-placeholder" style="width: 40px; height: 40px; font-size: 16px; margin-right: 12px;">
+                                            <div class="avatar-placeholder me-2" style="width: 34px; height: 34px; font-size: 14px;">
                                                 {{ strtoupper(substr($customer->name, 0, 1)) }}
                                             </div>
-                                            <span style="font-size: 14px; font-weight: 600; color: #2c2c2c;">{{ $customer->name }}</span>
+                                            <span class="font-weight-600 text-dark">{{ $customer->name }}</span>
                                         </div>
                                     </td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $customer->location }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $customer->orders_count }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">Rp. {{ number_format($customer->spent, 0, ',', '.') }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $customer->contact }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $customer->status }}</td>
-                                    <td style="padding: 15px 10px;">
-                                        <div class="d-flex">
-                                            <button type="button" class="btn btn-sm btn-outline-info bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#editCustomerModal{{ $customer->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
-                                                <i class="mdi mdi-pencil" style="font-size: 16px; margin: 0; color: #2b5cff;"></i>
+                                    <td class="text-muted">{{ $customer->location }}</td>
+                                    <td class="font-weight-500 text-dark">{{ $customer->orders_count }}</td>
+                                    <td class="font-weight-600 text-dark">Rp. {{ number_format($customer->spent, 0, ',', '.') }}</td>
+                                    <td class="text-muted">{{ $customer->contact }}</td>
+                                    <td>
+                                        @if(in_array(strtolower($customer->status ?? ''), ['active', 'aktif']))
+                                            <span class="badge badge-soft-success">Active</span>
+                                        @elseif(in_array(strtolower($customer->status ?? ''), ['blocked', 'diblokir', 'nonaktif', 'inactive']))
+                                            <span class="badge badge-soft-danger">Blocked</span>
+                                        @else
+                                            <span class="badge badge-soft-dark">{{ $customer->status }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex align-items-center">
+                                            <button type="button" class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1" data-bs-toggle="modal" data-bs-target="#editCustomerModal{{ $customer->id }}" style="width: 32px; height: 32px; padding: 0;" title="Edit Pelanggan">
+                                                <i class="mdi mdi-pencil" style="font-size: 16px; margin: 0;"></i>
                                             </button>
                                             <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-primary bg-white d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;">
-                                                    <i class="mdi mdi-delete-outline" style="font-size: 16px; margin: 0; color: #2b5cff;"></i>
+                                                <button type="submit" class="btn btn-sm btn-inverse-danger d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Hapus Pelanggan">
+                                                    <i class="mdi mdi-delete" style="font-size: 16px; margin: 0;"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -140,49 +145,88 @@
 
                                 <!-- Edit Customer Modal -->
                                 <div class="modal fade" id="editCustomerModal{{ $customer->id }}" tabindex="-1" aria-labelledby="editCustomerModalLabel{{ $customer->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content" style="border-radius: 8px;">
-                                            <div class="modal-header border-0 pb-0">
-                                                <h5 class="modal-title font-weight-bold" id="editCustomerModalLabel{{ $customer->id }}">Edit Pelanggan</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px; margin: 1.75rem auto; width: 95%;">
+                                        <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 12px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+                                            <!-- Header Modal -->
+                                            <div class="modal-header border-bottom py-2.5 px-3 px-sm-4 bg-white flex-shrink-0">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="d-inline-flex align-items-center justify-content-center text-info rounded-circle" style="width: 34px; height: 34px; background-color: #e0f2fe; color: #0284c7 !important;">
+                                                        <i class="mdi mdi-account-edit-outline" style="font-size: 18px;"></i>
+                                                    </span>
+                                                    <div>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <h6 class="modal-title font-weight-bold mb-0 text-dark" id="editCustomerModalLabel{{ $customer->id }}" style="font-size: 15px;">
+                                                                Edit Data Pelanggan
+                                                            </h6>
+                                                            <span class="badge bg-light text-primary border" style="font-size: 10px; font-weight: 600; padding: 2px 6px;">#{{ $customer->id }}</span>
+                                                        </div>
+                                                        <small class="text-muted" style="font-size: 11px;">Perbarui profil, kontak, atau status akun pelanggan.</small>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                                             </div>
                                             <form action="{{ route('customers.update', $customer->id) }}" method="POST" class="edit-form">
                                                 @csrf
                                                 @method('PUT')
-                                                <div class="modal-body">
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Nama</label>
-                                                        <input type="text" class="form-control" name="name" value="{{ $customer->name }}" required>
-                                                    </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Lokasi</label>
-                                                        <input type="text" class="form-control" name="location" value="{{ $customer->location }}">
-                                                    </div>
-                                                    <div class="row mb-3">
-                                                        <div class="col-md-6 form-group mb-0">
-                                                            <label class="font-weight-500 mb-2">Jumlah Pesanan</label>
-                                                            <input type="number" class="form-control" name="orders_count" value="{{ $customer->orders_count }}" min="0">
-                                                        </div>
-                                                        <div class="col-md-6 form-group mb-0">
-                                                            <label class="font-weight-500 mb-2">Pengeluaran (Rp)</label>
-                                                            <input type="number" class="form-control" name="spent" value="{{ $customer->spent }}" min="0">
+                                                <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
+                                                    <!-- Nama Pelanggan -->
+                                                    <div class="form-group mb-2.5">
+                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Nama Lengkap <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 6px 0 0 6px;"><i class="mdi mdi-account-outline"></i></span>
+                                                            <input type="text" class="form-control border-start-0" name="name" value="{{ $customer->name }}" required style="border-radius: 0 6px 6px 0; font-size: 12px;">
                                                         </div>
                                                     </div>
-                                                    <div class="form-group mb-3">
-                                                        <label class="font-weight-500 mb-2">Kontak</label>
-                                                        <input type="text" class="form-control" name="contact" value="{{ $customer->contact }}">
+                                                    <!-- Kontak & Lokasi in Grid 2-Kolom -->
+                                                    <div class="row g-2 mb-2.5">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group mb-0">
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Kontak / No. HP</label>
+                                                                <div class="input-group">
+                                                                    <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 6px 0 0 6px;"><i class="mdi mdi-phone-outline"></i></span>
+                                                                    <input type="text" class="form-control border-start-0" name="contact" value="{{ $customer->contact }}" placeholder="08xxxxxxxxxx" style="border-radius: 0 6px 6px 0; font-size: 12px;">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group mb-0">
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Kota / Lokasi</label>
+                                                                <div class="input-group">
+                                                                    <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 6px 0 0 6px;"><i class="mdi mdi-map-marker-outline"></i></span>
+                                                                    <input type="text" class="form-control border-start-0" name="location" value="{{ $customer->location }}" placeholder="Contoh: Medan" style="border-radius: 0 6px 6px 0; font-size: 12px;">
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
+                                                    <!-- Jumlah Pesanan & Total Pengeluaran -->
+                                                    <div class="row g-2 mb-2.5">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group mb-0">
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Jumlah Pesanan</label>
+                                                                <input type="number" class="form-control" name="orders_count" value="{{ $customer->orders_count }}" min="0" style="font-size: 12px; border-radius: 6px;">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group mb-0">
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Pengeluaran (Rp)</label>
+                                                                <input type="number" class="form-control" name="spent" value="{{ $customer->spent }}" min="0" style="font-size: 12px; border-radius: 6px;">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Status -->
                                                     <div class="form-group mb-0">
-                                                        <label class="font-weight-500 mb-2">Status</label>
-                                                        <select class="form-control form-select" name="status" required>
+                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Status Akun <span class="text-danger">*</span></label>
+                                                        <select class="form-control form-select" name="status" required style="font-size: 12px; border-radius: 6px; height: 38px;">
                                                             <option value="Active" {{ $customer->status == 'Active' ? 'selected' : '' }}>Aktif</option>
                                                             <option value="Blocked" {{ $customer->status == 'Blocked' ? 'selected' : '' }}>Diblokir</option>
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <div class="modal-footer border-0 pt-0">
-                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-gradient-primary">Perbarui Pelanggan</button>
+                                                <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 12px 12px;">
+                                                    <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Batal</button>
+                                                    <button type="submit" class="btn btn-gradient-primary btn-sm px-3 py-1 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
+                                                        <i class="mdi mdi-check-circle-outline me-1" style="font-size: 14px;"></i> Perbarui Pelanggan
+                                                    </button>
                                                 </div>
                                             </form>
                                         </div>
@@ -193,8 +237,8 @@
                                     <td colspan="8" class="text-center py-5">
                                         <div class="d-flex flex-column align-items-center justify-content-center">
                                             <i class="mdi mdi-account-multiple-outline text-muted mb-2" style="font-size: 64px;"></i>
-                                            <h5 class="text-muted font-weight-bold">Belum Ada Pelanggan</h5>
-                                            <p class="text-muted mb-0" style="font-size: 14px;">Tambahkan data pelanggan pertama Anda.</p>
+                                            <h5 class="text-muted font-weight-bold">Belum Ada Pelanggan Terdaftar</h5>
+                                            <p class="text-muted mb-0" style="font-size: 14px;">Pelanggan yang mendaftar atau berbelanja di website akan otomatis muncul di sini.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -219,55 +263,6 @@
     </div>
 </div>
 
-<!-- Add Customer Modal -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content" style="border-radius: 8px;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-weight-bold" id="addCustomerModalLabel">Tambah Pelanggan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ route('customers.store') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group mb-3">
-                        <label class="font-weight-500 mb-2">Nama</label>
-                        <input type="text" class="form-control" name="name" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="font-weight-500 mb-2">Lokasi</label>
-                        <input type="text" class="form-control" name="location">
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6 form-group mb-0">
-                            <label class="font-weight-500 mb-2">Jumlah Pesanan</label>
-                            <input type="number" class="form-control" name="orders_count" value="0" min="0">
-                        </div>
-                        <div class="col-md-6 form-group mb-0">
-                            <label class="font-weight-500 mb-2">Pengeluaran (Rp)</label>
-                            <input type="number" class="form-control" name="spent" value="0" min="0">
-                        </div>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="font-weight-500 mb-2">Kontak</label>
-                        <input type="text" class="form-control" name="contact">
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="font-weight-500 mb-2">Status</label>
-                        <select class="form-control form-select" name="status" required>
-                            <option value="Active">Aktif</option>
-                            <option value="Blocked">Diblokir</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-gradient-primary">Simpan Pelanggan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 
 
@@ -342,10 +337,6 @@
             });
         }
 
-        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any() && old('_method') !== 'PUT')
-            var myModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
-            myModal.show();
-        @endif
     });
 </script>
 @endsection

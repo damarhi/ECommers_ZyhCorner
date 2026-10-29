@@ -306,7 +306,7 @@
                                         @php
                                             $storeName = $storeSettings['store_name'] ?? 'Zyh Corner';
                                             $rpMessage = urlencode("Halo " . $storeName . ", saya tertarik untuk memesan Custom Product: " . $rp->nama_produk . " (Harga: Rp. " . number_format($rp->has_diskon ? $rp->harga_diskon : $rp->harga, 0, ',', '.') . "). Mohon info lebih lanjut.");
-                                            $rpWaUrl = "https://wa.me/" . ($storeSettings['wa_number'] ?? '628123456789') . "?text=" . $rpMessage;
+                                            $rpWaUrl = "https://wa.me/" . ($storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber()) . "?text=" . $rpMessage;
                                         @endphp
                                         <a href="{{ $rpWaUrl }}" target="_blank" class="cart-btn" style="background-color: #25d366; color: white;" title="Pesan via WhatsApp" onclick="event.stopPropagation();">
                                             <i class="fa-brands fa-whatsapp"></i>

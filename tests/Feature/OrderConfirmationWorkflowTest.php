@@ -268,4 +268,26 @@ class OrderConfirmationWorkflowTest extends TestCase
         $response->assertSee('btn-quick-confirm');
         $response->assertSee('Konfirmasi &amp; Kemas', false);
     }
+
+    public function test_orders_view_renders_synchronized_modal_ids_for_edit_and_detail(): void
+    {
+        $kasir = $this->createKasirUser();
+
+        $order = Pesanan::create([
+            'order_number' => '#ORD-SYNC-99',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'Dewi',
+            'email_pembeli' => 'dewi@example.com',
+            'payment_status' => 'Paid',
+            'order_status' => 'menunggu konfirmasi',
+            'total' => 85000,
+        ]);
+
+        $response = $this->actingAs($kasir)->get('/admin/orders');
+
+        $response->assertStatus(200);
+        $response->assertSee('id="edit-order-status-select-' . $order->id . '"', false);
+        $response->assertSee('id="modal-detail-status-badge-' . $order->id . '"', false);
+        $response->assertSee('id="order-status-badge-' . $order->id . '"', false);
+    }
 }

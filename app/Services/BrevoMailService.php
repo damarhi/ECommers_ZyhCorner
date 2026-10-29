@@ -32,8 +32,8 @@ class BrevoMailService
             'Accept' => 'application/json',
         ])->post('https://api.brevo.com/v3/smtp/email', [
             'sender' => [
-                'name' => config('mail.from.name', config('app.name', 'Zyh Corner')),
-                'email' => config('mail.from.address', 'damarn.h46@gmail.com'),
+                'name' => config('services.brevo.sender_name', config('mail.from.name', config('app.name', 'Zyh Corner'))),
+                'email' => config('services.brevo.sender_email', config('mail.from.address', 'damarn.h46@gmail.com')),
             ],
             'to' => [
                 [
@@ -93,8 +93,8 @@ class BrevoMailService
             'Accept' => 'application/json',
         ])->post('https://api.brevo.com/v3/smtp/email', [
             'sender' => [
-                'name' => config('mail.from.name', config('app.name', 'Zyh Corner')),
-                'email' => config('mail.from.address', 'damarn.h46@gmail.com'),
+                'name' => config('services.brevo.sender_name', config('mail.from.name', config('app.name', 'Zyh Corner'))),
+                'email' => config('services.brevo.sender_email', config('mail.from.address', 'damarn.h46@gmail.com')),
             ],
             'to' => $toPayload,
             'subject' => $subject,

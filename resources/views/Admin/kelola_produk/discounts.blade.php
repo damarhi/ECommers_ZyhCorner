@@ -129,7 +129,7 @@
                                     </div>
                                 </div>
                                 <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
-                                    <input type="text" name="search" value="{{ request('search') }}"
+                                    <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                         class="form-control form-control-sm ps-5 pe-3" placeholder="Cari diskon / produk..." 
                                         style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                                     <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
@@ -163,12 +163,12 @@
                                             <th>Skema Harga</th>
                                             <th>Periode</th>
                                             <th>Status</th>
-                                            <th class="text-end">Aksi</th>
+                                            <th class="text-center" style="width: 140px;">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($diskons as $d)
-                                            <tr>
+                                            <tr data-search="{{ strtolower($d->nama_diskon . ' ' . ($d->produk->nama_produk ?? '') . ' ' . $d->status) }}">
                                                 <td>
                                                     <div class="form-check m-0">
                                                         <label class="form-check-label" style="cursor: pointer;">
@@ -204,11 +204,11 @@
                                             </td>
                                             <td>
                                                 @if($d->tipe_diskon === 'persen')
-                                                    <span class="badge badge-gradient-danger px-3 py-2" style="font-size: 13px; border-radius: 20px;">
+                                                    <span class="badge badge-soft-danger">
                                                         <i class="mdi mdi-tag-outline me-1"></i>{{ number_format($d->nilai_diskon, 0) }}% OFF
                                                     </span>
                                                 @else
-                                                    <span class="badge badge-gradient-success px-3 py-2" style="font-size: 13px; border-radius: 20px;">
+                                                    <span class="badge badge-soft-success">
                                                         Potongan Rp {{ number_format($d->nilai_diskon, 0, ',', '.') }}
                                                     </span>
                                                 @endif
@@ -235,7 +235,7 @@
                                                         {{ $d->tanggal_selesai ? \Carbon\Carbon::parse($d->tanggal_selesai)->format('d M Y') : 'Selesai' }}
                                                     </small>
                                                 @else
-                                                    <span class="badge bg-light text-dark font-weight-normal" style="font-size: 11px;">Permanen / Tanpa Batas</span>
+                                                    <span class="badge badge-soft-dark">Permanen</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -245,7 +245,7 @@
                                                     <label class="badge badge-soft-danger">Nonaktif</label>
                                                 @endif
                                             </td>
-                                            <td class="text-end">
+                                            <td class="text-center">
                                                 <!-- Toggle Status -->
                                                 <form action="{{ route('discounts.toggle', $d->id_diskon) }}" method="POST" class="d-inline">
                                                     @csrf
@@ -276,19 +276,34 @@
 
                                         <!-- Modal Edit Diskon #{{ $d->id_diskon }} -->
                                         <div class="modal fade" id="editDiscountModal{{ $d->id_diskon }}" tabindex="-1" aria-labelledby="editDiscountModalLabel{{ $d->id_diskon }}" aria-hidden="true">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content" style="border-radius: 12px;">
-                                                    <div class="modal-header border-0 pb-0">
-                                                        <h5 class="modal-title font-weight-bold" id="editDiscountModalLabel{{ $d->id_diskon }}">Edit Diskon</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            <div class="modal-dialog modal-dialog-centered" style="max-width: 500px; margin: 1.75rem auto; width: 95%;">
+                                                <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 12px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+                                                    <!-- Header Modal -->
+                                                    <div class="modal-header border-bottom py-2.5 px-3 px-sm-4 bg-white flex-shrink-0">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="d-inline-flex align-items-center justify-content-center text-primary rounded-circle" style="width: 34px; height: 34px; background-color: #ede9fe; color: #4f46e5 !important;">
+                                                                <i class="mdi mdi-percent-outline" style="font-size: 18px;"></i>
+                                                            </span>
+                                                            <div>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <h6 class="modal-title font-weight-bold mb-0 text-dark" id="editDiscountModalLabel{{ $d->id_diskon }}" style="font-size: 15px;">
+                                                                        Edit Diskon Produk
+                                                                    </h6>
+                                                                    <span class="badge bg-light text-primary border" style="font-size: 10px; font-weight: 600; padding: 2px 6px;">#{{ $d->id_diskon }}</span>
+                                                                </div>
+                                                                <small class="text-muted" style="font-size: 11px;">Perbarui nilai diskon atau masa berlaku promo.</small>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                                                     </div>
                                                     <form action="{{ route('discounts.update', $d->id_diskon) }}" method="POST">
                                                         @csrf
                                                         @method('PUT')
-                                                        <div class="modal-body">
-                                                            <div class="form-group mb-3">
-                                                                <label class="font-weight-500 mb-1">Pilih Produk</label>
-                                                                <select name="id_produk" class="form-select" required>
+                                                        <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
+                                                            <!-- Pilih Produk -->
+                                                            <div class="form-group mb-2.5">
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Produk Terkait <span class="text-danger">*</span></label>
+                                                                <select name="id_produk" class="form-control form-select" required style="font-size: 12px; border-radius: 6px; height: 38px;">
                                                                     <option value="">-- Pilih Produk --</option>
                                                                     @foreach($produks as $p)
                                                                         <option value="{{ $p->id_produk }}" {{ $d->id_produk == $p->id_produk ? 'selected' : '' }}>
@@ -298,47 +313,61 @@
                                                                 </select>
                                                             </div>
 
-                                                            <div class="form-group mb-3">
-                                                                <label class="font-weight-500 mb-1">Nama Promo / Diskon</label>
-                                                                <input type="text" name="nama_diskon" class="form-control" value="{{ $d->nama_diskon }}" required>
+                                                            <!-- Nama Diskon -->
+                                                            <div class="form-group mb-2.5">
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Nama Promo / Diskon <span class="text-danger">*</span></label>
+                                                                <input type="text" name="nama_diskon" class="form-control" value="{{ $d->nama_diskon }}" required style="font-size: 12px; border-radius: 6px;">
                                                             </div>
 
-                                                            <div class="row">
-                                                                <div class="col-md-6 mb-3">
-                                                                    <label class="font-weight-500 mb-1">Tipe Diskon</label>
-                                                                    <select name="tipe_diskon" class="form-select" required>
-                                                                        <option value="persen" {{ $d->tipe_diskon === 'persen' ? 'selected' : '' }}>Persentase (%)</option>
-                                                                        <option value="nominal" {{ $d->tipe_diskon === 'nominal' ? 'selected' : '' }}>Nominal (Rp)</option>
-                                                                    </select>
+                                                            <!-- Tipe & Nilai Diskon (Grid 2 Kolom) -->
+                                                            <div class="row g-2 mb-2.5">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group mb-0">
+                                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Tipe Diskon <span class="text-danger">*</span></label>
+                                                                        <select name="tipe_diskon" class="form-control form-select" required style="font-size: 12px; border-radius: 6px; height: 38px;">
+                                                                            <option value="persen" {{ $d->tipe_diskon === 'persen' ? 'selected' : '' }}>Persentase (%)</option>
+                                                                            <option value="nominal" {{ $d->tipe_diskon === 'nominal' ? 'selected' : '' }}>Nominal (Rp)</option>
+                                                                        </select>
+                                                                    </div>
                                                                 </div>
-                                                                <div class="col-md-6 mb-3">
-                                                                    <label class="font-weight-500 mb-1">Nilai Diskon</label>
-                                                                    <input type="number" name="nilai_diskon" class="form-control" value="{{ (int)$d->nilai_diskon }}" min="0" required>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="row">
-                                                                <div class="col-md-6 mb-3">
-                                                                    <label class="font-weight-500 mb-1">Tanggal Mulai</label>
-                                                                    <input type="date" name="tanggal_mulai" class="form-control" value="{{ $d->tanggal_mulai }}">
-                                                                </div>
-                                                                <div class="col-md-6 mb-3">
-                                                                    <label class="font-weight-500 mb-1">Tanggal Selesai</label>
-                                                                    <input type="date" name="tanggal_selesai" class="form-control" value="{{ $d->tanggal_selesai }}">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group mb-0">
+                                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Nilai Diskon <span class="text-danger">*</span></label>
+                                                                        <input type="number" name="nilai_diskon" class="form-control" value="{{ (int)$d->nilai_diskon }}" min="0" required style="font-size: 12px; border-radius: 6px;">
+                                                                    </div>
                                                                 </div>
                                                             </div>
 
+                                                            <!-- Rentang Tanggal (Grid 2 Kolom) -->
+                                                            <div class="row g-2 mb-2.5">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group mb-0">
+                                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Tanggal Mulai</label>
+                                                                        <input type="date" name="tanggal_mulai" class="form-control" value="{{ $d->tanggal_mulai }}" style="font-size: 12px; border-radius: 6px;">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group mb-0">
+                                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Tanggal Selesai</label>
+                                                                        <input type="date" name="tanggal_selesai" class="form-control" value="{{ $d->tanggal_selesai }}" style="font-size: 12px; border-radius: 6px;">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Status Diskon -->
                                                             <div class="form-group mb-0">
-                                                                <label class="font-weight-500 mb-1">Status Diskon</label>
-                                                                <select name="status" class="form-select" required>
+                                                                <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">Status Diskon <span class="text-danger">*</span></label>
+                                                                <select name="status" class="form-control form-select" required style="font-size: 12px; border-radius: 6px; height: 38px;">
                                                                     <option value="Aktif" {{ $d->status === 'Aktif' ? 'selected' : '' }}>Aktif</option>
                                                                     <option value="Nonaktif" {{ $d->status === 'Nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                                                                 </select>
                                                             </div>
                                                         </div>
-                                                        <div class="modal-footer border-0 pt-0">
-                                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                                            <button type="submit" class="btn btn-gradient-primary">Perbarui Diskon</button>
+                                                        <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 12px 12px;">
+                                                            <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Batal</button>
+                                                            <button type="submit" class="btn btn-gradient-primary btn-sm px-3 py-1 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
+                                                                <i class="mdi mdi-check-circle-outline me-1" style="font-size: 14px;"></i> Perbarui Diskon
+                                                            </button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -377,125 +406,462 @@
 
     <!-- Modal Tambah Diskon -->
     <div class="modal fade" id="addDiscountModal" tabindex="-1" aria-labelledby="addDiscountModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content" style="border-radius: 12px;">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title font-weight-bold" id="addDiscountModalLabel">Tambah Diskon Baru</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 580px; margin: 1.75rem auto; width: 95%;">
+            <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 12px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+                <!-- Header Modal -->
+                <div class="modal-header border-bottom py-2.5 px-3 px-sm-4 bg-white flex-shrink-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="d-inline-flex align-items-center justify-content-center text-success rounded-circle" style="width: 34px; height: 34px; background-color: #dcfce7; color: #16a34a !important;">
+                            <i class="mdi mdi-tag-percent-outline" style="font-size: 18px;"></i>
+                        </span>
+                        <div>
+                            <h6 class="modal-title font-weight-bold mb-0 text-dark" id="addDiscountModalLabel" style="font-size: 15px;">
+                                Tambah Diskon Baru
+                            </h6>
+                            <small class="text-muted" style="font-size: 11px;">Terapkan potongan promo ke satu atau banyak produk sekaligus.</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                 </div>
                 <form action="{{ route('discounts.store') }}" method="POST">
                     @csrf
-                    <div class="modal-body">
-                        <div class="form-group mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="font-weight-500 m-0">Pilih Produk (Bisa Pilih Banyak)</label>
-                                <div>
-                                    <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2" id="btnSelectAllProducts" style="font-size: 11px;">Pilih Semua</button>
-                                    <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnDeselectAllProducts" style="font-size: 11px;">Batal Pilih</button>
+                    <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
+                        <!-- Searchable Multi-Select Product Dropdown -->
+                        <div class="form-group mb-3" id="productDropdownContainer">
+                            <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                <label class="form-label font-weight-500 m-0 text-dark" style="font-size: 12px;">
+                                    Pilih Produk <span class="text-danger">*</span>
+                                </label>
+                                <span class="badge bg-light text-muted border" id="selectedProductsCountBadge" style="font-size: 10px; font-weight: 600; padding: 2px 7px;">
+                                    0 Produk Terpilih
+                                </span>
+                            </div>
+
+                            <!-- Relative Anchor for Trigger and Floating Menu -->
+                            <div class="position-relative">
+                                <!-- Dropdown Trigger Button -->
+                                <div id="productDropdownTrigger" class="form-control d-flex align-items-center justify-content-between px-3" 
+                                     tabindex="0" role="combobox" aria-expanded="false" aria-haspopup="listbox"
+                                     style="font-size: 12px; border-radius: 6px; height: 38px; cursor: pointer; background-color: #fff; border-color: #ebedf2; transition: all 0.2s ease;">
+                                    <div class="d-flex align-items-center gap-2 overflow-hidden me-2" style="max-width: 88%;">
+                                        <i class="mdi mdi-cake-variant-outline text-primary" style="font-size: 15px; flex-shrink: 0;"></i>
+                                        <span id="productDropdownTriggerText" class="text-muted text-truncate" style="font-size: 12px;">
+                                            Pilih satu atau beberapa produk...
+                                        </span>
+                                    </div>
+                                    <i class="mdi mdi-chevron-down text-muted flex-shrink-0" id="productDropdownCaret" style="font-size: 16px; transition: transform 0.2s ease;"></i>
+                                </div>
+
+                                <!-- Floating Dropdown Menu Panel -->
+                                <div id="productDropdownMenu" class="dropdown-menu shadow-lg w-100 p-0 border" 
+                                     style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1055; border-radius: 8px; border-color: #e2e8f0; background: #ffffff; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12), 0 8px 10px -6px rgba(0,0,0,0.08);">
+                                    
+                                    <!-- Dropdown Header: Compact Live Search & Action Buttons -->
+                                    <div class="p-2 border-bottom bg-light">
+                                        <div class="position-relative mb-1.5">
+                                            <input type="text" id="modalProductSearch" class="form-control form-control-sm ps-4 pe-4" 
+                                                   placeholder="Ketik nama produk..." autocomplete="off" 
+                                                   style="font-size: 11.5px; height: 30px; border-radius: 6px; border-color: #cbd5e1; background: #ffffff;">
+                                            <i class="mdi mdi-magnify position-absolute text-muted" style="left: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none;"></i>
+                                            <button type="button" id="modalProductSearchClear" class="btn btn-link p-0 position-absolute text-muted d-none" 
+                                                    style="right: 8px; top: 50%; transform: translateY(-50%); text-decoration: none;" title="Hapus pencarian">
+                                                <i class="mdi mdi-close-circle" style="font-size: 14px;"></i>
+                                            </button>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center px-0.5">
+                                            <small class="text-muted" style="font-size: 10.5px;" id="productFilterCountText">
+                                                {{ count($produks) }} produk tersedia
+                                            </small>
+                                            <div class="d-flex gap-1">
+                                                <button type="button" class="btn btn-xs btn-outline-primary py-0.5 px-2" id="btnSelectAllProducts" style="font-size: 10px; border-radius: 4px;">
+                                                    <i class="mdi mdi-check me-1"></i>Pilih Semua
+                                                </button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-2" id="btnDeselectAllProducts" style="font-size: 10px; border-radius: 4px;">
+                                                    <i class="mdi mdi-close me-1"></i>Batal
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Scrollable Product Options List (Compact & Dense) -->
+                                    <div id="productOptionsScrollList" style="max-height: 145px; overflow-y: auto;">
+                                        @forelse($produks as $p)
+                                            <div class="product-item-option px-2.5 py-1.5 border-bottom d-flex align-items-center justify-content-between" 
+                                                 data-id="{{ $p->id_produk }}" 
+                                                 data-name="{{ strtolower($p->nama_produk) }}" 
+                                                 data-price="{{ $p->harga }}"
+                                                 style="cursor: pointer; transition: background 0.15s;" 
+                                                 onclick="toggleProductItemCheckbox(event, 'chk_prod_{{ $p->id_produk }}')">
+                                                <div class="d-flex align-items-center gap-2 text-truncate me-2" style="max-width: 75%;">
+                                                    <input type="checkbox" name="id_produk[]" id="chk_prod_{{ $p->id_produk }}" value="{{ $p->id_produk }}" 
+                                                           class="product-check-item form-check-input mt-0" 
+                                                           style="width: 14px; height: 14px; cursor: pointer; accent-color: #4F46E5;" 
+                                                           onclick="event.stopPropagation();"
+                                                           {{ is_array(old('id_produk')) && in_array($p->id_produk, old('id_produk')) ? 'checked' : '' }}>
+                                                    <span class="font-weight-500 text-dark text-truncate product-item-name" style="font-size: 12px;">{{ $p->nama_produk }}</span>
+                                                </div>
+                                                <span class="badge bg-light text-muted border flex-shrink-0" style="font-size: 10px; font-weight: 500; padding: 2px 6px;">
+                                                    Rp {{ number_format($p->harga, 0, ',', '.') }}
+                                                </span>
+                                            </div>
+                                        @empty
+                                            <div class="p-3 text-center text-muted" style="font-size: 12px;">Belum ada produk yang tersedia.</div>
+                                        @endforelse
+                                        <div id="productNoMatch" class="p-3 text-center text-muted d-none" style="font-size: 11.5px;">
+                                            <i class="mdi mdi-magnify-close d-block mb-1 text-muted" style="font-size: 20px;"></i>
+                                            Tidak ada produk yang cocok dengan pencarian.
+                                        </div>
+                                    </div>
+
+                                    <!-- Dropdown Footer (Slim Status Bar) -->
+                                    <div class="py-1 px-2.5 bg-light border-top d-flex justify-content-between align-items-center">
+                                        <small class="text-muted" style="font-size: 10px;">
+                                            Tekan di luar untuk menutup
+                                        </small>
+                                        <button type="button" class="btn btn-xs btn-gradient-primary py-0.5 px-2 text-white" id="btnCloseProductDropdown" style="font-size: 10px; border-radius: 4px; font-weight: 500;">
+                                            Selesai
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                             <div class="position-relative mb-2">
-                                 <input type="text" id="modalProductSearch" class="form-control form-control-sm ps-5 pe-3" placeholder="Cari produk di list..." style="font-size: 12px; height: 34px; border-radius: 6px; border: 1px solid #ebedf2;">
-                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none;"></i>
-                             </div>
-                            <div class="border rounded" style="max-height: 200px; overflow-y: auto; background: #ffffff;">
-                                @forelse($produks as $p)
-                                    <div class="product-item-option p-2 border-bottom d-flex align-items-center justify-content-between" style="cursor: pointer; transition: background 0.15s;" onclick="toggleProductItemCheckbox(event, 'chk_prod_{{ $p->id_produk }}')">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <input type="checkbox" name="id_produk[]" id="chk_prod_{{ $p->id_produk }}" value="{{ $p->id_produk }}" class="product-check-item" style="width: 17px; height: 17px; cursor: pointer; accent-color: #4F46E5;" onclick="event.stopPropagation();">
-                                            <span class="font-weight-500 text-dark" style="font-size: 13.5px;">{{ $p->nama_produk }}</span>
-                                        </div>
-                                        <span class="text-muted" style="font-size: 12px;">Rp {{ number_format($p->harga, 0, ',', '.') }}</span>
-                                    </div>
-                                @empty
-                                    <div class="p-3 text-center text-muted" style="font-size: 13px;">Belum ada produk yang tersedia.</div>
-                                @endforelse
-                            </div>
-                            <small class="form-text text-muted mt-1" style="font-size: 11px;">Klik baris atau centang produk yang ingin diberi diskon promo ini.</small>
+
+                            <!-- Helper text directly under trigger -->
+                            <small class="text-muted d-block mt-1" style="font-size: 10.5px;">
+                                Pilih satu atau beberapa produk yang akan diterapkan promo diskon ini.
+                            </small>
                         </div>
 
+                        <!-- Nama Promo / Diskon -->
                         <div class="form-group mb-3">
-                            <label class="font-weight-500 mb-1">Nama Promo / Diskon</label>
-                            <input type="text" name="nama_diskon" class="form-control" placeholder="Contoh: Diskon Akhir Tahun 20%" required>
+                            <label class="form-label font-weight-500 mb-1.5 text-dark" style="font-size: 12px;">Nama Promo / Diskon <span class="text-danger">*</span></label>
+                            <input type="text" name="nama_diskon" class="form-control" placeholder="Contoh: Promo Akhir Pekan 15%" required style="font-size: 12px; border-radius: 6px; height: 38px;">
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="font-weight-500 mb-1">Tipe Diskon</label>
-                                <select name="tipe_diskon" class="form-select" required>
-                                    <option value="persen">Persentase (%)</option>
-                                    <option value="nominal">Nominal (Rp)</option>
-                                </select>
+                        <!-- Tipe & Nilai Diskon (Grid 2 Kolom) -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label font-weight-500 mb-1.5 text-dark" style="font-size: 12px;">Tipe Diskon <span class="text-danger">*</span></label>
+                                    <select name="tipe_diskon" class="form-control form-select" required style="font-size: 12px; border-radius: 6px; height: 38px;">
+                                        <option value="persen">Persentase (%)</option>
+                                        <option value="nominal">Nominal (Rp)</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="font-weight-500 mb-1">Nilai Diskon</label>
-                                <input type="number" name="nilai_diskon" class="form-control" placeholder="Nilai (e.g. 20 atau 15000)" min="0" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="font-weight-500 mb-1">Tanggal Mulai (Opsional)</label>
-                                <input type="date" name="tanggal_mulai" class="form-control">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="font-weight-500 mb-1">Tanggal Selesai (Opsional)</label>
-                                <input type="date" name="tanggal_selesai" class="form-control">
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label font-weight-500 mb-1.5 text-dark" style="font-size: 12px;">Nilai Diskon <span class="text-danger">*</span></label>
+                                    <input type="number" name="nilai_diskon" class="form-control" placeholder="Nilai (e.g. 20 atau 15000)" min="0" required style="font-size: 12px; border-radius: 6px; height: 38px;">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="form-group mb-0">
-                            <label class="font-weight-500 mb-1">Status Diskon</label>
-                            <select name="status" class="form-select" required>
-                                <option value="Aktif">Aktif</option>
+                        <!-- Rentang Tanggal (Grid 2 Kolom) -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label font-weight-500 mb-1.5 text-dark" style="font-size: 12px;">Tanggal Mulai <small class="text-muted fw-normal">(Opsional)</small></label>
+                                    <input type="date" name="tanggal_mulai" class="form-control" style="font-size: 12px; border-radius: 6px; height: 38px;">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label font-weight-500 mb-1.5 text-dark" style="font-size: 12px;">Tanggal Selesai <small class="text-muted fw-normal">(Opsional)</small></label>
+                                    <input type="date" name="tanggal_selesai" class="form-control" style="font-size: 12px; border-radius: 6px; height: 38px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Diskon -->
+                        <div class="form-group mb-1">
+                            <label class="form-label font-weight-500 mb-1.5 text-dark" style="font-size: 12px;">Status Diskon <span class="text-danger">*</span></label>
+                            <select name="status" class="form-control form-select" required style="font-size: 12px; border-radius: 6px; height: 38px;">
+                                <option value="Aktif" selected>Aktif</option>
                                 <option value="Nonaktif">Nonaktif</option>
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-gradient-primary">Simpan Diskon</button>
+                    <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 12px 12px;">
+                        <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Batal</button>
+                        <button type="submit" class="btn btn-gradient-primary btn-sm px-3 py-1 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
+                            <i class="mdi mdi-check-circle-outline me-1" style="font-size: 14px;"></i> Simpan Diskon
+                        </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
     <script>
         function toggleProductItemCheckbox(event, checkboxId) {
             const checkbox = document.getElementById(checkboxId);
             if (checkbox && event.target !== checkbox) {
                 checkbox.checked = !checkbox.checked;
             }
+            if (typeof updateProductDropdownSummary === 'function') {
+                updateProductDropdownSummary();
+            }
         }
 
+        let updateProductDropdownSummary;
+
         document.addEventListener('DOMContentLoaded', function() {
+            const dropdownContainer = document.getElementById('productDropdownContainer');
+            const dropdownTrigger = document.getElementById('productDropdownTrigger');
+            const dropdownMenu = document.getElementById('productDropdownMenu');
+            const dropdownCaret = document.getElementById('productDropdownCaret');
+            const triggerText = document.getElementById('productDropdownTriggerText');
+            const countBadge = document.getElementById('selectedProductsCountBadge');
+            const searchInput = document.getElementById('modalProductSearch');
+            const searchClearBtn = document.getElementById('modalProductSearchClear');
             const selectAllBtn = document.getElementById('btnSelectAllProducts');
             const deselectAllBtn = document.getElementById('btnDeselectAllProducts');
-            const searchInput = document.getElementById('modalProductSearch');
+            const closeDropdownBtn = document.getElementById('btnCloseProductDropdown');
+            const filterCountText = document.getElementById('productFilterCountText');
+            const noMatchNotice = document.getElementById('productNoMatch');
+            const productOptions = document.querySelectorAll('.product-item-option');
+            const productCheckboxes = document.querySelectorAll('.product-check-item');
+            const addDiscountModal = document.getElementById('addDiscountModal');
 
+            // --- Dropdown Open & Close Logic ---
+            function openProductDropdown() {
+                if (!dropdownMenu) return;
+                dropdownMenu.style.display = 'block';
+                if (dropdownTrigger) {
+                    dropdownTrigger.style.borderColor = '#4f46e5';
+                    dropdownTrigger.style.boxShadow = '0 0 0 0.2rem rgba(79, 70, 229, 0.15)';
+                    dropdownTrigger.setAttribute('aria-expanded', 'true');
+                }
+                if (dropdownCaret) {
+                    dropdownCaret.style.transform = 'rotate(180deg)';
+                }
+                if (searchInput) {
+                    setTimeout(() => searchInput.focus(), 60);
+                }
+            }
+
+            function closeProductDropdown() {
+                if (!dropdownMenu) return;
+                dropdownMenu.style.display = 'none';
+                if (dropdownTrigger) {
+                    dropdownTrigger.style.borderColor = '#ebedf2';
+                    dropdownTrigger.style.boxShadow = 'none';
+                    dropdownTrigger.setAttribute('aria-expanded', 'false');
+                }
+                if (dropdownCaret) {
+                    dropdownCaret.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            function isProductDropdownOpen() {
+                return dropdownMenu && dropdownMenu.style.display === 'block';
+            }
+
+            if (dropdownTrigger) {
+                dropdownTrigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (isProductDropdownOpen()) {
+                        closeProductDropdown();
+                    } else {
+                        openProductDropdown();
+                    }
+                });
+
+                dropdownTrigger.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        openProductDropdown();
+                    } else if (e.key === 'Escape') {
+                        closeProductDropdown();
+                    }
+                });
+            }
+
+            if (closeDropdownBtn) {
+                closeDropdownBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeProductDropdown();
+                    if (dropdownTrigger) dropdownTrigger.focus();
+                });
+            }
+
+            // Close on click outside container
+            document.addEventListener('click', function(e) {
+                if (dropdownContainer && !dropdownContainer.contains(e.target)) {
+                    closeProductDropdown();
+                }
+            });
+
+            // Prevent clicks inside dropdown menu from closing it
+            if (dropdownMenu) {
+                dropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // Hover styling for options
+            productOptions.forEach(opt => {
+                opt.addEventListener('mouseenter', () => opt.style.backgroundColor = '#f8fafc');
+                opt.addEventListener('mouseleave', () => opt.style.backgroundColor = '');
+            });
+
+            // --- Update Summary Text & Badge ---
+            updateProductDropdownSummary = function() {
+                const checkedItems = Array.from(document.querySelectorAll('.product-check-item:checked'));
+                const count = checkedItems.length;
+
+                if (!triggerText || !countBadge) return;
+
+                if (count === 0) {
+                    triggerText.textContent = 'Pilih satu atau beberapa produk...';
+                    triggerText.className = 'text-muted text-truncate';
+                    countBadge.textContent = '0 Produk Terpilih';
+                    countBadge.className = 'badge bg-light text-muted border';
+                } else if (count === 1) {
+                    const optionEl = checkedItems[0].closest('.product-item-option');
+                    const name = optionEl ? optionEl.querySelector('.product-item-name').textContent.trim() : '1 Produk';
+                    triggerText.textContent = name;
+                    triggerText.className = 'text-dark font-weight-500 text-truncate';
+                    countBadge.textContent = '1 Produk Terpilih';
+                    countBadge.className = 'badge bg-light text-primary border';
+                } else if (count === 2) {
+                    const names = checkedItems.map(cb => {
+                        const opt = cb.closest('.product-item-option');
+                        return opt ? opt.querySelector('.product-item-name').textContent.trim() : '';
+                    }).join(', ');
+                    triggerText.textContent = names;
+                    triggerText.className = 'text-dark font-weight-500 text-truncate';
+                    countBadge.textContent = `${count} Produk Terpilih`;
+                    countBadge.className = 'badge bg-light text-primary border';
+                } else {
+                    const firstTwo = checkedItems.slice(0, 2).map(cb => {
+                        const opt = cb.closest('.product-item-option');
+                        return opt ? opt.querySelector('.product-item-name').textContent.trim() : '';
+                    }).join(', ');
+                    triggerText.textContent = `${firstTwo}... (+${count - 2} lainnya)`;
+                    triggerText.className = 'text-dark font-weight-500 text-truncate';
+                    countBadge.textContent = `${count} Produk Terpilih`;
+                    countBadge.className = 'badge bg-light text-primary border';
+                }
+            };
+
+            productCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateProductDropdownSummary);
+            });
+
+            // Initial calculation
+            updateProductDropdownSummary();
+
+            // --- Live Search & Filter Logic ---
+            function applyProductSearch(term) {
+                const q = term.toLowerCase().trim();
+                let visibleCount = 0;
+
+                productOptions.forEach(item => {
+                    const name = (item.dataset.name || item.textContent).toLowerCase();
+                    if (q === '' || name.includes(q)) {
+                        item.classList.remove('d-none');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('d-none');
+                    }
+                });
+
+                if (searchClearBtn) {
+                    if (q.length > 0) {
+                        searchClearBtn.classList.remove('d-none');
+                    } else {
+                        searchClearBtn.classList.add('d-none');
+                    }
+                }
+
+                if (filterCountText) {
+                    if (q === '') {
+                        filterCountText.textContent = `${productOptions.length} produk tersedia`;
+                    } else {
+                        filterCountText.textContent = `${visibleCount} dari ${productOptions.length} produk`;
+                    }
+                }
+
+                if (noMatchNotice) {
+                    if (visibleCount === 0 && productOptions.length > 0) {
+                        noMatchNotice.classList.remove('d-none');
+                    } else {
+                        noMatchNotice.classList.add('d-none');
+                    }
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    applyProductSearch(this.value);
+                });
+            }
+
+            if (searchClearBtn) {
+                searchClearBtn.addEventListener('click', function() {
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.focus();
+                        applyProductSearch('');
+                    }
+                });
+            }
+
+            // --- Select All & Deselect All ---
             if (selectAllBtn) {
                 selectAllBtn.addEventListener('click', function() {
-                    document.querySelectorAll('.product-check-item').forEach(cb => {
-                        if (cb.closest('.product-item-option').style.display !== 'none') {
-                            cb.checked = true;
+                    productOptions.forEach(opt => {
+                        if (!opt.classList.contains('d-none') && opt.style.display !== 'none') {
+                            const cb = opt.querySelector('.product-check-item');
+                            if (cb) cb.checked = true;
                         }
                     });
+                    updateProductDropdownSummary();
                 });
             }
 
             if (deselectAllBtn) {
                 deselectAllBtn.addEventListener('click', function() {
-                    document.querySelectorAll('.product-check-item').forEach(cb => cb.checked = false);
+                    productCheckboxes.forEach(cb => cb.checked = false);
+                    updateProductDropdownSummary();
                 });
             }
 
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const term = this.value.toLowerCase().trim();
-                    document.querySelectorAll('.product-item-option').forEach(item => {
-                        const text = item.textContent.toLowerCase();
-                        item.style.display = text.includes(term) ? 'flex' : 'none';
-                    });
+            // --- Form Submit Validation ---
+            const discountForm = addDiscountModal ? addDiscountModal.querySelector('form') : null;
+            if (discountForm) {
+                discountForm.addEventListener('submit', function(e) {
+                    const checkedCount = document.querySelectorAll('.product-check-item:checked').length;
+                    if (checkedCount === 0) {
+                        e.preventDefault();
+                        openProductDropdown();
+                        if (dropdownTrigger) {
+                            dropdownTrigger.style.borderColor = '#ef4444';
+                        }
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Produk Belum Dipilih',
+                                text: 'Silakan pilih minimal 1 produk untuk menerapkan diskon promo ini.',
+                                confirmButtonColor: '#4f46e5'
+                            });
+                        } else {
+                            alert('Silakan pilih minimal 1 produk untuk menerapkan diskon promo ini.');
+                        }
+                    }
                 });
             }
 
+            // Reset state when modal is closed
+            if (addDiscountModal) {
+                addDiscountModal.addEventListener('hidden.bs.modal', function() {
+                    closeProductDropdown();
+                    if (searchInput) {
+                        searchInput.value = '';
+                        applyProductSearch('');
+                    }
+                });
+            }
             // --- Check All & Bulk Delete Logic ---
             const checkAllHeader = document.getElementById('checkAllDiscounts');
             const rowCheckboxes = document.querySelectorAll('.discount-row-checkbox');

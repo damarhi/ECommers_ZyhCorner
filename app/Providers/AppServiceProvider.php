@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
                 if (Schema::hasTable('store_settings')) {
                     $settings = StoreSetting::getAllAsArray();
                     $settings['wa_number'] = StoreSetting::getWaNumber($settings['store_phone'] ?? null);
+                    $settings['social_instagram'] = StoreSetting::getInstagramUrl($settings['social_instagram'] ?? null);
                     $view->with('storeSettings', $settings);
                 }
             } catch (\Throwable $e) {

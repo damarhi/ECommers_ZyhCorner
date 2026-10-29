@@ -10,7 +10,7 @@
     $isKustom = ($currentJenis === 'kustom');
     $stokVal = old('status_produk', $produk->status_produk);
     if (!$isKustom && $stokVal === 'Tersedia') {
-        $stokVal = '99';
+        $stokVal = '0';
     }
 @endphp
 

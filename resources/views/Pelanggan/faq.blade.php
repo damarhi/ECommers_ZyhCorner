@@ -104,7 +104,7 @@
                     <a href="{{ route('contact') }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: #fff; color: #00b207; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; transition: transform 0.2s;">
                         <i class="fa-solid fa-paper-plane"></i> Hubungi Kami
                     </a>
-                    <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? '628123456789' }}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; border: 2px solid rgba(255,255,255,0.5); color: #fff; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; transition: transform 0.2s;">
+                    <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; border: 2px solid rgba(255,255,255,0.5); color: #fff; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; transition: transform 0.2s;">
                         <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </a>
                 </div>

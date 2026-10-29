@@ -183,7 +183,7 @@
                                 'created_at_formatted' => $order->created_at->format('d M Y, H:i'),
                                 'updated_at_formatted' => $order->updated_at ? $order->updated_at->format('d M Y, H:i') : null,
                                 'detail_url' => route('order.detail', $order->id),
-                                'wa_url' => 'https://wa.me/' . ($storeSettings['wa_number'] ?? '6281298765432') . '?text=' . urlencode('Halo Zyh Corner, saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $order->resi_code . ')'),
+                                'wa_url' => 'https://wa.me/' . ($storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber()) . '?text=' . urlencode('Halo ' . ($storeSettings['store_name'] ?? 'Zyh Corner') . ', saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $order->resi_code . ')'),
                             ];
                         @endphp
                         <div class="order-row-item">

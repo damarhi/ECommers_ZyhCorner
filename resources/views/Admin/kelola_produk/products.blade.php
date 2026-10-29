@@ -77,7 +77,7 @@
                                     </div>
                                 </div>
                                 <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
-                                    <input type="text" name="search" value="{{ request('search') }}"
+                                    <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                         class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama produk..."
                                         style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                                     <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
@@ -96,26 +96,26 @@
                         </form>
 
                         <div class="table-responsive">
-                            <table class="table" style="border-bottom: 1px solid #e4e4e4;">
+                            <table class="table table-hover align-middle">
                                 <thead>
-                                    <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
-                                        <th style="padding: 15px 10px; width: 40px;">
+                                    <tr>
+                                        <th style="width: 40px;">
                                             <div class="form-check m-0">
                                                 <label class="form-check-label">
                                                     <input type="checkbox" id="checkAllProducts" class="form-check-input" style="cursor: pointer;">
                                                 <i class="input-helper"></i></label>
                                             </div>
                                         </th>
-                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Produk</th>
-                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Stok Produk</th>
-                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Diskon</th>
-                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Harga Asli</th>
-                                        <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Aksi</th>
+                                        <th>Produk</th>
+                                        <th>Stok Produk</th>
+                                        <th>Diskon</th>
+                                        <th>Harga Asli</th>
+                                        <th class="text-center" style="width: 100px;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($produks as $p)
-                                        <tr>
+                                        <tr data-search="{{ strtolower($p->nama_produk . ' ' . ($p->kategori->nama_kategori ?? '') . ' ' . $p->id_produk) }}">
                                             <td>
                                                 <div class="form-check">
                                                     <label class="form-check-label">
@@ -139,7 +139,7 @@
                                                         <h6 class="mb-0">{{ $p->nama_produk }}</h6>
                                                         <small class="text-muted">{{ $p->kategori ? $p->kategori->nama_kategori : 'Tanpa Kategori' }}</small>
                                                         @if ($p->bisa_custom_teks)
-                                                            <span class="badge bg-soft-info text-info ms-1" style="font-size: 10px; padding: 2px 6px;" title="Dapat diberi tulisan di atas kue"><i class="mdi mdi-lead-pencil me-1"></i>Custom Teks</span>
+                                                            <span class="badge badge-soft-info ms-1" style="font-size: 10px; padding: 2px 6px;" title="Dapat diberi tulisan di atas kue"><i class="mdi mdi-lead-pencil me-1"></i>Custom Teks</span>
                                                         @endif
                                                     </div>
                                                 </div>
@@ -153,9 +153,35 @@
                                                         class="badge badge-soft-warning">{{ $p->status_produk }}</label>
                                                 @endif
                                             </td>
-                                            <td>-</td>
-                                            <td>Rp. {{ number_format($p->harga, 0, ',', '.') }}</td>
                                             <td>
+                                                @if ($p->has_diskon)
+                                                    <span class="badge {{ ($p->diskonAktif && $p->diskonAktif->tipe_diskon === 'persen') ? 'badge-soft-danger' : 'badge-soft-success' }}" style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px;">
+                                                        <i class="mdi mdi-tag-outline me-1"></i>{{ $p->diskon_badge }}
+                                                    </span>
+                                                    @if ($p->diskonAktif && $p->diskonAktif->nama_diskon)
+                                                        <small class="text-muted d-block mt-1 text-truncate" style="max-width: 140px; font-size: 10.5px;" title="{{ $p->diskonAktif->nama_diskon }}">
+                                                            {{ $p->diskonAktif->nama_diskon }}
+                                                        </small>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if ($p->has_diskon)
+                                                    <div class="d-flex flex-column" style="line-height: 1.35;">
+                                                        <span class="font-weight-600 text-success" style="font-size: 13.5px;">
+                                                            Rp. {{ number_format($p->harga_diskon, 0, ',', '.') }}
+                                                        </span>
+                                                        <small class="text-muted text-decoration-line-through" style="font-size: 11px;">
+                                                            Rp. {{ number_format($p->harga, 0, ',', '.') }}
+                                                        </small>
+                                                    </div>
+                                                @else
+                                                    <span class="font-weight-600 text-dark">Rp. {{ number_format($p->harga, 0, ',', '.') }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
                                                 <a href="{{ route('products.edit', $p->id_produk) }}"
                                                     class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1"
                                                     style="width: 32px; height: 32px; padding: 0;" title="Edit">

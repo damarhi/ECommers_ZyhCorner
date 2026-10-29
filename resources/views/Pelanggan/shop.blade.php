@@ -118,7 +118,8 @@
         <!-- Product Grid -->
         <div class="product-grid">
             @forelse ($products as $index => $product)
-                <div class="product-card" style="cursor: pointer;"
+                <div class="product-card shop-product-col" style="cursor: pointer;"
+                    data-search="{{ strtolower($product->nama_produk . ' ' . ($product->kategori->nama_kategori ?? '') . ' ' . $product->deskripsi) }}"
                     onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                     <div class="product-image">
                         @if ($product->has_diskon)

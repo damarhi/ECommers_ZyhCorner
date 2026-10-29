@@ -10,6 +10,9 @@ use App\Models\Pesanan;
 use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
+use App\Mail\PesanKontakBaruAdminMail;
+use Illuminate\Support\Facades\Log;
 
 class PelangganController extends Controller
 {
@@ -250,6 +253,12 @@ class PelangganController extends Controller
             'pesan' => strip_tags($validated['pesan']),
             'status' => 'Belum Dibaca',
         ]);
+
+        try {
+            NotificationService::sendToAdmin(new PesanKontakBaruAdminMail($message));
+        } catch (\Exception $e) {
+            Log::error('Gagal mengirim notifikasi email admin untuk pesan kontak: ' . $e->getMessage());
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

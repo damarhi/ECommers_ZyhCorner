@@ -43,6 +43,8 @@ return [
 
     'brevo' => [
         'api_key' => env('BREVO_API_KEY'),
+        'sender_email' => env('BREVO_SENDER_EMAIL', env('MAIL_FROM_ADDRESS', 'damarn.h46@gmail.com')),
+        'sender_name' => env('BREVO_SENDER_NAME', env('MAIL_FROM_NAME', 'Zyh Corner')),
     ],
 
     'midtrans' => [
@@ -50,6 +52,15 @@ return [
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
         'merchant_id' => env('MIDTRANS_MERCHANT_ID'),
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+    ],
+
+    'biteship' => [
+        'api_key' => env('BITESHIP_API_KEY'),
+        'origin_area_id' => env('BITESHIP_ORIGIN_AREA_ID', 'ID_PLW_01'),
+        'origin_postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE', '28654'),
+        'origin_latitude' => env('BITESHIP_ORIGIN_LATITUDE', 0.40384),
+        'origin_longitude' => env('BITESHIP_ORIGIN_LONGITUDE', 101.85588),
+        'is_production' => env('BITESHIP_IS_PRODUCTION', false),
     ],
 
 ];

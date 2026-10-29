@@ -33,7 +33,7 @@ class StoreSettingSeeder extends Seeder
             ],
             [
                 'key' => 'store_address',
-                'value' => 'Jl. Utama No. 123, Kota Subang',
+                'value' => 'Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654',
                 'label' => 'Alamat Lengkap Toko',
                 'group' => 'contact',
             ],

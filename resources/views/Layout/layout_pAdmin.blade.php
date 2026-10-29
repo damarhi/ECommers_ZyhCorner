@@ -42,16 +42,6 @@
                 <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
                     <span class="mdi mdi-menu"></span>
                 </button>
-                <div class="search-field d-none d-md-block">
-                    <form class="d-flex align-items-center h-100" action="#">
-                        <div class="input-group">
-                            <div class="input-group-prepend bg-transparent">
-                                <i class="input-group-text border-0 mdi mdi-magnify"></i>
-                            </div>
-                            <input type="text" class="form-control bg-transparent border-0" placeholder="Cari...">
-                        </div>
-                    </form>
-                </div>
                 <ul class="navbar-nav navbar-nav-right">
 
                     <li class="nav-item d-none d-lg-block full-screen-link">
@@ -108,57 +98,65 @@
                             </div>
                         </div>
                     </li>
+                    @php
+                        $notifUnconfirmed = \App\Models\Pesanan::whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(order_status)'), ['menunggu konfirmasi', 'unconfirmed'])->count();
+                        $notifRetur = \App\Models\Retur::where('status', 'New')->count();
+                        $totalNotif = $notifUnconfirmed + $notifRetur;
+                    @endphp
                     <li class="nav-item dropdown">
                         <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
                             data-bs-toggle="dropdown">
                             <i class="mdi mdi-bell-outline"></i>
-                            <span class="count-symbol bg-danger"></span>
+                            @if($totalNotif > 0)
+                                <span class="count-symbol bg-danger"></span>
+                            @endif
                         </a>
                         <div class="dropdown-menu dropdown-menu-end navbar-dropdown preview-list"
                             aria-labelledby="notificationDropdown">
                             <h6 class="p-3 mb-0">Notifikasi</h6>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item preview-item">
-                                <div class="preview-thumbnail">
-                                    <div class="preview-icon bg-success">
-                                        <i class="mdi mdi-calendar"></i>
+                            @if($notifUnconfirmed > 0)
+                                <a class="dropdown-item preview-item" href="{{ route('orders.index') }}?search=menunggu+konfirmasi">
+                                    <div class="preview-thumbnail">
+                                        <div class="preview-icon bg-warning text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                                            <i class="mdi mdi-cart-outline"></i>
+                                        </div>
                                     </div>
-                                </div>
-                                <div
-                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="preview-subject font-weight-normal mb-1">Event today</h6>
-                                    <p class="text-gray ellipsis mb-0"> Just a reminder that you have an event today
-                                    </p>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item preview-item">
-                                <div class="preview-thumbnail">
-                                    <div class="preview-icon bg-warning">
-                                        <i class="mdi mdi-cog"></i>
+                                    <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                        <h6 class="preview-subject font-weight-normal mb-1">{{ $notifUnconfirmed }} Pesanan Baru</h6>
+                                        <p class="text-muted ellipsis mb-0" style="font-size: 11px;">Menunggu konfirmasi pembayaran</p>
                                     </div>
-                                </div>
-                                <div
-                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="preview-subject font-weight-normal mb-1">Settings</h6>
-                                    <p class="text-gray ellipsis mb-0"> Update dashboard </p>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item preview-item">
-                                <div class="preview-thumbnail">
-                                    <div class="preview-icon bg-info">
-                                        <i class="mdi mdi-link-variant"></i>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                            @endif
+
+                            @if($notifRetur > 0)
+                                <a class="dropdown-item preview-item" href="{{ route('returs.index', ['filter' => 'New']) }}">
+                                    <div class="preview-thumbnail">
+                                        <div class="preview-icon bg-danger text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
+                                            <i class="mdi mdi-keyboard-return"></i>
+                                        </div>
                                     </div>
+                                    <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
+                                        <h6 class="preview-subject font-weight-normal mb-1">{{ $notifRetur }} Retur Baru</h6>
+                                        <p class="text-muted ellipsis mb-0" style="font-size: 11px;">Permohonan retur dari pembeli</p>
+                                    </div>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                            @endif
+
+                            @if($totalNotif === 0)
+                                <div class="p-3 text-center text-muted" style="font-size: 12.5px;">
+                                    <i class="mdi mdi-check-circle-outline text-success me-1"></i> Tidak ada notifikasi baru
                                 </div>
-                                <div
-                                    class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                                    <h6 class="preview-subject font-weight-normal mb-1">Launch Admin</h6>
-                                    <p class="text-gray ellipsis mb-0"> New admin wow! </p>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <h6 class="p-3 mb-0 text-center">Lihat semua notifikasi</h6>
+                                <div class="dropdown-divider"></div>
+                            @endif
+
+                            <div class="p-2 text-center">
+                                <a href="{{ route('orders.index') }}" class="text-primary text-decoration-none font-weight-500" style="font-size: 12.5px;">
+                                    Lihat Semua Pesanan
+                                </a>
+                            </div>
                         </div>
                     </li>
 
@@ -491,6 +489,7 @@
     <!-- endinject -->
     <!-- Custom js for this page -->
     <!-- End custom js for this page -->
+    <script src="{{ asset('js/live-instant-search.js') }}"></script>
     @yield('scripts')
 </body>
 

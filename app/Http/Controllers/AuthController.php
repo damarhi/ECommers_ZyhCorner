@@ -29,11 +29,23 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+
+            if ($user->isBlocked()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'email' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
+                ])->onlyInput('email');
+            }
+
             $request->session()->regenerate();
 
-            if (Auth::user()->role === 'admin') {
+            if ($user->role === 'admin') {
                 return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
-            } elseif (Auth::user()->role === 'kasir') {
+            } elseif ($user->role === 'kasir') {
                 return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Kasir! Anda berhasil masuk.');
             }
 
@@ -113,9 +125,18 @@ class AuthController extends Controller
      */
     public function redirectToGoogle()
     {
+        $clientId = config('services.google.client_id');
+        if (!$clientId) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Fitur Google Login belum dikonfigurasi di file .env. Harap lengkapi GOOGLE_CLIENT_ID dan GOOGLE_CLIENT_SECRET.'
+            ]);
+        }
+
+        $redirectUri = config('services.google.redirect') ?: url('/login');
+
         $query = http_build_query([
-            'client_id' => config('services.google.client_id'),
-            'redirect_uri' => config('services.google.redirect', url('/login')),
+            'client_id' => $clientId,
+            'redirect_uri' => $redirectUri,
             'response_type' => 'code',
             'scope' => 'openid profile email',
             'state' => csrf_token(),
@@ -139,7 +160,7 @@ class AuthController extends Controller
             'code' => $code,
             'client_id' => config('services.google.client_id'),
             'client_secret' => config('services.google.client_secret'),
-            'redirect_uri' => config('services.google.redirect', url('/login')),
+            'redirect_uri' => config('services.google.redirect') ?: url('/login'),
             'grant_type' => 'authorization_code',
         ]);
 
@@ -175,11 +196,16 @@ class AuthController extends Controller
             ->first();
 
         if ($user) {
+            if ($user->isBlocked()) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
+                ]);
+            }
+
             // Update Google ID if not set
             if (!$user->google_id) {
                 $user->update(['google_id' => $googleId]);
             }
-            
             // Log the user in directly
             Auth::login($user);
             $request->session()->regenerate();
@@ -308,6 +334,12 @@ class AuthController extends Controller
         } else {
             session()->forget('google_auth_pending_user_id');
         }
+        if ($user->isBlocked()) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
+            ]);
+        }
+
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -432,6 +464,12 @@ class AuthController extends Controller
                 'role' => 'pelanggan',
             ]);
         }
+        if ($user->isBlocked()) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
+            ]);
+        }
+
 
         Auth::login($user);
         $request->session()->regenerate();

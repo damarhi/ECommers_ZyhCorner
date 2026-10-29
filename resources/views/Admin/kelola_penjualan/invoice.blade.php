@@ -24,11 +24,11 @@
         <!-- Invoice Header -->
         <div class="invoice-header">
             <div>
-                <h1 class="store-logo">ZyhCorner</h1>
+                <h1 class="store-logo">{{ \App\Models\StoreSetting::get('store_name', 'Zyh Corner') }}</h1>
                 <div class="store-info">
-                    <strong>Premium Dessert, Cake and Cookies</strong><br>
-                    Jl. Pemda, Pangkalan Kerinci<br>
-                    Hubungi: +62 812-3456-7890 | zyhcorner@gmail.com
+                    <strong>{{ \App\Models\StoreSetting::get('store_tagline', 'Pastry & Bakery Specialist') }}</strong><br>
+                    {{ \App\Models\StoreSetting::get('store_address', 'Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654') }}<br>
+                    Hubungi: {{ \App\Models\StoreSetting::get('store_phone', '0812-3456-789') }} | {{ \App\Models\StoreSetting::get('store_email', 'contact@zyhcorner.com') }}
                 </div>
             </div>
             <div>
@@ -110,7 +110,7 @@
 
         <!-- Footer -->
         <div class="invoice-footer">
-            <p>Terima kasih telah berbelanja di <strong>ZyhCorner</strong>!</p>
+            <p>Terima kasih telah berbelanja di <strong>{{ \App\Models\StoreSetting::get('store_name', 'Zyh Corner') }}</strong>!</p>
             <p style="font-size: 11px; color: #aaa; margin-top: 5px;">Ini adalah dokumen resmi yang diterbitkan secara otomatis oleh sistem.</p>
         </div>
     </div>

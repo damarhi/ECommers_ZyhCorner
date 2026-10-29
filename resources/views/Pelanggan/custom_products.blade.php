@@ -111,7 +111,8 @@
         <!-- Product Grid -->
         <div class="product-grid">
             @forelse ($products as $index => $product)
-                <div class="product-card" style="cursor: pointer;"
+                <div class="product-card shop-product-col" style="cursor: pointer;"
+                    data-search="{{ strtolower($product->nama_produk . ' ' . ($product->kategori->nama_kategori ?? '') . ' ' . $product->deskripsi) }}"
                     onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}?custom=1'">
                     <div class="product-image">
                         @if ($product->stok == 0)
@@ -154,7 +155,7 @@
                             @php
                                 $storeName = $storeSettings['store_name'] ?? 'Zyh Corner';
                                 $message = urlencode("Halo " . $storeName . ", saya tertarik untuk memesan Custom Product: " . $product->nama_produk . " (Harga: Rp. " . number_format($product->harga, 0, ',', '.') . "). Mohon info lebih lanjut.");
-                                $waUrl = "https://wa.me/" . ($storeSettings['wa_number'] ?? '628123456789') . "?text=" . $message;
+                                $waUrl = "https://wa.me/" . ($storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber()) . "?text=" . $message;
                             @endphp
                             <a href="{{ $waUrl }}" target="_blank" class="cart-btn" style="background-color: #25d366; color: white;" title="Pesan via WhatsApp" onclick="event.stopPropagation();">
                                 <i class="fa-brands fa-whatsapp"></i>

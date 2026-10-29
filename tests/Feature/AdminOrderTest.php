@@ -14,8 +14,26 @@ class AdminOrderTest extends TestCase
     public function test_admin_can_access_all_sales_page(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+
+        $order = Pesanan::create([
+            'order_number' => '#ALLSALE01',
+            'jenis_penjualan' => 'Offline',
+            'customer_name' => 'Walk-in Customer Test',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'payment_method' => 'Cash',
+            'total' => 50000,
+            'items' => [
+                ['id' => 1, 'name' => 'Kue Cokelat', 'price' => 50000, 'qty' => 1]
+            ]
+        ]);
+
         $response = $this->actingAs($admin)->get(route('all-sales.index'));
         $response->assertStatus(200);
+        $response->assertSee('Aksi');
+        $response->assertSee('Detail');
+        $response->assertSee('orderDetailModal' . $order->id);
+        $response->assertSee(route('orders.invoice', $order->id));
     }
 
     public function test_admin_can_access_invoice_page(): void

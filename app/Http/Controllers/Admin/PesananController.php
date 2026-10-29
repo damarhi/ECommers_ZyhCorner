@@ -31,22 +31,7 @@ class PesananController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'payment_status' => 'required|string|in:Pending,Paid',
-            'order_status' => 'required|string|in:menunggu pembayaran,menunggu konfirmasi,dikemas,dikirim,selesai,batal',
-            'total' => 'required|numeric|min:0',
-        ]);
-
-        Pesanan::create([
-            'order_number' => '#' . strtoupper(Str::random(6)),
-            'customer_name' => $request->customer_name,
-            'payment_status' => $request->payment_status,
-            'order_status' => $request->order_status,
-            'total' => $request->total,
-        ]);
-
-        return redirect()->route('orders.index')->with('success', 'Order created successfully.');
+        return redirect()->route('pos.index')->with('info', 'Penambahan transaksi manual dilayani melalui sistem Kasir POS agar stok dan item produk tercatat dengan benar.');
     }
 
     /**
@@ -59,15 +44,23 @@ class PesananController extends Controller
         $pesanan = Pesanan::findOrFail($id);
 
         $request->validate([
-            'customer_name' => 'required|string|max:255',
+            'customer_name' => 'nullable|string|max:255',
             'payment_status' => 'required|string|in:Pending,Paid',
             'order_status' => 'required|string|in:menunggu pembayaran,menunggu konfirmasi,dikemas,dikirim,selesai,batal',
-            'total' => 'required|numeric|min:0',
+            'total' => 'nullable|numeric|min:0',
         ]);
 
-        $pesanan->update($request->only('customer_name', 'payment_status', 'order_status', 'total'));
+        $updateData = $request->only('payment_status', 'order_status');
+        if ($request->filled('customer_name')) {
+            $updateData['customer_name'] = $request->customer_name;
+        }
+        if ($request->filled('total')) {
+            $updateData['total'] = $request->total;
+        }
 
-        return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
+        $pesanan->update($updateData);
+
+        return redirect()->route('orders.index')->with('success', 'Status pesanan berhasil diperbarui.');
     }
 
     /**
@@ -334,10 +327,10 @@ class PesananController extends Controller
         }
         $allRetursList = $returQuery->latest()->get();
 
-        // Filter for completed/accepted returns (Done, Accepted, Processed, Selesai, Disetujui)
+        // Filter for completed/accepted returns (Done, Accepted, Completed, Selesai, Disetujui)
         $returnedProductsList = $allRetursList->filter(function($r) {
             $status = strtolower($r->status ?? '');
-            return in_array($status, ['done', 'accepted', 'processed', 'selesai', 'disetujui']);
+            return in_array($status, ['done', 'accepted', 'completed', 'selesai', 'disetujui']);
         })->values();
 
         $jumlahReturSelesai = $returnedProductsList->count();
@@ -586,7 +579,7 @@ class PesananController extends Controller
         $allRetursList = $returQuery->latest()->get();
         $returnedProductsList = $allRetursList->filter(function($r) {
             $status = strtolower($r->status ?? '');
-            return in_array($status, ['done', 'accepted', 'processed', 'selesai', 'disetujui']);
+            return in_array($status, ['done', 'accepted', 'completed', 'selesai', 'disetujui']);
         })->values();
         $jumlahReturSelesai = $returnedProductsList->count();
         $productMapByName = \App\Models\Produk::all()->keyBy('nama_produk');

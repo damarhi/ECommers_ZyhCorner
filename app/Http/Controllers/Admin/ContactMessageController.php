@@ -30,12 +30,14 @@ class ContactMessageController extends Controller
 
         $totalMessages = ContactMessage::count();
         $unreadMessages = ContactMessage::where('status', 'Belum Dibaca')->count();
+        $readMessages = ContactMessage::where('status', 'Dibaca')->count();
         $repliedMessages = ContactMessage::where('status', 'Dibalas')->count();
 
         return view('Admin.pesan_kontak.index', compact(
             'messages',
             'totalMessages',
             'unreadMessages',
+            'readMessages',
             'repliedMessages'
         ));
     }

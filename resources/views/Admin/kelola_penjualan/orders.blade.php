@@ -12,9 +12,9 @@
             <span class="text-nowrap">Pesanan Online</span>
         </h3>
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
-            <button type="button" class="btn btn-gradient-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addOrderModal">
-                <i class="mdi mdi-plus me-1"></i> Tambah Pesanan
-            </button>
+            <a href="{{ route('pos.index') }}" class="btn btn-gradient-primary btn-sm px-3 d-inline-flex align-items-center shadow-sm" style="border-radius: 6px; font-weight: 500;" title="Transaksi manual kasir offline">
+                <i class="mdi mdi-cash-register me-1" style="font-size: 16px;"></i> Buka Kasir POS
+            </a>
         </div>
     </div>
 
@@ -47,12 +47,11 @@
                                 </div>
                             </div>
                             <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
-                                <input type="text" name="search" value="{{ request('search') }}"
+                                <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                     class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nomor pesanan / pelanggan..."
                                     style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
-                        </div>
                         </div>
                         <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center align-self-end align-self-md-center px-3" style="height: 38px;" title="Hapus Terpilih">
                             <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
@@ -66,46 +65,46 @@
 
                     <!-- Table -->
                     <div class="table-responsive">
-                        <table class="table" style="border-bottom: 1px solid #e4e4e4;">
+                        <table class="table table-hover align-middle">
                             <thead>
-                                <tr class="text-muted" style="border-top: 1px solid #e4e4e4; border-bottom: 1px solid #e4e4e4;">
-                                     <th style="padding: 15px 10px; width: 40px;">
+                                <tr>
+                                     <th style="width: 40px;">
                                         <div class="form-check m-0">
                                             <label class="form-check-label">
                                                 <input type="checkbox" id="checkAllOrders" class="form-check-input" style="cursor: pointer;">
                                             <i class="input-helper"></i></label>
                                         </div>
                                      </th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pesanan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Tanggal</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Pelanggan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status Pembayaran</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Status Pesanan</th>
-                                    <th style="font-size: 13px; font-weight: 500; padding: 15px 10px;">Total</th>
-                                    <th style="padding: 15px 10px; width: 140px; text-align: center;">Aksi</th>
+                                    <th>Pesanan</th>
+                                    <th>Tanggal</th>
+                                    <th>Pelanggan</th>
+                                    <th>Status Pembayaran</th>
+                                    <th>Status Pesanan</th>
+                                    <th>Total</th>
+                                    <th class="text-center" style="width: 140px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($orders as $order)
-                                <tr>
-                                     <td style="padding: 15px 10px;">
+                                <tr data-search="{{ strtolower($order->order_number . ' ' . $order->customer_name . ' ' . $order->payment_method . ' ' . $order->payment_status . ' ' . $order->order_status . ' ' . $order->id) }}">
+                                     <td>
                                         <div class="form-check m-0">
                                             <label class="form-check-label">
                                                 <input type="checkbox" name="ids[]" value="{{ $order->id }}" class="form-check-input order-row-checkbox" style="cursor: pointer;">
                                             <i class="input-helper"></i></label>
                                         </div>
                                      </td>
-                                    <td style="padding: 15px 10px; font-weight: 500; font-size: 14px; color: #2c2c2c;">{{ $order->order_number }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->created_at->format('M j, g:i A') }}</td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">{{ $order->customer_name }}</td>
-                                    <td style="padding: 15px 10px;">
+                                    <td class="font-weight-600 text-dark">{{ $order->order_number }}</td>
+                                    <td class="text-muted">{{ $order->created_at->format('M j, g:i A') }}</td>
+                                    <td class="font-weight-500 text-dark">{{ $order->customer_name }}</td>
+                                    <td>
                                         @if($order->payment_status == 'Paid')
                                             <span class="badge badge-soft-success">Dibayar</span>
                                         @else
                                             <span class="badge badge-soft-warning">Tertunda</span>
                                         @endif
                                     </td>
-                                    <td style="padding: 15px 10px;" id="order-status-badge-{{ $order->id }}">
+                                    <td id="order-status-badge-{{ $order->id }}">
                                         @if($order->order_status == 'menunggu pembayaran')
                                             <span class="badge badge-soft-warning">Menunggu Pembayaran</span>
                                         @elseif($order->order_status == 'menunggu konfirmasi')
@@ -122,29 +121,29 @@
                                             <span class="badge badge-soft-dark">{{ $order->order_status }}</span>
                                         @endif
                                     </td>
-                                    <td style="padding: 15px 10px; font-size: 14px; color: #444;">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
-                                    <td style="padding: 15px 10px;">
-                                        <div class="d-flex align-items-center">
+                                    <td class="font-weight-600 text-dark">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
+                                    <td class="text-center">
+                                        <div class="d-inline-flex align-items-center">
                                             @if(in_array(strtolower($order->order_status ?? ''), ['menunggu konfirmasi', 'unconfirmed']))
                                                 <button type="button" 
-                                                    class="btn btn-sm btn-quick-confirm me-2" 
+                                                    class="btn btn-sm btn-quick-confirm me-1" 
                                                     id="btn-quick-confirm-{{ $order->id }}"
                                                     onclick="quickConfirmOrder({{ $order->id }}, '{{ $order->order_number }}')"
                                                     title="Konfirmasi Pesanan &amp; Siap Kemas">
                                                     <i class="mdi mdi-check-circle-outline me-1"></i> Konfirmasi &amp; Kemas
                                                 </button>
                                             @endif
-                                            <button type="button" class="btn btn-sm btn-outline-success bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Detail Pesanan">
+                                            <button type="button" class="btn btn-sm btn-inverse-success d-inline-flex align-items-center justify-content-center me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0;" title="Detail Pesanan">
                                                 <i class="mdi mdi-eye" style="font-size: 16px; margin: 0;"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-info bg-white d-inline-flex align-items-center justify-content-center me-2" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Edit Pesanan">
+                                            <button type="button" class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ $order->id }}" style="width: 32px; height: 32px; padding: 0;" title="Edit Pesanan">
                                                 <i class="mdi mdi-pencil" style="font-size: 16px; margin: 0;"></i>
                                             </button>
                                             <form action="{{ route('orders.destroy', $order->id) }}" method="POST" class="d-inline delete-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-primary bg-white d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0; border-radius: 4px;" title="Hapus Pesanan">
-                                                    <i class="mdi mdi-delete-outline" style="font-size: 16px; margin: 0;"></i>
+                                                <button type="submit" class="btn btn-sm btn-inverse-danger d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;" title="Hapus Pesanan">
+                                                    <i class="mdi mdi-delete" style="font-size: 16px; margin: 0;"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -169,46 +168,95 @@
                     @foreach($orders as $order)
                         <!-- Edit Order Modal -->
                         <div class="modal fade" id="editOrderModal{{ $order->id }}" tabindex="-1" aria-labelledby="editOrderModalLabel{{ $order->id }}" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content" style="border-radius: 8px;">
-                                    <div class="modal-header border-0 pb-0">
-                                        <h5 class="modal-title font-weight-bold" id="editOrderModalLabel{{ $order->id }}">Edit Pesanan</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-dialog modal-dialog-centered" style="max-width: 480px; margin: 1.75rem auto;">
+                                <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                                    <!-- Header Modal -->
+                                    <div class="modal-header border-bottom py-2.5 px-3 bg-white">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="d-inline-flex align-items-center justify-content-center text-info rounded-circle" style="width: 34px; height: 34px; background-color: #e0f2fe; color: #0284c7 !important;">
+                                                <i class="mdi mdi-pencil-box-outline" style="font-size: 18px;"></i>
+                                            </span>
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <h6 class="modal-title font-weight-bold mb-0 text-dark" id="editOrderModalLabel{{ $order->id }}" style="font-size: 15px;">
+                                                        Edit Status Pesanan
+                                                    </h6>
+                                                    <span class="badge bg-light text-primary border" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">
+                                                        {{ $order->order_number }}
+                                                    </span>
+                                                </div>
+                                                <small class="text-muted" style="font-size: 11px;">Perbarui status bayar dan alur proses pesanan.</small>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                                     </div>
                                     <form action="{{ route('orders.update', $order->id) }}" method="POST" class="edit-form">
                                         @csrf
                                         @method('PUT')
-                                        <div class="modal-body">
-                                            <div class="form-group mb-3">
-                                                <label class="font-weight-500 mb-2">Nama Pelanggan</label>
-                                                <input type="text" class="form-control" name="customer_name" value="{{ $order->customer_name }}" required>
+                                        <div class="modal-body p-3 bg-white">
+                                            <!-- Ringkasan Data Pesanan Terkunci (Read-Only) -->
+                                            <div class="p-2.5 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px;">
+                                                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                                                    <span class="text-muted d-flex align-items-center" style="font-size: 11px;">
+                                                        <i class="mdi mdi-lock-outline text-warning me-1" style="font-size: 13px;"></i> Data Transaksi Terkunci
+                                                    </span>
+                                                    <span class="badge badge-soft-dark" style="font-size: 10px;">ID #{{ $order->id }}</span>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <span class="text-muted d-block" style="font-size: 10px;">Nama Pelanggan</span>
+                                                        <strong class="text-dark d-block text-truncate" style="font-size: 12px;" title="{{ $order->customer_name }}">
+                                                            {{ $order->customer_name }}
+                                                        </strong>
+                                                    </div>
+                                                    <div class="col-6 text-end">
+                                                        <span class="text-muted d-block" style="font-size: 10px;">Total Tagihan</span>
+                                                        <strong class="text-dark d-block font-weight-bold" style="font-size: 13px; color: #1E2753 !important;">
+                                                            Rp. {{ number_format($order->total, 0, ',', '.') }}
+                                                        </strong>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="form-group mb-3">
-                                                <label class="font-weight-500 mb-2">Total (Rp)</label>
-                                                <input type="number" class="form-control" name="total" value="{{ $order->total }}" required min="0">
-                                            </div>
-                                            <div class="form-group mb-3">
-                                                <label class="font-weight-500 mb-2">Status Pembayaran</label>
-                                                <select class="form-select form-control" name="payment_status" required>
-                                                    <option value="Pending" {{ $order->payment_status == 'Pending' ? 'selected' : '' }}>Tertunda</option>
-                                                    <option value="Paid" {{ $order->payment_status == 'Paid' ? 'selected' : '' }}>Dibayar</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group mb-0">
-                                                <label class="font-weight-500 mb-2">Status Pesanan</label>
-                                                <select class="form-select form-control" name="order_status" required>
-                                                    <option value="menunggu pembayaran" {{ $order->order_status == 'menunggu pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran</option>
-                                                    <option value="menunggu konfirmasi" {{ $order->order_status == 'menunggu konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
-                                                    <option value="dikemas" {{ $order->order_status == 'dikemas' ? 'selected' : '' }}>Dikemas</option>
-                                                    <option value="dikirim" {{ $order->order_status == 'dikirim' ? 'selected' : '' }}>Dikirim</option>
-                                                    <option value="selesai" {{ $order->order_status == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                                                    <option value="batal" {{ $order->order_status == 'batal' ? 'selected' : '' }}>Dibatalkan</option>
-                                                </select>
+
+                                            <!-- Hidden inputs to retain values safely -->
+                                            <input type="hidden" name="customer_name" value="{{ $order->customer_name }}">
+                                            <input type="hidden" name="total" value="{{ $order->total }}">
+
+                                            <!-- Grid Status (2 Kolom) -->
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-0">
+                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">
+                                                            Status Bayar <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select form-control" name="payment_status" required style="border-radius: 6px; font-size: 12px; height: 38px;">
+                                                            <option value="Pending" {{ $order->payment_status == 'Pending' ? 'selected' : '' }}>Tertunda</option>
+                                                            <option value="Paid" {{ $order->payment_status == 'Paid' ? 'selected' : '' }}>Dibayar</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-0">
+                                                        <label class="form-label font-weight-500 mb-1 text-dark" style="font-size: 12px;">
+                                                            Status Pesanan <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select form-control" name="order_status" id="edit-order-status-select-{{ $order->id }}" required style="border-radius: 6px; font-size: 12px; height: 38px;">
+                                                            <option value="menunggu pembayaran" {{ $order->order_status == 'menunggu pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran</option>
+                                                            <option value="menunggu konfirmasi" {{ $order->order_status == 'menunggu konfirmasi' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
+                                                            <option value="dikemas" {{ $order->order_status == 'dikemas' ? 'selected' : '' }}>Dikemas</option>
+                                                            <option value="dikirim" {{ $order->order_status == 'dikirim' ? 'selected' : '' }}>Dikirim</option>
+                                                            <option value="selesai" {{ $order->order_status == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                                            <option value="batal" {{ $order->order_status == 'batal' ? 'selected' : '' }}>Dibatalkan</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="modal-footer border-0 pt-0">
-                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-gradient-primary">Perbarui Pesanan</button>
+                                        <div class="modal-footer border-top bg-light py-2 px-3 d-flex justify-content-end gap-2" style="border-radius: 0 0 12px 12px;">
+                                            <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Batal</button>
+                                            <button type="submit" class="btn btn-gradient-primary btn-sm px-3 py-1 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
+                                                <i class="mdi mdi-check-circle-outline me-1" style="font-size: 14px;"></i> Perbarui Status
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
@@ -236,52 +284,6 @@
     </div>
 </div>
 
-<!-- Add Order Modal -->
-<div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content" style="border-radius: 8px;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-weight-bold" id="addOrderModalLabel">Tambah Pesanan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ route('orders.store') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group mb-3">
-                        <label class="font-weight-500 mb-2">Nama Pelanggan</label>
-                        <input type="text" class="form-control" name="customer_name" placeholder="Masukkan nama pelanggan" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="font-weight-500 mb-2">Total (Rp)</label>
-                        <input type="number" class="form-control" name="total" placeholder="0" required min="0">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="font-weight-500 mb-2">Status Pembayaran</label>
-                        <select class="form-select form-control" name="payment_status" required>
-                            <option value="Pending">Tertunda</option>
-                            <option value="Paid">Dibayar</option>
-                        </select>
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="font-weight-500 mb-2">Status Pesanan</label>
-                        <select class="form-select form-control" name="order_status" required>
-                            <option value="menunggu pembayaran">Menunggu Pembayaran</option>
-                            <option value="menunggu konfirmasi">Menunggu Konfirmasi</option>
-                            <option value="dikemas">Dikemas</option>
-                            <option value="dikirim">Dikirim</option>
-                            <option value="selesai">Selesai</option>
-                            <option value="batal">Dibatalkan</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-gradient-primary">Simpan Pesanan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -354,10 +356,32 @@
             });
         }
 
-        @if(isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any() && old('_method') !== 'PUT')
-            var myModal = new bootstrap.Modal(document.getElementById('addOrderModal'));
-            myModal.show();
-        @endif
+        // Proteksi sinkronisasi status ketika modal edit pesanan dibuka
+        document.addEventListener('show.bs.modal', function(event) {
+            const modal = event.target;
+            if (modal && modal.id && modal.id.startsWith('editOrderModal')) {
+                const orderId = modal.id.replace('editOrderModal', '');
+                const badgeContainer = document.getElementById(`order-status-badge-${orderId}`);
+                const select = document.getElementById(`edit-order-status-select-${orderId}`) || modal.querySelector('select[name="order_status"]');
+                if (badgeContainer && select) {
+                    const badgeText = badgeContainer.textContent.trim().toLowerCase();
+                    if (badgeText.includes('dikemas') && select.value !== 'dikemas') {
+                        select.value = 'dikemas';
+                        Array.from(select.options).forEach(opt => opt.selected = (opt.value === 'dikemas'));
+                    } else if (badgeText.includes('dikirim') && select.value !== 'dikirim') {
+                        select.value = 'dikirim';
+                        Array.from(select.options).forEach(opt => opt.selected = (opt.value === 'dikirim'));
+                    } else if (badgeText.includes('selesai') && select.value !== 'selesai') {
+                        select.value = 'selesai';
+                        Array.from(select.options).forEach(opt => opt.selected = (opt.value === 'selesai'));
+                    } else if (badgeText.includes('batal') && select.value !== 'batal') {
+                        select.value = 'batal';
+                        Array.from(select.options).forEach(opt => opt.selected = (opt.value === 'batal'));
+                    }
+                }
+            }
+        });
+
     });
 
     function quickConfirmOrder(orderId, orderNumber) {
@@ -399,16 +423,41 @@
                             showConfirmButton: false
                         });
 
-                        // Instant DOM update: Swap status badge and fade out quick-confirm button
+                        // 1. Instant DOM update: Ubah status badge di baris tabel
                         const badgeContainer = document.getElementById(`order-status-badge-${orderId}`);
                         if (badgeContainer) {
                             badgeContainer.innerHTML = '<span class="badge badge-soft-info">Dikemas</span>';
                         }
+
+                        // 2. Animasi & hapus tombol quick confirm
                         if (btn) {
                             btn.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                             btn.style.opacity = '0';
                             btn.style.transform = 'scale(0.8)';
                             setTimeout(() => btn.remove(), 300);
+                        }
+
+                        // 3. Sinkronisasi Dropdown Modal Edit Status (#editOrderModal)
+                        const editStatusSelect = document.getElementById(`edit-order-status-select-${orderId}`) ||
+                                                 document.querySelector(`#editOrderModal${orderId} select[name="order_status"]`);
+                        if (editStatusSelect) {
+                            editStatusSelect.value = 'dikemas';
+                            Array.from(editStatusSelect.options).forEach(opt => {
+                                opt.selected = (opt.value === 'dikemas');
+                            });
+                        }
+
+                        // 4. Sinkronisasi Badge Status pada Modal Detail (#orderDetailModal)
+                        const modalDetailBadge = document.getElementById(`modal-detail-status-badge-${orderId}`);
+                        if (modalDetailBadge) {
+                            modalDetailBadge.innerHTML = '<span class="badge badge-soft-info" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Dikemas</span>';
+                        }
+
+                        // 5. Perbarui data-search pada elemen tr agar pencarian real-time tetap sinkron
+                        const tableRow = document.querySelector(`tr[data-search*="${orderNumber.toLowerCase()}"]`) || (badgeContainer ? badgeContainer.closest('tr') : null);
+                        if (tableRow && tableRow.getAttribute('data-search')) {
+                            const curSearch = tableRow.getAttribute('data-search');
+                            tableRow.setAttribute('data-search', curSearch.replace(/menunggu\s*konfirmasi/gi, 'dikemas'));
                         }
                     } else {
                         Swal.fire({

@@ -239,4 +239,17 @@ class CartCheckoutController extends Controller
 
         return view('Pelanggan.order_success', compact('order', 'deadline', 'remainingSeconds'));
     }
+
+    /**
+     * Search areas using BiteshipService (API with local fallback).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function biteshipAreas(Request $request)
+    {
+        $query = (string) $request->query('search', $request->query('q', ''));
+        $areas = \App\Services\BiteshipService::searchAreas($query);
+        return response()->json($areas);
+    }
 }

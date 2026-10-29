@@ -15,7 +15,7 @@ class ContactUsTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Contact Us - Zyh Corner');
         $response->assertSee('Alamat Toko');
-        $response->assertSee('Jl. Teropong, Sidomulyo Barat, Kec. Tampan, Kota Pekanbaru, Riau 28294');
+        $response->assertSee('Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654');
         $response->assertSee('Surel Kami');
         $response->assertSee('zyhcorner@gmail.com');
         $response->assertSee('Nomor Telepon');

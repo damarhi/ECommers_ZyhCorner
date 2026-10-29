@@ -176,7 +176,7 @@
                                         'created_at_formatted' => $order->created_at ? $order->created_at->format('d M Y, H:i') : '-',
                                         'updated_at_formatted' => $order->updated_at ? $order->updated_at->format('d M Y, H:i') : '-',
                                         'detail_url' => route('order.detail', $order->id),
-                                        'wa_url' => 'https://wa.me/' . ($storePhone ?? '6281298765432') . '?text=' . urlencode('Halo ' . ($storeName ?? 'Zyh Corner') . ', saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $order->resi_code . ')'),
+                                        'wa_url' => 'https://wa.me/' . ($storeSettings['wa_number'] ?? ($storePhone ?? \App\Models\StoreSetting::getWaNumber())) . '?text=' . urlencode('Halo ' . ($storeSettings['store_name'] ?? ($storeName ?? 'Zyh Corner')) . ', saya ingin konfirmasi pengiriman pesanan #' . $order->order_number . ' (Resi: ' . $order->resi_code . ')'),
                                     ];
                                 @endphp
 
@@ -759,6 +759,31 @@
                 .then(data => {
                     Swal.close();
                     if (data.success && data.snap_token) {
+                        if (data.snap_token.startsWith('MOCK-SNAP-')) {
+                            Swal.fire({
+                                title: 'Simulasi Pembayaran (Mock Mode)',
+                                text: 'Sistem berjalan dalam mode simulasi pengujian. Apakah Anda ingin mensimulasikan pembayaran lunas?',
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonColor: '#00b207',
+                                confirmButtonText: 'Ya, Tandai Lunas',
+                                cancelButtonText: 'Batal'
+                            }).then((mockRes) => {
+                                if (mockRes.isConfirmed) {
+                                    fetch(`/order-history/${orderId}/check-payment`).then(() => window.location.reload());
+                                }
+                            });
+                            return;
+                        }
+                        if (typeof snap === 'undefined' || !snap || typeof snap.pay !== 'function') {
+                            Swal.fire({
+                                title: 'Midtrans Belum Siap',
+                                text: 'SDK Midtrans Snap belum termuat sempurna. Pastikan variabel MIDTRANS_CLIENT_KEY telah diisi di file .env dan koneksi internet aktif.',
+                                icon: 'warning',
+                                confirmButtonColor: '#00b207'
+                            });
+                            return;
+                        }
                         snap.pay(data.snap_token, {
                             onSuccess: function(result) {
                                 fetch(`/order-history/${orderId}/check-payment`)

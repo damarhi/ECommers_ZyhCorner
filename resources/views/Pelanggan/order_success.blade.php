@@ -330,6 +330,33 @@
     }
 
     function triggerSnapPayment(token) {
+        if (!token) return;
+        if (token.startsWith('MOCK-SNAP-')) {
+            Swal.fire({
+                title: 'Simulasi Pembayaran (Mock Mode)',
+                text: 'Sistem berjalan dalam mode simulasi pengujian. Apakah Anda ingin mensimulasikan pembayaran lunas?',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#00b207',
+                confirmButtonText: 'Ya, Tandai Lunas',
+                cancelButtonText: 'Batal'
+            }).then((mockRes) => {
+                if (mockRes.isConfirmed) {
+                    fetch(`/order-history/{{ $order->id }}/check-payment`)
+                        .then(() => updateUIPaymentSuccess());
+                }
+            });
+            return;
+        }
+        if (typeof snap === 'undefined' || !snap || typeof snap.pay !== 'function') {
+            Swal.fire({
+                title: 'Midtrans Belum Siap',
+                text: 'SDK Midtrans Snap belum termuat sempurna. Pastikan variabel MIDTRANS_CLIENT_KEY telah diisi di file .env.',
+                icon: 'warning',
+                confirmButtonColor: '#00b207'
+            });
+            return;
+        }
         snap.pay(token, {
             onSuccess: function(result) {
                 if (typeof timerInterval !== 'undefined' && timerInterval) clearInterval(timerInterval);

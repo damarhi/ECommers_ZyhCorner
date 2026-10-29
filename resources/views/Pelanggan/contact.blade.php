@@ -22,7 +22,7 @@
                     </div>
                     <div class="contact-info-text">
                         <h3>Alamat Toko</h3>
-                        <p>{{ $storeSettings['store_address'] ?? 'Jl. Teropong, Sidomulyo Barat, Kec. Tampan, Kota Pekanbaru, Riau 28294' }}</p>
+                        <p>{{ $storeSettings['store_address'] ?? 'Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654' }}</p>
                     </div>
                 </div>
                 <hr class="contact-divider">
@@ -50,10 +50,29 @@
                     <div class="contact-info-text">
                         <h3>Nomor Telepon</h3>
                         <p>
-                            <a href="tel:+{{ $storeSettings['wa_number'] ?? '628123456789' }}">{{ $storeSettings['store_phone'] ?? '(+62) 812-3456-789' }}</a>
+                            <a href="tel:+{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}">{{ $storeSettings['store_phone'] ?? '(+62) 812-3456-789' }}</a>
                         </p>
                     </div>
                 </div>
+
+                @if (!empty($storeSettings['social_instagram']))
+                <hr class="contact-divider">
+
+                <!-- Instagram Section -->
+                <div class="contact-info-section">
+                    <div class="contact-info-icon" style="background: rgba(225, 48, 108, 0.1); color: #e1306c;">
+                        <i class="fa-brands fa-instagram"></i>
+                    </div>
+                    <div class="contact-info-text">
+                        <h3>Instagram Kami</h3>
+                        <p>
+                            <a href="{{ $storeSettings['social_instagram'] }}" target="_blank" rel="noopener noreferrer" style="color: #00b207; font-weight: 500; text-decoration: none;">
+                                {{ str_replace(['https://instagram.com/', 'https://www.instagram.com/', 'http://instagram.com/'], '@', rtrim($storeSettings['social_instagram'], '/')) }}
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                @endif
                 
             </div>
             

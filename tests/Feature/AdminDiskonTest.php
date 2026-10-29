@@ -197,4 +197,56 @@ class AdminDiskonTest extends TestCase
         $this->assertDatabaseMissing('diskons', ['id_diskon' => $d1->id_diskon]);
         $this->assertDatabaseMissing('diskons', ['id_diskon' => $d2->id_diskon]);
     }
+
+    public function test_products_page_displays_active_discount_and_filters_correctly(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $kategori = Kategori::create([
+            'nama_kategori' => 'Kue & Cake',
+            'gambar_kategori' => 'dummy.png',
+        ]);
+
+        $produkBerdiskon = Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'nama_produk' => 'Black Forest Cake Classic',
+            'deskripsi' => 'Kue Cokelat Lezat',
+            'harga' => 125000,
+            'jenis_produk' => 'showcase',
+            'status_produk' => 'Tersedia',
+        ]);
+
+        $produkTanpaDiskon = Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'nama_produk' => 'Butter Croissant Paris',
+            'deskripsi' => 'Croissant Renyah',
+            'harga' => 22000,
+            'jenis_produk' => 'showcase',
+            'status_produk' => 'Tersedia',
+        ]);
+
+        Diskon::create([
+            'id_produk' => $produkBerdiskon->id_produk,
+            'nama_diskon' => 'Promo Spesial 20%',
+            'tipe_diskon' => 'persen',
+            'nilai_diskon' => 20,
+            'status' => 'Aktif',
+        ]);
+
+        // 1. Showcase page should show discount badge, promo name, and both products
+        $response = $this->actingAs($admin)->get(route('products.index'));
+        $response->assertStatus(200);
+        $response->assertSee('20% OFF');
+        $response->assertSee('Promo Spesial 20%');
+        $response->assertSee('Black Forest Cake Classic');
+        $response->assertSee('Butter Croissant Paris');
+
+        // 2. Filtering with diskon=1 should only return products with active discount
+        $filterResponse = $this->actingAs($admin)->get(route('products.index', ['diskon' => '1']));
+        $filterResponse->assertStatus(200);
+        $filterResponse->assertSee('Black Forest Cake Classic');
+        $filterResponse->assertDontSee('Butter Croissant Paris');
+    }
 }

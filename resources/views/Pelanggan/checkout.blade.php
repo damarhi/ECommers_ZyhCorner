@@ -635,6 +635,13 @@
         if (!areaInput || !resultsContainer) return;
 
         const sampleAreas = [
+            { id: 'ID_PLW_01', name: 'Pangkalan Kerinci Kota', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+            { id: 'ID_PLW_02', name: 'Pangkalan Kerinci Barat', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28381' },
+            { id: 'ID_PLW_03', name: 'Pangkalan Kerinci Timur', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+            { id: 'ID_PLW_04', name: 'Kuala Terusan', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+            { id: 'ID_PLW_05', name: 'Makmur', city: 'Pangkalan Kerinci, Pelalawan, Riau', postal: '28654' },
+            { id: 'ID_PLW_06', name: 'Bandar Seikijang', city: 'Pelalawan, Riau', postal: '28383' },
+            { id: 'ID_PLW_07', name: 'Pangkalan Kuras / Sorek', city: 'Pelalawan, Riau', postal: '28382' },
             { id: 'ID_PKU_01', name: 'Sukajadi', city: 'Pekanbaru, Riau', postal: '28121' },
             { id: 'ID_PKU_02', name: 'Tampan / Tuah Madani', city: 'Pekanbaru, Riau', postal: '28292' },
             { id: 'ID_PKU_03', name: 'Marpoyan Damai', city: 'Pekanbaru, Riau', postal: '28282' },
@@ -647,20 +654,10 @@
             { id: 'ID_PKU_10', name: 'Bina Widya', city: 'Pekanbaru, Riau', postal: '28293' }
         ];
 
-        areaInput.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            if (query.length < 2) {
-                resultsContainer.style.display = 'none';
-                return;
-            }
+        let areaDebounceTimer = null;
 
-            const matches = sampleAreas.filter(a => 
-                a.name.toLowerCase().includes(query) || 
-                a.city.toLowerCase().includes(query) || 
-                a.postal.includes(query)
-            );
-
-            if (matches.length === 0) {
+        function renderAreaResults(items, query) {
+            if (!items || items.length === 0) {
                 resultsContainer.innerHTML = `
                     <div class="area-dropdown-item" style="color: #64748b; cursor: default;">
                         Wilayah tidak ditemukan di daftar cepat. Anda dapat mengetik manual.
@@ -671,13 +668,49 @@
                 return;
             }
 
-            resultsContainer.innerHTML = matches.map(area => `
+            resultsContainer.innerHTML = items.map(area => `
                 <div class="area-dropdown-item" onclick="selectArea('${area.id}', '${area.name}, ${area.city}', '${area.postal}')">
                     <strong>${area.name}</strong>
                     <div class="area-detail">${area.city} &bull; Kode Pos: ${area.postal}</div>
                 </div>
             `).join('');
             resultsContainer.style.display = 'block';
+        }
+
+        areaInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            clearTimeout(areaDebounceTimer);
+            areaDebounceTimer = setTimeout(() => {
+                fetch(`{{ route('biteship.areas') }}?search=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            renderAreaResults(data, query);
+                        } else {
+                            const qLower = query.toLowerCase();
+                            const matches = sampleAreas.filter(a => 
+                                a.name.toLowerCase().includes(qLower) || 
+                                a.city.toLowerCase().includes(qLower) || 
+                                a.postal.includes(qLower)
+                            );
+                            renderAreaResults(matches, query);
+                        }
+                    })
+                    .catch(() => {
+                        const qLower = query.toLowerCase();
+                        const matches = sampleAreas.filter(a => 
+                            a.name.toLowerCase().includes(qLower) || 
+                            a.city.toLowerCase().includes(qLower) || 
+                            a.postal.includes(qLower)
+                        );
+                        renderAreaResults(matches, query);
+                    });
+            }, 250);
         });
 
         // Close dropdown when clicking outside

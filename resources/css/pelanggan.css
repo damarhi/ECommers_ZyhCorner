@@ -203,6 +203,13 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
+            color: #ffffff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-phone:hover {
+            color: #00b207;
         }
 
         /* Breadcrumb Area */

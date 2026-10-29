@@ -14,7 +14,7 @@ class ProdukController extends Controller
     {
         Produk::checkAndEmptyExpiredProducts();
 
-        $query = Produk::with('kategori')
+        $query = Produk::with(['kategori', 'diskonAktif'])
             ->where(function($q) {
                 $q->where('jenis_produk', 'showcase')
                   ->orWhereNull('jenis_produk');
@@ -33,8 +33,7 @@ class ProdukController extends Controller
         }
 
         if ($request->has('diskon')) {
-            // Mock discount by filtering products under 100,000
-            $query->where('harga', '<', 100000);
+            $query->whereHas('diskonAktif');
         }
 
         if ($request->has('terbaru')) {
@@ -49,7 +48,7 @@ class ProdukController extends Controller
 
     public function customIndex(Request $request)
     {
-        $query = Produk::with('kategori')
+        $query = Produk::with(['kategori', 'diskonAktif'])
             ->where('jenis_produk', 'kustom');
 
         if ($request->has('search') && $request->search != '') {
@@ -65,8 +64,7 @@ class ProdukController extends Controller
         }
 
         if ($request->has('diskon')) {
-            // Mock discount by filtering products under 100,000
-            $query->where('harga', '<', 100000);
+            $query->whereHas('diskonAktif');
         }
 
         if ($request->has('terbaru')) {

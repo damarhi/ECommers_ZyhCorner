@@ -49,4 +49,32 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserAddress::class, 'user_id', 'user_id')->where('is_default', true);
     }
+
+    public function isBlocked(): bool
+    {
+        if ($this->role !== 'pelanggan') {
+            return false;
+        }
+
+        $customer = $this->customer()->first();
+        if ($customer && $customer->status === 'Blocked') {
+            return true;
+        }
+
+        if (!empty($this->no_hp)) {
+            $rawPhone = ltrim((string) $this->no_hp, '0');
+            $customerByPhone = Customer::where(function ($q) use ($rawPhone) {
+                $q->where('contact', (string) $this->no_hp)
+                  ->orWhere('contact', '0' . $rawPhone)
+                  ->orWhere('contact', '62' . $rawPhone)
+                  ->orWhere('contact', 'like', '%' . $rawPhone . '%');
+            })->first();
+
+            if ($customerByPhone && $customerByPhone->status === 'Blocked') {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

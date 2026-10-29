@@ -91,7 +91,7 @@
 
                         <!-- Search Input -->
                         <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
-                            <input type="text" name="search" value="{{ request('search') }}"
+                            <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                 class="form-control form-control-sm ps-5 pe-3" placeholder="Cari judul banner..." 
                                 style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
                             <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
@@ -113,7 +113,7 @@
 
         <div class="row">
                 @forelse($banners as $b)
-                    <div class="col-md-6 col-lg-6 col-xl-4 grid-margin stretch-card mb-4">
+                    <div class="col-md-6 col-lg-6 col-xl-4 grid-margin stretch-card mb-4 banner-col-item" data-search="{{ strtolower($b->judul_banner . ' ' . $b->subjudul_banner . ' ' . $b->posisi_banner) }}">
                         <div class="card border-0 shadow-sm overflow-hidden h-100 banner-card position-relative" style="border-radius: 14px; background: #ffffff; transition: transform 0.25s ease, box-shadow 0.25s ease;">
 
                             <!-- Banner Image Header Container -->
@@ -229,19 +229,27 @@
 
                     <!-- Modal Preview Banner #{{ $b->id_banner }} -->
                     <div class="modal fade" id="previewBannerModal{{ $b->id_banner }}" tabindex="-1" aria-labelledby="previewBannerModalLabel{{ $b->id_banner }}" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content" style="border-radius: 14px;">
-                                <div class="modal-header border-0 pb-0">
-                                    <div>
-                                        <h5 class="modal-title font-weight-bold" id="previewBannerModalLabel{{ $b->id_banner }}">
-                                            <i class="mdi mdi-eye text-primary me-2"></i> Preview Banner Pelanggan
-                                        </h5>
-                                        <small class="text-muted">Simulasi tampilan pada posisi <strong>{{ $b->posisi_label }}</strong></small>
+                        <div class="modal-dialog modal-dialog-centered" style="max-width: 720px; margin: 1.75rem auto; width: 95%;">
+                            <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 12px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+                                <!-- Header Modal -->
+                                <div class="modal-header border-bottom py-2.5 px-3 px-sm-4 bg-white flex-shrink-0">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="d-inline-flex align-items-center justify-content-center text-primary rounded-circle" style="width: 34px; height: 34px; background-color: #ede9fe; color: #4f46e5 !important;">
+                                            <i class="mdi mdi-eye-outline" style="font-size: 18px;"></i>
+                                        </span>
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <h6 class="modal-title font-weight-bold mb-0 text-dark" id="previewBannerModalLabel{{ $b->id_banner }}" style="font-size: 15px;">
+                                                    Pratinjau Banner Pelanggan
+                                                </h6>
+                                                <span class="badge bg-light text-primary border" style="font-size: 10px; font-weight: 600; padding: 2px 6px;">{{ $b->posisi_label }}</span>
+                                            </div>
+                                            <small class="text-muted" style="font-size: 11px;">Simulasi rendering visual persis pada antarmuka pelanggan.</small>
+                                        </div>
                                     </div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                                 </div>
-                                <div class="modal-body p-4">
-                                    <!-- Preview Container Box -->
+                                <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
                                     <div class="p-3 bg-light rounded-3 mb-3 border">
                                         <div class="d-flex align-items-center justify-content-between mb-2">
                                             <span class="badge bg-primary px-3 py-1" style="font-size: 12px;">Tampilan Halaman Pelanggan</span>
@@ -350,48 +358,57 @@
                                         </a>
                                     </div>
                                 </div>
+                                <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-end" style="border-radius: 0 0 12px 12px;">
+                                    <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Tutup</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Modal Edit Banner #{{ $b->id_banner }} -->
                     <div class="modal fade" id="editBannerModal{{ $b->id_banner }}" tabindex="-1" aria-labelledby="editBannerModalLabel{{ $b->id_banner }}" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-                                <div class="modal-header border-bottom px-4 py-3 bg-light bg-opacity-75">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="rounded-3 p-2 d-flex align-items-center justify-content-center bg-primary text-white shadow-sm" style="width: 40px; height: 40px;">
-                                            <i class="mdi mdi-image-edit-outline" style="font-size: 22px;"></i>
-                                        </div>
+                        <div class="modal-dialog modal-dialog-centered" style="max-width: 860px; margin: 1.75rem auto; width: 94%;">
+                            <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 14px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+                                <!-- Header Modal -->
+                                <div class="modal-header border-bottom py-3 px-3 px-sm-4 bg-white flex-shrink-0">
+                                    <div class="d-flex align-items-center gap-2.5">
+                                        <span class="d-inline-flex align-items-center justify-content-center text-info rounded-circle flex-shrink-0" style="width: 38px; height: 38px; background-color: #e0f2fe; color: #0284c7 !important;">
+                                            <i class="mdi mdi-image-edit-outline" style="font-size: 20px;"></i>
+                                        </span>
                                         <div>
-                                            <h5 class="modal-title fw-bold text-dark mb-0" id="editBannerModalLabel{{ $b->id_banner }}">Edit Banner Promo</h5>
-                                            <small class="text-muted" style="font-size: 12px;">Sesuaikan visual promosi, penempatan posisi, dan target rute URL</small>
+                                            <div class="d-flex align-items-center gap-2 mb-0.5">
+                                                <h6 class="modal-title font-weight-bold mb-0 text-dark" id="editBannerModalLabel{{ $b->id_banner }}" style="font-size: 15px;">
+                                                    Edit Banner Promo
+                                                </h6>
+                                                <span class="badge bg-light text-primary border" style="font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px;">#{{ $b->id_banner }}</span>
+                                            </div>
+                                            <small class="text-muted" style="font-size: 11.5px;">Sesuaikan visual promosi, penempatan posisi, dan target rute URL.</small>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                                 </div>
                                 <form action="{{ route('banners.update', $b->id_banner) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     @method('PUT')
-                                    <div class="modal-body p-4">
+                                    <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
                                         <div class="row g-4">
                                             <!-- Kolom Kiri: Pratinjau Visual & Dropzone Upload -->
                                             <div class="col-lg-5 d-flex flex-column gap-3">
-                                                <div class="card border rounded-3 p-3 bg-light bg-opacity-50 shadow-none">
+                                                <div class="p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                                     <div class="d-flex align-items-center justify-content-between mb-2">
-                                                        <span class="fw-bold text-dark" style="font-size: 13px;">
-                                                            <i class="mdi mdi-eye-outline me-1 text-primary"></i> Pratinjau Banner
+                                                        <span class="font-weight-600 text-dark d-inline-flex align-items-center gap-1.5" style="font-size: 12px;">
+                                                            <i class="mdi mdi-eye-outline text-primary" style="font-size: 15px;"></i> Pratinjau Banner
                                                         </span>
-                                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size: 10px;">Rasio 16:9</span>
+                                                        <span class="badge bg-white text-secondary border px-2 py-0.5" style="font-size: 10px; font-weight: 600; border-radius: 4px;">Rasio 16:9</span>
                                                     </div>
-                                                    <div class="position-relative overflow-hidden rounded-3 shadow-sm bg-dark" style="aspect-ratio: 16/9; max-height: 190px; display: flex; align-items: center; justify-content: center;">
+                                                    <div class="position-relative overflow-hidden rounded-2 shadow-sm bg-dark" style="aspect-ratio: 16/9; max-height: 175px; display: flex; align-items: center; justify-content: center;">
                                                         <img src="{{ asset('storage/' . $b->gambar_banner) }}" 
                                                              id="editPreviewImg{{ $b->id_banner }}" 
                                                              alt="Preview" 
                                                              class="w-100 h-100 object-fit-cover"
                                                              data-original-src="{{ asset('storage/' . $b->gambar_banner) }}">
                                                         <div class="position-absolute top-0 start-0 m-2">
-                                                            <span class="badge bg-dark bg-opacity-75 text-white" id="badgePosisi{{ $b->id_banner }}" style="font-size: 11px; backdrop-filter: blur(4px);">
+                                                            <span class="badge bg-dark bg-opacity-75 text-white px-2 py-1" id="badgePosisi{{ $b->id_banner }}" style="font-size: 10.5px; font-weight: 500; backdrop-filter: blur(4px); border-radius: 6px;">
                                                                 @if($b->posisi_banner === 'home_hero') Home Hero
                                                                 @elseif($b->posisi_banner === 'shop_header') Header Showcase
                                                                 @elseif($b->posisi_banner === 'custom_header') Header Kustom
@@ -402,108 +419,113 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="card border rounded-3 p-3 bg-white shadow-none">
-                                                    <label class="form-label fw-bold text-dark mb-2 d-flex align-items-center justify-content-between" style="font-size: 13px;">
-                                                        <span><i class="mdi mdi-cloud-upload-outline me-1 text-primary"></i> Ganti File Banner</span>
+                                                <div class="p-3 rounded-3" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                                        <span class="font-weight-600 text-dark d-inline-flex align-items-center gap-1.5" style="font-size: 12px;">
+                                                            <i class="mdi mdi-cloud-upload-outline text-primary" style="font-size: 15px;"></i> Ganti Gambar
+                                                        </span>
                                                         <button type="button" class="btn btn-link text-danger p-0 d-none" id="btnResetImg{{ $b->id_banner }}"
                                                                 style="font-size: 11px; text-decoration: none;"
                                                                 onclick="resetEditBanner('{{ $b->id_banner }}')">
-                                                            <i class="mdi mdi-undo"></i> Batal Ganti
+                                                            <i class="mdi mdi-undo me-0.5"></i> Batal
                                                         </button>
-                                                    </label>
-                                                    <div class="upload-dropzone position-relative border border-2 border-dashed rounded-3 p-3 text-center bg-light transition-all"
-                                                         id="dropzoneEdit{{ $b->id_banner }}">
+                                                    </div>
+                                                    <div class="upload-dropzone position-relative border border-dashed rounded-3 p-3 text-center bg-light"
+                                                         id="dropzoneEdit{{ $b->id_banner }}" style="border-color: #cbd5e1 !important; cursor: pointer;">
                                                         <input type="file" name="gambar_banner" id="inputGambarEdit{{ $b->id_banner }}"
                                                                class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
                                                                accept="image/jpeg,image/png,image/webp,image/jpg,image/svg+xml" style="cursor: pointer;"
                                                                onchange="previewEditBanner(event, '{{ $b->id_banner }}')">
-                                                        <i class="mdi mdi-image-plus text-primary mb-1" style="font-size: 32px; display: block;"></i>
-                                                        <div class="fw-semibold text-dark" style="font-size: 12px;">Pilih atau seret gambar baru</div>
-                                                        <small class="text-muted d-block mt-1" style="font-size: 11px;">Maksimal 4MB (JPG, PNG, WEBP)</small>
+                                                        <i class="mdi mdi-image-plus text-primary mb-1" style="font-size: 26px; display: block;"></i>
+                                                        <div class="fw-semibold text-dark" style="font-size: 11.5px;">Pilih atau seret gambar baru</div>
+                                                        <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;">Maks. 4MB (JPG, PNG, WEBP)</small>
                                                     </div>
-                                                    <small class="text-muted mt-2 d-block" style="font-size: 11px;">*Biarkan kosong jika tidak ingin mengubah gambar.</small>
+                                                    <small class="text-muted mt-2 d-block" style="font-size: 10.5px; line-height: 1.4;">
+                                                        <i class="mdi mdi-information-outline me-0.5 text-muted"></i> Kosongkan bila gambar tidak ingin diubah.
+                                                    </small>
                                                 </div>
                                             </div>
 
                                             <!-- Kolom Kanan: Metadata & Pengaturan -->
-                                            <div class="col-lg-7 d-flex flex-column gap-3">
-                                                <div class="card border rounded-3 p-3 bg-white shadow-none">
-                                                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                                                        <i class="mdi mdi-format-text text-primary"></i>
-                                                        <span class="fw-bold text-dark" style="font-size: 13px;">Informasi Konten</span>
-                                                    </div>
-                                                    
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Judul Banner <span class="text-danger">*</span></label>
-                                                        <input type="text" name="judul_banner" class="form-control rounded-2" 
-                                                               value="{{ $b->judul_banner }}" placeholder="Contoh: Promo Spesial Weekend Cake" required>
-                                                    </div>
+                                            <div class="col-lg-7 d-flex flex-column">
+                                                <!-- Seksi 1: Informasi Konten -->
+                                                <div class="d-flex align-items-center gap-1.5 text-uppercase font-weight-bold text-muted pb-1.5 mb-2.5 border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
+                                                    <i class="mdi mdi-card-text-outline text-primary" style="font-size: 15px;"></i>
+                                                    <span>Informasi Konten</span>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Judul Banner <span class="text-danger">*</span></label>
+                                                    <input type="text" name="judul_banner" class="form-control" 
+                                                           value="{{ $b->judul_banner }}" placeholder="Contoh: Promo Spesial Weekend Cake" required 
+                                                           style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                                </div>
 
-                                                    <div class="mb-0">
-                                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Subjudul / Deskripsi Singkat</label>
-                                                        <input type="text" name="subjudul" class="form-control rounded-2" 
-                                value="{{ $b->subjudul }}" placeholder="Contoh: Dapatkan diskon hingga 30% untuk aneka pilihan">
+                                                <div class="mb-3.5">
+                                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">
+                                                        Subjudul / Deskripsi Singkat <span class="text-muted fw-normal ms-1" style="font-size: 11px;">(Opsional)</span>
+                                                    </label>
+                                                    <input type="text" name="subjudul" class="form-control" 
+                                                           value="{{ $b->subjudul }}" placeholder="Contoh: Dapatkan diskon hingga 30%" 
+                                                           style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                                </div>
+
+                                                <!-- Seksi 2: Penempatan & Status -->
+                                                <div class="d-flex align-items-center gap-1.5 text-uppercase font-weight-bold text-muted pb-1.5 mb-2.5 border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
+                                                    <i class="mdi mdi-tune-vertical-variant text-primary" style="font-size: 15px;"></i>
+                                                    <span>Penempatan & Status</span>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Posisi Penempatan <span class="text-danger">*</span></label>
+                                                    <select name="posisi_banner" class="form-control form-select select-posisi" 
+                                                            data-banner-id="{{ $b->id_banner }}" 
+                                                            onchange="updatePosisiBadge(this, '{{ $b->id_banner }}')" required 
+                                                            style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                                        <option value="home_hero" {{ $b->posisi_banner === 'home_hero' ? 'selected' : '' }}>Beranda Utama (Home Hero Slider)</option>
+                                                        <option value="shop_header" {{ $b->posisi_banner === 'shop_header' ? 'selected' : '' }}>Halaman Showcase (Shop Header)</option>
+                                                        <option value="custom_header" {{ $b->posisi_banner === 'custom_header' ? 'selected' : '' }}>Halaman Produk Kustom (Custom Header)</option>
+                                                        <option value="popup_promo" {{ $b->posisi_banner === 'popup_promo' ? 'selected' : '' }}>Pop-up Promo Spesial</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">
+                                                        Target URL Tujuan <span class="text-muted fw-normal ms-1" style="font-size: 11px;">(Opsional)</span>
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1;">
+                                                            <i class="mdi mdi-link-variant"></i>
+                                                        </span>
+                                                        <input type="text" name="link_url" class="form-control border-start-0" 
+                                                               value="{{ $b->link_url }}" placeholder="Contoh: /shop" 
+                                                               style="border-radius: 0 8px 8px 0; font-size: 12.5px; height: 38px; border-color: #cbd5e1;">
                                                     </div>
                                                 </div>
 
-                                                <div class="card border rounded-3 p-3 bg-white shadow-none">
-                                                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                                                        <i class="mdi mdi-tune text-primary"></i>
-                                                        <span class="fw-bold text-dark" style="font-size: 13px;">Penempatan & Navigasi</span>
+                                                <div class="row g-2.5">
+                                                    <div class="col-sm-5">
+                                                        <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Urutan</label>
+                                                        <input type="number" name="urutan" class="form-control" value="{{ $b->urutan }}" min="0" 
+                                                               style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
                                                     </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Posisi Penempatan <span class="text-danger">*</span></label>
-                                                        <select name="posisi_banner" class="form-select rounded-2 select-posisi" 
-                                                                data-banner-id="{{ $b->id_banner }}" 
-                                                                onchange="updatePosisiBadge(this, '{{ $b->id_banner }}')" required>
-                                                            <option value="home_hero" {{ $b->posisi_banner === 'home_hero' ? 'selected' : '' }}>🏠 Home Hero Slider (Beranda Utama)</option>
-                                                            <option value="shop_header" {{ $b->posisi_banner === 'shop_header' ? 'selected' : '' }}>🛍️ Header Showcase (Halaman Shop)</option>
-                                                            <option value="custom_header" {{ $b->posisi_banner === 'custom_header' ? 'selected' : '' }}>🎂 Header Kustom (Halaman Custom Products)</option>
-                                                            <option value="popup_promo" {{ $b->posisi_banner === 'popup_promo' ? 'selected' : '' }}>✨ Pop-up Promo Eksklusif</option>
+                                                    <div class="col-sm-7">
+                                                        <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Status Tayang</label>
+                                                        <select name="status" class="form-control form-select" required 
+                                                                style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                                            <option value="Aktif" {{ $b->status === 'Aktif' ? 'selected' : '' }}>Aktif (Ditayangkan)</option>
+                                                            <option value="Nonaktif" {{ $b->status === 'Nonaktif' ? 'selected' : '' }}>Nonaktif (Draf / Arsip)</option>
                                                         </select>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Target URL Tujuan (Opsional)</label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text bg-light text-muted border-end-0"><i class="mdi mdi-link-variant"></i></span>
-                                                            <input type="text" name="link_url" class="form-control border-start-0" 
-                                                                   value="{{ $b->link_url }}" placeholder="Contoh: /shop atau /custom-products">
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row g-2">
-                                                        <div class="col-sm-6">
-                                                            <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Urutan Tampil</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text bg-light text-muted"><i class="mdi mdi-sort-numeric-ascending"></i></span>
-                                                                <input type="number" name="urutan" class="form-control" value="{{ $b->urutan }}" min="0">
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-6">
-                                                            <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Status Publikasi</label>
-                                                            <select name="status" class="form-select rounded-2" required>
-                                                                <option value="Aktif" {{ $b->status === 'Aktif' ? 'selected' : '' }}>🟢 Aktif (Tayang)</option>
-                                                                <option value="Nonaktif" {{ $b->status === 'Nonaktif' ? 'selected' : '' }}>⚪ Nonaktif (Draft)</option>
-                                                            </select>
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="modal-footer border-top px-4 py-3 bg-light bg-opacity-75 d-flex justify-content-between align-items-center">
-                                        <div class="text-muted d-flex align-items-center gap-1" style="font-size: 12px;">
-                                            <i class="mdi mdi-identifier"></i> ID Banner: <strong>#{{ $b->id_banner }}</strong>
-                                        </div>
-                                        <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-light px-3 rounded-3" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-gradient-primary px-4 rounded-3 d-inline-flex align-items-center gap-2">
-                                                <i class="mdi mdi-check-circle-outline"></i>
-                                                <span>Perbarui Banner</span>
-                                            </button>
-                                        </div>
+                                    <div class="modal-footer border-top bg-light py-2.5 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 14px 14px;">
+                                        <button type="button" class="btn btn-light btn-sm px-3.5 py-1.5 border" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 500; font-size: 12.5px;">Batal</button>
+                                        <button type="submit" class="btn btn-gradient-primary btn-sm px-3.5 py-1.5 shadow-sm d-inline-flex align-items-center" style="border-radius: 8px; font-weight: 500; font-size: 12.5px;">
+                                            <i class="mdi mdi-check-circle-outline me-1.5" style="font-size: 15px;"></i> Perbarui Banner
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -552,148 +574,158 @@
 
     <!-- Modal Tambah Banner -->
     <div class="modal fade" id="addBannerModal" tabindex="-1" aria-labelledby="addBannerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
-                <div class="modal-header border-bottom px-4 py-3 bg-light bg-opacity-75">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-3 p-2 d-flex align-items-center justify-content-center bg-success text-white shadow-sm" style="width: 40px; height: 40px;">
-                            <i class="mdi mdi-image-plus" style="font-size: 22px;"></i>
-                        </div>
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 860px; margin: 1.75rem auto; width: 94%;">
+            <div class="modal-content border-0 shadow-lg text-start" style="border-radius: 14px; overflow: hidden; max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+                <!-- Header Modal -->
+                <div class="modal-header border-bottom py-3 px-3 px-sm-4 bg-white flex-shrink-0">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <span class="d-inline-flex align-items-center justify-content-center text-success rounded-circle flex-shrink-0" style="width: 38px; height: 38px; background-color: #dcfce7; color: #16a34a !important;">
+                            <i class="mdi mdi-image-plus-outline" style="font-size: 20px;"></i>
+                        </span>
                         <div>
-                            <h5 class="modal-title fw-bold text-dark mb-0" id="addBannerModalLabel">Tambah Banner Baru</h5>
-                            <small class="text-muted" style="font-size: 12px;">Unggah visual promosi dan konfigurasikan penempatan banner</small>
+                            <h6 class="modal-title font-weight-bold mb-0 text-dark" id="addBannerModalLabel" style="font-size: 15px;">
+                                Tambah Banner Baru
+                            </h6>
+                            <small class="text-muted" style="font-size: 11.5px;">Unggah visual promosi dan konfigurasikan penempatan banner.</small>
                         </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
                 </div>
                 <form action="{{ route('banners.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="modal-body p-4">
+                    <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
                         <div class="row g-4">
                             <!-- Kolom Kiri: Pratinjau Visual & Dropzone Upload -->
                             <div class="col-lg-5 d-flex flex-column gap-3">
-                                <div class="card border rounded-3 p-3 bg-light bg-opacity-50 shadow-none">
+                                <div class="p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <span class="fw-bold text-dark" style="font-size: 13px;">
-                                            <i class="mdi mdi-eye-outline me-1 text-primary"></i> Pratinjau Banner
+                                        <span class="font-weight-600 text-dark d-inline-flex align-items-center gap-1.5" style="font-size: 12px;">
+                                            <i class="mdi mdi-eye-outline text-primary" style="font-size: 15px;"></i> Pratinjau Banner
                                         </span>
-                                        <span class="badge bg-secondary-subtle text-secondary" style="font-size: 10px;">Rasio 16:9</span>
+                                        <span class="badge bg-white text-secondary border px-2 py-0.5" style="font-size: 10px; font-weight: 600; border-radius: 4px;">Rasio 16:9</span>
                                     </div>
-                                    <div class="position-relative overflow-hidden rounded-3 shadow-sm bg-light border d-flex align-items-center justify-content-center" 
-                                         id="addPreviewContainer" style="aspect-ratio: 16/9; max-height: 190px;">
+                                    <div class="position-relative overflow-hidden rounded-2 shadow-sm bg-light border d-flex align-items-center justify-content-center" 
+                                         id="addPreviewContainer" style="aspect-ratio: 16/9; max-height: 175px;">
                                         <img src="" id="addPreviewImg" alt="Preview" class="w-100 h-100 object-fit-cover d-none">
                                         <div id="addPreviewPlaceholder" class="text-center p-3 text-muted">
-                                            <i class="mdi mdi-image-filter-hdr" style="font-size: 42px; opacity: 0.4;"></i>
-                                            <div class="fw-semibold mt-1" style="font-size: 12px;">Pratinjau Banner Baru</div>
-                                            <small style="font-size: 11px;">Gambar akan muncul di sini</small>
+                                            <i class="mdi mdi-image-filter-hdr" style="font-size: 38px; opacity: 0.35;"></i>
+                                            <div class="fw-semibold mt-1" style="font-size: 12px; color: #64748b;">Pratinjau Banner Baru</div>
+                                            <small style="font-size: 10.5px; color: #94a3b8;">Gambar muncul setelah dipilih</small>
                                         </div>
                                         <div class="position-absolute top-0 start-0 m-2">
-                                            <span class="badge bg-dark bg-opacity-75 text-white" id="badgePosisiAdd" style="font-size: 11px; backdrop-filter: blur(4px);">
+                                            <span class="badge bg-dark bg-opacity-75 text-white px-2 py-1" id="badgePosisiAdd" style="font-size: 10.5px; font-weight: 500; backdrop-filter: blur(4px); border-radius: 6px;">
                                                 Home Hero
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="card border rounded-3 p-3 bg-white shadow-none">
-                                    <label class="form-label fw-bold text-dark mb-2 d-flex align-items-center justify-content-between" style="font-size: 13px;">
-                                        <span><i class="mdi mdi-cloud-upload-outline me-1 text-primary"></i> Upload Gambar <span class="text-danger">*</span></span>
+                                <div class="p-3 rounded-3" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="font-weight-600 text-dark d-inline-flex align-items-center gap-1.5" style="font-size: 12px;">
+                                            <i class="mdi mdi-cloud-upload-outline text-primary" style="font-size: 15px;"></i> Upload Gambar <span class="text-danger">*</span>
+                                        </span>
                                         <button type="button" class="btn btn-link text-danger p-0 d-none" id="btnResetAddImg"
                                                 style="font-size: 11px; text-decoration: none;"
                                                 onclick="resetAddBanner()">
-                                            <i class="mdi mdi-undo"></i> Batalkan
+                                            <i class="mdi mdi-undo me-0.5"></i> Batal
                                         </button>
-                                    </label>
-                                    <div class="upload-dropzone position-relative border border-2 border-dashed rounded-3 p-3 text-center bg-light transition-all"
-                                         id="dropzoneAdd">
+                                    </div>
+                                    <div class="upload-dropzone position-relative border border-dashed rounded-3 p-3 text-center bg-light"
+                                         id="dropzoneAdd" style="border-color: #cbd5e1 !important; cursor: pointer;">
                                         <input type="file" name="gambar_banner" id="inputGambarAdd"
                                                class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
                                                accept="image/jpeg,image/png,image/webp,image/jpg,image/svg+xml" style="cursor: pointer;"
                                                onchange="previewAddBanner(event)" required>
-                                        <i class="mdi mdi-cloud-upload text-success mb-1" style="font-size: 32px; display: block;"></i>
-                                        <div class="fw-semibold text-dark" style="font-size: 12px;">Pilih atau seret gambar banner</div>
-                                        <small class="text-muted d-block mt-1" style="font-size: 11px;">Maksimal 4MB (JPG, PNG, WEBP)</small>
+                                        <i class="mdi mdi-cloud-upload text-success mb-1" style="font-size: 26px; display: block;"></i>
+                                        <div class="fw-semibold text-dark" style="font-size: 11.5px;">Pilih atau seret gambar banner</div>
+                                        <small class="text-muted d-block mt-0.5" style="font-size: 10.5px;">Maks. 4MB (JPG, PNG, WEBP)</small>
                                     </div>
-                                    <small class="text-muted mt-2 d-block" style="font-size: 11px;">*Disarankan gambar landscape horizontal.</small>
+                                    <small class="text-muted mt-2 d-block" style="font-size: 10.5px; line-height: 1.4;">
+                                        <i class="mdi mdi-information-outline me-0.5 text-muted"></i> Disarankan gambar lanskap horizontal (16:9).
+                                    </small>
                                 </div>
                             </div>
 
                             <!-- Kolom Kanan: Metadata & Pengaturan -->
-                            <div class="col-lg-7 d-flex flex-column gap-3">
-                                <div class="card border rounded-3 p-3 bg-white shadow-none">
-                                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                                        <i class="mdi mdi-format-text text-primary"></i>
-                                        <span class="fw-bold text-dark" style="font-size: 13px;">Informasi Konten</span>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Judul Banner <span class="text-danger">*</span></label>
-                                        <input type="text" name="judul_banner" class="form-control rounded-2" 
-                                               placeholder="Contoh: Promo Spesial Kategori Kue" required>
-                                    </div>
+                            <div class="col-lg-7 d-flex flex-column">
+                                <!-- Seksi 1: Informasi Konten -->
+                                <div class="d-flex align-items-center gap-1.5 text-uppercase font-weight-bold text-muted pb-1.5 mb-2.5 border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
+                                    <i class="mdi mdi-card-text-outline text-primary" style="font-size: 15px;"></i>
+                                    <span>Informasi Konten</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Judul Banner <span class="text-danger">*</span></label>
+                                    <input type="text" name="judul_banner" class="form-control" 
+                                           placeholder="Contoh: Promo Spesial Kategori Kue" required 
+                                           style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                </div>
 
-                                    <div class="mb-0">
-                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Subjudul / Deskripsi Singkat</label>
-                                        <input type="text" name="subjudul" class="form-control rounded-2" 
-                                               placeholder="Contoh: Dapatkan diskon hingga 50% untuk pesanan hari ini">
+                                <div class="mb-3.5">
+                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">
+                                        Subjudul / Deskripsi Singkat <span class="text-muted fw-normal ms-1" style="font-size: 11px;">(Opsional)</span>
+                                    </label>
+                                    <input type="text" name="subjudul" class="form-control" 
+                                           placeholder="Contoh: Dapatkan diskon hingga 50%" 
+                                           style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                </div>
+
+                                <!-- Seksi 2: Penempatan & Status -->
+                                <div class="d-flex align-items-center gap-1.5 text-uppercase font-weight-bold text-muted pb-1.5 mb-2.5 border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
+                                    <i class="mdi mdi-tune-vertical-variant text-primary" style="font-size: 15px;"></i>
+                                    <span>Penempatan & Status</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Posisi Penempatan <span class="text-danger">*</span></label>
+                                    <select name="posisi_banner" class="form-control form-select select-posisi-add" 
+                                            onchange="updatePosisiBadgeAdd(this)" required 
+                                            style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                        <option value="home_hero" selected>Beranda Utama (Home Hero Slider)</option>
+                                        <option value="shop_header">Halaman Showcase (Shop Header)</option>
+                                        <option value="custom_header">Halaman Produk Kustom (Custom Header)</option>
+                                        <option value="popup_promo">Pop-up Promo Spesial</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">
+                                        Target URL Tujuan <span class="text-muted fw-normal ms-1" style="font-size: 11px;">(Opsional)</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1;">
+                                            <i class="mdi mdi-link-variant"></i>
+                                        </span>
+                                        <input type="text" name="link_url" class="form-control border-start-0" 
+                                               placeholder="Contoh: /shop" 
+                                               style="border-radius: 0 8px 8px 0; font-size: 12.5px; height: 38px; border-color: #cbd5e1;">
                                     </div>
                                 </div>
 
-                                <div class="card border rounded-3 p-3 bg-white shadow-none">
-                                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                                        <i class="mdi mdi-tune text-primary"></i>
-                                        <span class="fw-bold text-dark" style="font-size: 13px;">Penempatan & Navigasi</span>
+                                <div class="row g-2.5">
+                                    <div class="col-sm-5">
+                                        <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Urutan</label>
+                                        <input type="number" name="urutan" class="form-control" value="1" min="0" 
+                                               style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
                                     </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Posisi Penempatan <span class="text-danger">*</span></label>
-                                        <select name="posisi_banner" class="form-select rounded-2 select-posisi-add" 
-                                                onchange="updatePosisiBadgeAdd(this)" required>
-                                            <option value="home_hero" selected>🏠 Home Hero Slider (Beranda Utama)</option>
-                                            <option value="shop_header">🛍️ Header Showcase (Halaman Shop)</option>
-                                            <option value="custom_header">🎂 Header Kustom (Halaman Custom Products)</option>
-                                            <option value="popup_promo">✨ Pop-up Promo Eksklusif</option>
+                                    <div class="col-sm-7">
+                                        <label class="form-label font-weight-600 text-dark mb-1.5" style="font-size: 12px;">Status Tayang</label>
+                                        <select name="status" class="form-control form-select" required 
+                                                style="font-size: 12.5px; border-radius: 8px; height: 38px; border: 1px solid #cbd5e1;">
+                                            <option value="Aktif" selected>Aktif (Ditayangkan)</option>
+                                            <option value="Nonaktif">Nonaktif (Draf / Arsip)</option>
                                         </select>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Target URL Tujuan (Opsional)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light text-muted border-end-0"><i class="mdi mdi-link-variant"></i></span>
-                                            <input type="text" name="link_url" class="form-control border-start-0" 
-                                                   placeholder="Contoh: /shop atau /custom-products">
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-2">
-                                        <div class="col-sm-6">
-                                            <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Urutan Tampil</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light text-muted"><i class="mdi mdi-sort-numeric-ascending"></i></span>
-                                                <input type="number" name="urutan" class="form-control" value="1" min="0">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12px;">Status Publikasi</label>
-                                            <select name="status" class="form-select rounded-2" required>
-                                                <option value="Aktif" selected>🟢 Aktif (Tayang)</option>
-                                                <option value="Nonaktif">⚪ Nonaktif (Draft)</option>
-                                            </select>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-top px-4 py-3 bg-light bg-opacity-75 d-flex justify-content-between align-items-center">
-                        <small class="text-muted" style="font-size: 12px;">Pastikan data sudah benar sebelum menyimpan.</small>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-light px-3 rounded-3" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-gradient-primary px-4 rounded-3 d-inline-flex align-items-center gap-2">
-                                <i class="mdi mdi-check-circle-outline"></i>
-                                <span>Simpan Banner</span>
-                            </button>
-                        </div>
+                    <div class="modal-footer border-top bg-light py-2.5 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 14px 14px;">
+                        <button type="button" class="btn btn-light btn-sm px-3.5 py-1.5 border" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 500; font-size: 12.5px;">Batal</button>
+                        <button type="submit" class="btn btn-gradient-primary btn-sm px-3.5 py-1.5 shadow-sm d-inline-flex align-items-center" style="border-radius: 8px; font-weight: 500; font-size: 12.5px;">
+                            <i class="mdi mdi-check-circle-outline me-1.5" style="font-size: 15px;"></i> Simpan Banner
+                        </button>
                     </div>
                 </form>
             </div>

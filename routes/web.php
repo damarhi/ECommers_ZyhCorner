@@ -12,6 +12,7 @@ use App\Http\Controllers\Pelanggan\CustomerReturnController;
 use App\Http\Controllers\Pelanggan\CustomerSettingsController;
 use App\Http\Controllers\Pelanggan\CustomerAddressController;
 // Admin Controllers
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CassierController;
@@ -36,6 +37,7 @@ Route::get('/faq', [PelangganController::class, 'faq'])->name('faq');
 Route::get('/product/{id}', [PelangganController::class, 'detail'])->name('product.detail');
 Route::get('/search-suggestions', [PelangganController::class, 'searchSuggestions'])->name('search.suggestions');
 Route::get('/cart', [CartCheckoutController::class, 'userChart'])->name('userChart');
+Route::get('/biteship/areas', [CartCheckoutController::class, 'biteshipAreas'])->name('biteship.areas');
 
 Route::middleware(['auth', 'preventBackHistory'])->group(function () {
     Route::get('/checkout', [CartCheckoutController::class, 'checkout'])->name('checkout');
@@ -72,10 +74,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Google Authentication Routes
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
 Route::get('/auth/google/verify', [AuthController::class, 'showGoogleVerifyForm'])->name('login.google.verify');
 Route::post('/auth/google/verify', [AuthController::class, 'verifyGoogleOtp'])->name('login.google.verify.post');
 Route::post('/auth/google/verify/resend', [AuthController::class, 'resendGoogleOtp'])->name('login.google.verify.resend');
-
 // Registration OTP Email Verification Routes
 Route::get('/register/verify', [AuthController::class, 'showRegisterVerifyForm'])->name('register.verify');
 Route::post('/register/verify', [AuthController::class, 'verifyRegisterOtp'])->name('register.verify.post');
@@ -87,12 +89,7 @@ Route::post('/register', [AuthController::class, 'registerPost'])->name('registe
 use Illuminate\Support\Facades\Auth;
 
 Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        if (Auth::check() && Auth::user()->role === 'kasir') {
-            return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman dashboard.');
-        }
-        return view('Admin.dashboard.dashboard');
-    });
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::get('admin/custom-products', [ProdukController::class, 'customIndex'])->name('products.custom');
     Route::get('admin/expired-products', [ExpiredProductController::class, 'index'])->name('products.expired.index');
@@ -113,6 +110,7 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
     Route::post('admin/discounts/bulk-delete', [DiskonController::class, 'bulkDelete'])->name('discounts.bulk-delete');
     Route::post('admin/discounts/{discount}/toggle', [DiskonController::class, 'toggleStatus'])->name('discounts.toggle');
     Route::post('admin/returs/bulk-delete', [ReturController::class, 'bulkDelete'])->name('returs.bulk-delete');
+    Route::patch('admin/returs/{retur}/status', [ReturController::class, 'updateStatus'])->name('returs.update-status');
     Route::resource('admin/returs', ReturController::class)->names('returs');
 
     Route::middleware('blockKasir')->group(function () {
@@ -122,6 +120,9 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
         Route::resource('admin/cassiers', CassierController::class)->names('cassiers');
         Route::post('admin/customers/bulk-delete', [CustomerController::class, 'bulkDelete'])->name('customers.bulk-delete');
         Route::resource('admin/customers', CustomerController::class)->names('customers');
+        Route::post('admin/messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('messages.bulk-delete');
+        Route::resource('admin/messages', ContactMessageController::class)->names('messages')->only(['index', 'show', 'destroy']);
+        Route::patch('admin/messages/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('messages.update-status');
     });
 
     Route::post('admin/orders/bulk-delete', [PesananController::class, 'bulkDelete'])->name('orders.bulk-delete');
@@ -138,10 +139,9 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
     Route::post('admin/settings/password', [AdminSettingsController::class, 'updatePassword'])->name('settings.password.update');
     Route::post('admin/settings/store', [AdminSettingsController::class, 'updateStoreInfo'])->name('settings.store.update');
 
-    Route::post('admin/messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('messages.bulk-delete');
-    Route::resource('admin/messages', ContactMessageController::class)->names('messages')->only(['index', 'show', 'destroy']);
-    Route::patch('admin/messages/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('messages.update-status');
 
     Route::get('admin/pos', [PosController::class, 'index'])->name('pos.index');
+    Route::get('admin/pos/checkout', [PosController::class, 'checkoutPage'])->name('pos.checkout.page');
     Route::post('admin/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+    Route::post('admin/pos/products/{id}/add-stock', [PosController::class, 'addStock'])->name('pos.add-stock');
 });

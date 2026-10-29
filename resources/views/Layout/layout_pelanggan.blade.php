@@ -53,7 +53,7 @@
         }
     </style>
     <script>
-        window.storePhone = "{{ $storeSettings['wa_number'] ?? '628123456789' }}";
+        window.storePhone = "{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}";
         window.storeName = "{!! addslashes($storeSettings['store_name'] ?? 'Zyh Corner') !!}";
     </script>
 </head>
@@ -141,10 +141,10 @@
                 <a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact Us</a>
                 <a href="{{ route('faq') }}" class="{{ request()->routeIs('faq') ? 'active' : '' }}">FAQ</a>
             </div>
-            <div class="nav-phone">
+            <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}" target="_blank" rel="noopener noreferrer" class="nav-phone" style="color: inherit; text-decoration: none;" title="Chat WhatsApp Toko">
                 <i class="fa-solid fa-phone-volume"></i>
-                <span>(+62) 8123456789</span>
-            </div>
+                <span>{{ $storeSettings['store_phone'] ?? '(+62) 812-3456-789' }}</span>
+            </a>
         </div>
     </nav>
 
@@ -179,9 +179,9 @@
                             style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                         <div class="logo-text">{{ $storeSettings['store_name'] ?? 'Zyh Corner' }}</div>
                     </div>
-                    <p style="margin: 15px 0; color: #999; font-size: 14px; line-height: 1.6; max-width: 320px;">{{ $storeSettings['store_tagline'] ?? 'Toko Pastry & Bakery pilihan terbaik di Pekanbaru. Menyediakan aneka cake, kue ulang tahun, dessert, dan pesanan kue kustom berkualitas tinggi.' }}</p>
+                    <p style="margin: 15px 0; color: #999; font-size: 14px; line-height: 1.6; max-width: 320px;">{{ $storeSettings['store_tagline'] ?? 'Toko Pastry & Bakery pilihan terbaik di Pangkalan Kerinci, Pelalawan. Menyediakan aneka cake, kue ulang tahun, dessert, dan pesanan kue kustom berkualitas tinggi.' }}</p>
                     <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
-                        <a href="tel:+{{ $storeSettings['wa_number'] ?? '628123456789' }}" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;">
+                        <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px; font-weight: 500; text-decoration: none;" title="Chat WhatsApp Toko">
                             <i class="fa-solid fa-phone-volume" style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.08); color: #00b207; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;"></i>
                             <span>{{ $storeSettings['store_phone'] ?? '(+62) 812-3456-789' }}</span>
                         </a>
@@ -264,9 +264,17 @@
                 <a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact Us</a>
             </div>
             <div class="mobile-nav-phone"
-                style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f2f2f2; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #666;">
-                <i class="fa-solid fa-phone-volume" style="color: #00b207;"></i>
-                <span>(+62) 8123456789</span>
+                style="margin-top: 25px; padding-top: 16px; border-top: 1px solid #f2f2f2; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: #666;">
+                <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 10px; color: #444; text-decoration: none; font-weight: 500;" title="Chat WhatsApp Toko">
+                    <i class="fa-solid fa-phone-volume" style="color: #00b207; width: 20px; text-align: center;"></i>
+                    <span>{{ $storeSettings['store_phone'] ?? '(+62) 812-3456-789' }}</span>
+                </a>
+                @if (!empty($storeSettings['social_instagram']))
+                <a href="{{ $storeSettings['social_instagram'] }}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 10px; color: #444; text-decoration: none; font-weight: 500;">
+                    <i class="fa-brands fa-instagram" style="color: #e1306c; width: 20px; text-align: center; font-size: 16px;"></i>
+                    <span>Instagram</span>
+                </a>
+                @endif
             </div>
         </div>
     </div>
@@ -507,6 +515,7 @@
             }
         });
     </script>
+    <script src="{{ asset('js/live-instant-search.js') }}"></script>
     @yield('scripts')
 </body>
 
