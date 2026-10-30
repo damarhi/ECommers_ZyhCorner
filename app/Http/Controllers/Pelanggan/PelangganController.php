@@ -62,7 +62,11 @@ class PelangganController extends Controller
             ->limit(3)
             ->get();
 
-        $categories = Kategori::withCount('produks')->get();
+        $categories = Kategori::withCount('produks')
+            ->orderBy('produks_count', 'desc')
+            ->orderBy('id_kategori', 'asc')
+            ->limit(5)
+            ->get();
         $newestProducts = Produk::with(['kategori', 'diskonAktif'])
             ->where(function($q) {
                 $q->where('jenis_produk', 'showcase')

@@ -86,6 +86,16 @@ class PesananController extends Controller
     {
         $order = Pesanan::findOrFail($id);
 
+        if ($order->is_bank_transfer) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan dengan metode Transfer Bank harus diverifikasi melalui bukti pembayaran terlebih dahulu.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Pesanan dengan metode Transfer Bank harus diverifikasi melalui bukti pembayaran terlebih dahulu.');
+        }
+
         if (!in_array(strtolower($order->order_status ?? ''), ['menunggu konfirmasi', 'unconfirmed'])) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -112,6 +122,93 @@ class PesananController extends Controller
         }
 
         return redirect()->back()->with('success', 'Pesanan ' . $order->order_number . ' berhasil dikonfirmasi dan masuk antrean dapur!');
+    }
+
+    /**
+     * Confirm bank transfer proof of payment.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int|string  $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function confirmProof(Request $request, $id)
+    {
+        $order = Pesanan::findOrFail($id);
+
+        if ($order->payment_status === 'Paid') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan ini sudah berstatus Lunas.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Pesanan ini sudah berstatus Lunas.');
+        }
+
+        $order->update([
+            'payment_status' => 'Paid',
+            'order_status' => 'dikemas',
+            'catatan_verifikasi_pembayaran' => 'Diverifikasi Lunas oleh Kasir/Admin pada ' . now()->isoFormat('D MMMM YYYY, HH:mm') . ' WIB',
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Bukti pembayaran pesanan ' . $order->order_number . ' berhasil dikonfirmasi! Pesanan kini LUNAS dan sedang dikemas.',
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_status' => 'Paid',
+                'order_status' => 'dikemas',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Bukti pembayaran pesanan ' . $order->order_number . ' berhasil dikonfirmasi!');
+    }
+
+    /**
+     * Reject bank transfer proof of payment.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int|string  $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function rejectProof(Request $request, $id)
+    {
+        $order = Pesanan::findOrFail($id);
+
+        $request->validate([
+            'alasan_penolakan' => 'required|string|max:255',
+        ], [
+            'alasan_penolakan.required' => 'Wajib mengisi alasan penolakan bukti pembayaran.',
+        ]);
+
+        $alasan = strip_tags(trim($request->input('alasan_penolakan')));
+
+        if ($order->bukti_pembayaran && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->bukti_pembayaran)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($order->bukti_pembayaran);
+        }
+
+        $order->update([
+            'bukti_pembayaran' => null,
+            'bukti_pembayaran_uploaded_at' => null,
+            'payment_status' => 'Pending',
+            'order_status' => 'menunggu pembayaran',
+            'catatan_verifikasi_pembayaran' => 'Bukti ditolak: ' . $alasan . ' (' . now()->isoFormat('D MMMM YYYY, HH:mm') . ' WIB)',
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Bukti pembayaran pesanan ' . $order->order_number . ' telah ditolak. Pelanggan dapat mengunggah bukti baru.',
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_status' => 'Pending',
+                'order_status' => 'menunggu pembayaran',
+                'catatan' => $order->catatan_verifikasi_pembayaran,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Bukti pembayaran pesanan ' . $order->order_number . ' telah ditolak.');
     }
     public function allSales(Request $request)
     {
@@ -148,7 +245,8 @@ class PesananController extends Controller
             $query->where(function($q) use ($searchTerm) {
                 $q->where('order_number', 'like', $searchTerm)
                   ->orWhere('customer_name', 'like', $searchTerm)
-                  ->orWhere('email_pembeli', 'like', $searchTerm);
+                  ->orWhere('email_pembeli', 'like', $searchTerm)
+                  ->orWhere('items', 'like', $searchTerm);
             });
         }
 
@@ -157,9 +255,25 @@ class PesananController extends Controller
         $totalOfflineCount = (clone $query)->where('jenis_penjualan', 'Offline')->count();
 
         $sales = $query->latest()->paginate(10)->withQueryString();
+
+        if ($request->ajax() || $request->has('ajax') || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            $tableHtml = view('Admin.kelola_penjualan.partials.all_sales_table', compact('sales'))->render();
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'html' => $tableHtml,
+                    'total' => $sales->total(),
+                    'firstItem' => $sales->firstItem() ?? 0,
+                    'lastItem' => $sales->lastItem() ?? 0,
+                    'totalPendapatan' => 'Rp. ' . number_format($totalPendapatan, 0, ',', '.'),
+                    'totalOnlineCount' => $totalOnlineCount,
+                    'totalOfflineCount' => $totalOfflineCount,
+                ]);
+            }
+            return response($tableHtml);
+        }
+
         return view('Admin.kelola_penjualan.all_sales', compact('sales', 'totalPendapatan', 'totalOnlineCount', 'totalOfflineCount'));
     }
-
     public function salesReport(Request $request)
     {
         $query = Pesanan::query();
@@ -237,7 +351,8 @@ class PesananController extends Controller
             $query->where(function($q) use ($searchTerm) {
                 $q->where('order_number', 'like', $searchTerm)
                   ->orWhere('customer_name', 'like', $searchTerm)
-                  ->orWhere('email_pembeli', 'like', $searchTerm);
+                  ->orWhere('email_pembeli', 'like', $searchTerm)
+                  ->orWhere('items', 'like', $searchTerm);
             });
         }
 
@@ -502,7 +617,8 @@ class PesananController extends Controller
             $query->where(function($q) use ($searchTerm) {
                 $q->where('order_number', 'like', $searchTerm)
                   ->orWhere('customer_name', 'like', $searchTerm)
-                  ->orWhere('email_pembeli', 'like', $searchTerm);
+                  ->orWhere('email_pembeli', 'like', $searchTerm)
+                  ->orWhere('items', 'like', $searchTerm);
             });
         }
 

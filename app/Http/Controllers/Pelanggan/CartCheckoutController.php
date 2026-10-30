@@ -165,7 +165,13 @@ class CartCheckoutController extends Controller
             $contactNote = '[Penerima: ' . $customerName . ' (' . $recipientPhone . ')]';
             $finalNotes = $finalNotes ? ($finalNotes . ' ' . $contactNote) : $contactNote;
         }
-
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $lat = $request->input('latitude');
+            $lng = $request->input('longitude');
+            $mapLink = "https://maps.google.com/?q={$lat},{$lng}";
+            $gpsNote = "[Titik GPS: {$lat}, {$lng} | {$mapLink}]";
+            $finalNotes = $finalNotes ? ($finalNotes . ' ' . $gpsNote) : $gpsNote;
+        }
         do {
             $orderNumber = '#' . strtoupper(Str::random(6));
         } while (Pesanan::where('order_number', $orderNumber)->exists());
@@ -225,8 +231,17 @@ class CartCheckoutController extends Controller
         $orderId = $request->query('order_id');
         $order = null;
         if ($orderId) {
-            $order = Pesanan::where('id', $orderId)
-                ->where('email_pembeli', Auth::user()->email)
+            $userEmail = Auth::user()->email;
+            $cleanId = preg_replace('/[^a-zA-Z0-9\-\_\~\.]/', '', $orderId);
+
+            $order = Pesanan::where('email_pembeli', $userEmail)
+                ->where(function ($q) use ($orderId, $cleanId) {
+                    $q->where('id', $orderId)
+                      ->orWhere('order_number', $orderId)
+                      ->orWhere('order_number', '#' . $orderId)
+                      ->orWhere('order_number', $cleanId)
+                      ->orWhere('order_number', '#' . $cleanId);
+                })
                 ->first();
         }
 
@@ -234,10 +249,21 @@ class CartCheckoutController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
+        if ($order->payment_status !== 'Paid' && strtoupper((string)$order->payment_method) !== 'COD' && !$order->is_bank_transfer) {
+            app(\App\Http\Controllers\Pelanggan\PembayaranController::class)->verifyAndSyncOrderPayment($order);
+            $order->refresh();
+        }
+
         $deadline = $order->created_at->addHours(24);
         $remainingSeconds = max(0, now()->diffInSeconds($deadline, false));
 
-        return view('Pelanggan.order_success', compact('order', 'deadline', 'remainingSeconds'));
+        $storeBank = [
+            'name' => \App\Models\StoreSetting::get('bank_name', 'Bank Central Asia (BCA)'),
+            'account_number' => \App\Models\StoreSetting::get('bank_account_number', '8295-0192-38'),
+            'account_holder' => \App\Models\StoreSetting::get('bank_account_holder', 'ZYH CORNER PASTRY'),
+        ];
+
+        return view('Pelanggan.order_success', compact('order', 'deadline', 'remainingSeconds', 'storeBank'));
     }
 
     /**
@@ -251,5 +277,42 @@ class CartCheckoutController extends Controller
         $query = (string) $request->query('search', $request->query('q', ''));
         $areas = \App\Services\BiteshipService::searchAreas($query);
         return response()->json($areas);
+    }
+
+    /**
+     * Get calculated courier rates for checkout.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function biteshipRates(Request $request)
+    {
+        $destinationAreaId = (string) $request->input('destination_area_id', '');
+        $destinationAreaName = (string) $request->input('destination_area_name', '');
+        $items = $request->input('items', []);
+
+        // Resolve area ID if empty but name provided
+        if (empty($destinationAreaId) && !empty($destinationAreaName)) {
+            $matchedAreas = \App\Services\BiteshipService::searchAreas($destinationAreaName);
+            if (!empty($matchedAreas)) {
+                $destinationAreaId = $matchedAreas[0]['id'] ?? '';
+            }
+        }
+
+        if (empty($destinationAreaId)) {
+            $destinationAreaId = config('services.biteship.origin_area_id', 'ID_PLW_01');
+        }
+
+        $ratesResult = \App\Services\BiteshipService::getRates($destinationAreaId, $items);
+        $couriers = \App\Services\BiteshipService::formatCheckoutRates($ratesResult, $destinationAreaId, $destinationAreaName);
+
+        return response()->json([
+            'success' => true,
+            'source' => $ratesResult['source'] ?? 'standard_tiers',
+            'destination_area_id' => $destinationAreaId,
+            'destination_area_name' => $destinationAreaName,
+            'couriers' => $couriers,
+            'rates' => $ratesResult['rates'] ?? []
+        ]);
     }
 }

@@ -230,4 +230,75 @@ class BiteshipService
             ],
         ];
     }
+
+    /**
+     * Map rates from Biteship API or standard fallback into Zyh Corner checkout courier options.
+     *
+     * @param array $ratesResult
+     * @param string|null $destinationAreaId
+     * @param string|null $destinationAreaName
+     * @return array
+     */
+    public static function formatCheckoutRates(array $ratesResult, ?string $destinationAreaId = null, ?string $destinationAreaName = null): array
+    {
+        $destId = strtoupper((string) ($destinationAreaId ?? $ratesResult['destination_area_id'] ?? ''));
+        $destName = strtolower((string) ($destinationAreaName ?? $ratesResult['destination_area_name'] ?? ''));
+
+        // Default local base tier (Pangkalan Kerinci Kota - store origin area)
+        // Differentiated realistic rates: Maxim (ekonomis), Gojek (standar), Grab (ekspres), Pick Up (gratis)
+        $courierCosts = [
+            'Gojek' => 18000,
+            'Grab' => 20000,
+            'Maxim' => 12000,
+            'Pick Up' => 0,
+        ];
+
+        // If destination is in outer Pelalawan subdistricts
+        if (in_array($destId, ['ID_PLW_04', 'ID_PLW_05', 'ID_PLW_06', 'ID_PLW_07', 'ID_PLW_08', 'ID_PLW_09', 'ID_PLW_10']) ||
+            (str_contains($destName, 'pelalawan') && !str_contains($destName, 'kerinci kota') && !str_contains($destName, 'kerinci barat') && !str_contains($destName, 'kerinci timur'))) {
+            $courierCosts = [
+                'Gojek' => 28000,
+                'Grab' => 30000,
+                'Maxim' => 22000,
+                'Pick Up' => 0,
+            ];
+        } elseif (str_starts_with($destId, 'ID_PKU') || str_contains($destName, 'pekanbaru')) {
+            // Pekanbaru city zone
+            $courierCosts = [
+                'Gojek' => 42000,
+                'Grab' => 45000,
+                'Maxim' => 35000,
+                'Pick Up' => 0,
+            ];
+        } elseif (!empty($destId) && !str_starts_with($destId, 'ID_PLW')) {
+            // Other regencies in Riau or national
+            $courierCosts = [
+                'Gojek' => 48000,
+                'Grab' => 50000,
+                'Maxim' => 40000,
+                'Pick Up' => 0,
+            ];
+        }
+
+        // If live API returned valid pricing with positive amounts, override with real-time API values
+        if (!empty($ratesResult['rates']) && ($ratesResult['source'] ?? '') === 'biteship_api') {
+            foreach ($ratesResult['rates'] as $rate) {
+                $comp = strtolower($rate['company'] ?? '');
+                $courier = strtolower($rate['courier_name'] ?? '');
+                $price = (int) ($rate['price'] ?? 0);
+
+                if ($price > 0) {
+                    if (str_contains($comp, 'gojek') || str_contains($courier, 'gojek') || str_contains($comp, 'gosend')) {
+                        $courierCosts['Gojek'] = $price;
+                    } elseif (str_contains($comp, 'grab') || str_contains($courier, 'grab')) {
+                        $courierCosts['Grab'] = $price;
+                    } elseif (str_contains($comp, 'maxim') || str_contains($courier, 'maxim')) {
+                        $courierCosts['Maxim'] = $price;
+                    }
+                }
+            }
+        }
+
+        return $courierCosts;
+    }
 }

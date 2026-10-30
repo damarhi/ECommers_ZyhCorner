@@ -176,6 +176,35 @@
                                         <textarea name="store_address" class="form-control" rows="3" required>{{ old('store_address', $storeInfo['address']) }}</textarea>
                                     </div>
 
+                                    <!-- Bank Account for Manual Bank Transfer -->
+                                    <div class="card mb-4 border-0 shadow-sm" style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 10px;">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="me-2 d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px; background: rgba(30, 39, 83, 0.1); color: #1E2753;">
+                                                    <i class="mdi mdi-bank" style="font-size: 18px;"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="font-weight-bold text-dark mb-0" style="font-size: 14px;">Rekening Bank Toko (Transfer Manual)</h6>
+                                                    <small class="text-muted" style="font-size: 11.5px;">Nomor rekening ini akan ditampilkan kepada pelanggan saat memilih metode Transfer Bank.</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="font-weight-500 mb-1" style="font-size: 12.5px;">Nama Bank</label>
+                                                    <input type="text" name="bank_name" class="form-control" value="{{ old('bank_name', $storeInfo['bank_name'] ?? 'Bank Central Asia (BCA)') }}" placeholder="Contoh: Bank Central Asia (BCA)" required>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="font-weight-500 mb-1" style="font-size: 12.5px;">Nomor Rekening</label>
+                                                    <input type="text" name="bank_account_number" class="form-control font-monospace" value="{{ old('bank_account_number', $storeInfo['bank_account_number'] ?? '8295-0192-38') }}" placeholder="Contoh: 8295019238" pattern="[0-9\-\s]+" title="Hanya angka, strip, dan spasi" required>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="font-weight-500 mb-1" style="font-size: 12.5px;">Atas Nama (Pemilik Rekening)</label>
+                                                    <input type="text" name="bank_account_holder" class="form-control" value="{{ old('bank_account_holder', $storeInfo['bank_account_holder'] ?? 'ZYH CORNER PASTRY') }}" placeholder="Contoh: ZYH CORNER PASTRY" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <h6 class="font-weight-bold text-dark mt-4 mb-3" style="font-size: 14px;">
                                         <i class="mdi mdi-share-variant me-1 text-primary"></i> Media Sosial Toko (Opsional)
                                     </h6>

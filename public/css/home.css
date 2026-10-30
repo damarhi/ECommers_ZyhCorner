@@ -477,6 +477,153 @@
     height: 100%;
 }
 
+.small-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.small-product-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    padding: 10px 12px;
+    height: 108px;
+    min-height: 108px;
+    max-height: 108px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    cursor: pointer;
+    position: relative;
+}
+
+.small-product-card:hover {
+    border-color: #00b207;
+    box-shadow: 0 6px 18px rgba(0, 178, 7, 0.1);
+    transform: translateY(-2px);
+}
+
+.sp-image {
+    width: 76px;
+    height: 76px;
+    flex-shrink: 0;
+    background: #f9f9f9;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.sp-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.sp-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.sp-name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #2b2b2b;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s ease;
+    line-height: 1.3;
+}
+
+.sp-name:hover {
+    color: #00b207;
+}
+
+.sp-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.sp-price-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.15;
+    min-width: 0;
+}
+
+.sp-price-current {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1a1a1a;
+    white-space: nowrap;
+}
+
+.sp-price-old {
+    font-size: 11px;
+    color: #94a3b8;
+    text-decoration: line-through;
+    white-space: nowrap;
+    margin-top: 1px;
+}
+
+.sp-price {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.sp-rating {
+    color: #ff8a00;
+    font-size: 11px;
+    display: flex;
+    gap: 2px;
+}
+
+.sp-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.sp-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e6e6e6;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    color: #1a1a1a;
+}
+
+.sp-action-btn:hover {
+    background-color: #00b207 !important;
+    color: #ffffff !important;
+    border-color: #00b207 !important;
+    transform: scale(1.08);
+}
+
 /* ==========================================================================
    Ecobazar Figma Replica: Promotional / Discount Banner (Enlarged & Enhanced)
    ========================================================================== */

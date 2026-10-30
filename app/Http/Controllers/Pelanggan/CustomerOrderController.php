@@ -124,10 +124,14 @@ class CustomerOrderController extends Controller
 
         $storePhone = StoreSetting::getWaNumber();
         $storeName = StoreSetting::get('store_name', 'Zyh Corner');
+        $storeBank = [
+            'name' => StoreSetting::get('bank_name', 'Bank Central Asia (BCA)'),
+            'account_number' => StoreSetting::get('bank_account_number', '8295-0192-38'),
+            'account_holder' => StoreSetting::get('bank_account_holder', 'ZYH CORNER PASTRY'),
+        ];
 
-        return view('Pelanggan.order_history', compact('user', 'orders', 'statusFilter', 'returs', 'storePhone', 'storeName'));
+        return view('Pelanggan.order_history', compact('user', 'orders', 'statusFilter', 'returs', 'storePhone', 'storeName', 'storeBank'));
     }
-
     /**
      * @param  int|string  $id
      * @return \Illuminate\Contracts\View\View
@@ -138,6 +142,10 @@ class CustomerOrderController extends Controller
         $user = Auth::user();
         $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
 
+        if ($order->payment_status !== 'Paid' && strtoupper((string)$order->payment_method) !== 'COD' && !$order->is_bank_transfer) {
+            app(\App\Http\Controllers\Pelanggan\PembayaranController::class)->verifyAndSyncOrderPayment($order);
+            $order->refresh();
+        }
         $items = [];
         $orderItems = $order->items;
 
@@ -175,6 +183,11 @@ class CustomerOrderController extends Controller
 
         $storePhone = StoreSetting::getWaNumber();
         $storeName = StoreSetting::get('store_name', 'Zyh Corner');
+        $storeBank = [
+            'name' => StoreSetting::get('bank_name', 'Bank Central Asia (BCA)'),
+            'account_number' => StoreSetting::get('bank_account_number', '8295-0192-38'),
+            'account_holder' => StoreSetting::get('bank_account_holder', 'ZYH CORNER PASTRY'),
+        ];
 
         return view('Pelanggan.order_detail', compact(
             'user',
@@ -185,7 +198,8 @@ class CustomerOrderController extends Controller
             'shippingCost',
             'itemsSubtotal',
             'storePhone',
-            'storeName'
+            'storeName',
+            'storeBank'
         ));
     }
 
@@ -221,5 +235,90 @@ class CustomerOrderController extends Controller
             'success' => false,
             'message' => 'Pesanan tidak dapat dibatalkan.'
         ], 400);
+    }
+
+    /**
+     * Upload payment proof for manual bank transfer orders.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int|string  $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function uploadPaymentProof(Request $request, $id)
+    {
+        $user = Auth::user();
+        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+
+        if ($order->payment_status === 'Paid') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan ini sudah berstatus lunas.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Pesanan ini sudah berstatus lunas.');
+        }
+        if ($order->is_canceled || in_array(strtolower($order->order_status ?? ''), ['batal', 'cancelled'])) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan telah dibatalkan.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Pesanan telah dibatalkan.');
+        }
+
+        if (in_array(strtolower($order->order_status ?? ''), ['dikemas', 'dikirim', 'selesai'])) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan telah dikonfirmasi dan sedang diproses. Pengunggahan bukti pembayaran sudah ditutup.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Pesanan telah dikonfirmasi dan sedang diproses.');
+        }
+
+        $request->validate([
+            'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ], [
+            'bukti_pembayaran.required' => 'Pilih file gambar bukti pembayaran terlebih dahulu.',
+            'bukti_pembayaran.image' => 'File bukti harus berupa gambar.',
+            'bukti_pembayaran.mimes' => 'Format file yang didukung: JPG, PNG, WEBP.',
+            'bukti_pembayaran.max' => 'Ukuran file maksimal adalah 2MB.',
+        ]);
+
+        if ($request->hasFile('bukti_pembayaran')) {
+            if ($order->bukti_pembayaran && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->bukti_pembayaran)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($order->bukti_pembayaran);
+            }
+
+            $path = $request->file('bukti_pembayaran')->store('bukti_pembayaran', 'public');
+
+            $order->update([
+                'bukti_pembayaran' => $path,
+                'bukti_pembayaran_uploaded_at' => now(),
+                'order_status' => 'menunggu konfirmasi',
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Bukti pembayaran berhasil diunggah! Kasir kami akan segera memverifikasi.',
+                    'proof_url' => asset('storage/' . $path),
+                    'uploaded_at' => now()->isoFormat('D MMMM YYYY, HH:mm') . ' WIB',
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Bukti pembayaran berhasil diunggah! Kasir kami akan segera memverifikasi.');
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunggah file. Silakan coba kembali.',
+            ], 400);
+        }
+
+        return redirect()->back()->with('error', 'Gagal mengunggah berkas bukti pembayaran.');
     }
 }

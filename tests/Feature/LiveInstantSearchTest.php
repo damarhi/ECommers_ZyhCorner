@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Kategori;
 use App\Models\Produk;
 use App\Models\User;
+use App\Models\Pesanan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -73,6 +74,26 @@ class LiveInstantSearchTest extends TestCase
         $responseMessages->assertStatus(200);
         $responseMessages->assertSee('live-instant-search.js');
         $responseMessages->assertSee('name="search"', false);
+
+        // Test All Sales Table includes product names in data-search
+        Pesanan::create([
+            'order_number' => '#ALLSALE-INSTANT-01',
+            'jenis_penjualan' => 'Offline',
+            'customer_name' => 'Budi Instant Tester',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'total' => 64000,
+            'items' => [
+                ['id' => $product->id_produk, 'nama_produk' => 'Croissant Almond', 'price' => 32000, 'qty' => 2]
+            ]
+        ]);
+        $responseSales = $this->actingAs($admin)->get(route('all-sales.index'));
+        $responseSales->assertStatus(200);
+        $responseSales->assertSee('live-instant-search.js');
+        $responseSales->assertSee('data-ajax-container="#all-sales-table-container"', false);
+        $responseSales->assertSee('id="all-sales-table-container"', false);
+        $responseSales->assertSee('data-search=', false);
+        $responseSales->assertSee('croissant almond');
     }
 
     public function test_shop_page_renders_instant_search_attributes_for_customers(): void

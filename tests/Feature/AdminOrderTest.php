@@ -209,4 +209,152 @@ class AdminOrderTest extends TestCase
         $response->assertSee('Jumlah Produk Kadaluarsa');
         $response->assertSee('Jumlah Retur Selesai');
     }
+
+    public function test_admin_can_search_all_sales_by_product_name(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        // Order 1 with "Black Forest Cake Classic" (using nama_produk key)
+        $order1 = Pesanan::create([
+            'order_number' => '#ORD-BF-01',
+            'jenis_penjualan' => 'Offline',
+            'customer_name' => 'Budi Santoso',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'payment_method' => 'Cash',
+            'total' => 125000,
+            'items' => [
+                ['id' => 1, 'nama_produk' => 'Black Forest Cake Classic', 'price' => 125000, 'qty' => 1]
+            ]
+        ]);
+
+        // Order 2 with "Red Velvet Special Cream Cheese" (using name key)
+        $order2 = Pesanan::create([
+            'order_number' => '#ORD-RV-02',
+            'jenis_penjualan' => 'Offline',
+            'customer_name' => 'Siti Aminah',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'payment_method' => 'Cash',
+            'total' => 140000,
+            'items' => [
+                ['id' => 2, 'name' => 'Red Velvet Special Cream Cheese', 'price' => 140000, 'qty' => 1]
+            ]
+        ]);
+
+        // 1. Search by "Black Forest"
+        $response = $this->actingAs($admin)->get(route('all-sales.index', ['search' => 'Black Forest']));
+        $response->assertStatus(200);
+        $response->assertSee('#ORD-BF-01');
+        $response->assertDontSee('#ORD-RV-02');
+        $response->assertSee('black forest cake classic');
+
+        // 2. Search by "Red Velvet"
+        $response2 = $this->actingAs($admin)->get(route('all-sales.index', ['search' => 'Red Velvet']));
+        $response2->assertStatus(200);
+        $response2->assertSee('#ORD-RV-02');
+        $response2->assertDontSee('#ORD-BF-01');
+        $response2->assertSee('red velvet special cream cheese');
+    }
+
+    public function test_admin_can_perform_ajax_live_search_on_all_sales_returning_partial_html(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        Pesanan::create([
+            'order_number' => '#ORD-MATCH-01',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'Dewi Lestari',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'payment_method' => 'Midtrans',
+            'total' => 175000,
+            'items' => [
+                ['id' => 10, 'nama_produk' => 'Matcha Layer Cake', 'price' => 175000, 'qty' => 1]
+            ]
+        ]);
+
+        Pesanan::create([
+            'order_number' => '#ORD-TIRAM-02',
+            'jenis_penjualan' => 'Offline',
+            'customer_name' => 'Andi Wijaya',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'payment_method' => 'Cash',
+            'total' => 135000,
+            'items' => [
+                ['id' => 11, 'nama_produk' => 'Classic Tiramisu', 'price' => 135000, 'qty' => 1]
+            ]
+        ]);
+
+        // Request via AJAX header
+        $response = $this->actingAs($admin)->get(
+            route('all-sales.index', ['search' => 'Matcha']),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+
+        $response->assertStatus(200);
+        $response->assertSee('#ORD-MATCH-01');
+        $response->assertDontSee('#ORD-TIRAM-02');
+        $response->assertDontSee('<!DOCTYPE html>'); // Pastikan partial Blade, bukan full layout wrapper
+        $response->assertSee('table-responsive');
+        $response->assertSee('Menampilkan 1 - 1 dari 1 hasil');
+    }
+
+    public function test_admin_can_perform_ajax_live_search_on_all_sales_returning_json_with_kpi_counts(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        Pesanan::create([
+            'order_number' => '#ORD-CHOC-01',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'Fajar Pratama',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'payment_method' => 'Midtrans',
+            'total' => 200000,
+            'items' => [
+                ['id' => 12, 'nama_produk' => 'Dark Chocolate Fudge', 'price' => 200000, 'qty' => 1]
+            ]
+        ]);
+
+        // Request with Accept application/json
+        $response = $this->actingAs($admin)->getJson(
+            route('all-sales.index', ['search' => 'Chocolate', 'ajax' => 1]),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'html',
+            'total',
+            'firstItem',
+            'lastItem',
+            'totalPendapatan',
+            'totalOnlineCount',
+            'totalOfflineCount',
+        ]);
+        $response->assertJson([
+            'total' => 1,
+            'totalPendapatan' => 'Rp. 200.000',
+            'totalOnlineCount' => 1,
+            'totalOfflineCount' => 0,
+        ]);
+    }
+
+    public function test_admin_ajax_live_search_shows_empty_state_with_reset_button(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get(
+            route('all-sales.index', ['search' => 'KueNanasPanggangGaib']),
+            ['X-Requested-With' => 'XMLHttpRequest']
+        );
+
+        $response->assertStatus(200);
+        $response->assertSee('Tidak ada data yang cocok');
+        $response->assertSee('KueNanasPanggangGaib');
+        $response->assertSee('Reset Pencarian');
+        $response->assertSee('reset-instant-search-btn');
+    }
 }

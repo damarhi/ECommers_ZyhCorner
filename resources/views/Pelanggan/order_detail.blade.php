@@ -1916,12 +1916,23 @@
                     
                     <div class="details-header-actions">
                         <div class="header-actions-group">
-                            @if($isPending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
+                            @php
+                                $isOrderProcessingOrDone = in_array(strtolower($order->order_status ?? ''), ['dikemas', 'dikirim', 'selesai', 'batal', 'cancelled']);
+                                $isRejected = $order->is_payment_proof_rejected;
+                            @endphp
+                            @if($order->is_bank_transfer && $order->payment_status !== 'Paid' && !$isOrderProcessingOrDone)
+                                <button type="button" onclick="openUploadProofModal()" class="btn-track-order-top btn-pay-now-top btn-pay-now-solid" style="background: {{ $isRejected ? '#dc2626' : '#0284c7' }}; border-color: {{ $isRejected ? '#dc2626' : '#0284c7' }};">
+                                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> {{ $isRejected ? 'Upload Ulang Bukti' : ($order->has_payment_proof ? 'Ganti Bukti Bayar' : 'Upload Bukti Bayar') }}
+                                </button>
+                            @elseif($order->is_bank_transfer && $order->has_payment_proof)
+                                <button type="button" onclick="openUploadProofModal(true)" class="btn-track-order-top btn-pay-now-top btn-pay-now-solid" style="background: #f1f5f9; border-color: #cbd5e1; color: #475569;">
+                                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> Lihat Bukti Bayar
+                                </button>
+                            @elseif($isPending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
                                 <button type="button" onclick="payOrderNow('{{ $order->id }}')" class="btn-track-order-top btn-pay-now-top btn-pay-now-solid">
                                     <i class="fa-solid fa-credit-card me-1"></i> Bayar Sekarang
                                 </button>
                             @endif
-
                             <button type="button" onclick="openBiteshipTrackingModal()" class="btn-track-order-top">
                                 <i class="fa-solid fa-location-crosshairs me-1"></i> Lacak Pesanan
                             </button>
@@ -1955,9 +1966,31 @@
                         </div>
                     </div>
                 </div>
+                @if($isRejected)
+                    <div class="return-status-banner mb-4" style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <i class="fa-solid fa-triangle-exclamation text-danger mt-1" style="font-size: 20px;"></i>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #991b1b; margin-bottom: 3px;">
+                                        Bukti Pembayaran Ditolak oleh Kasir
+                                    </div>
+                                    <div style="font-size: 13px; color: #b91c1c; margin-bottom: 6px;">
+                                        Alasan: <strong>{{ $order->payment_proof_rejection_reason ?? 'Bukti transfer tidak valid atau belum sesuai.' }}</strong>
+                                    </div>
+                                    <div style="font-size: 12px; color: #7f1d1d;">
+                                        Silakan periksa kembali transfer Anda dan unggah berkas bukti pembayaran baru.
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="openUploadProofModal()" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1.5" style="border-radius: 6px; padding: 6px 14px; font-size: 12.5px; white-space: nowrap; align-self: center;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Ulang Bukti
+                            </button>
+                        </div>
+                    </div>
+                @endif
 
                 @if(isset($alreadyReturned) && $alreadyReturned)
-                    <div class="return-status-banner return-success">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fa-solid fa-circle-check"></i>
                             <div>
@@ -2105,6 +2138,26 @@
                                             <span class="payment-status-badge badge-pending">Menunggu</span>
                                         @endif
                                     </div>
+                                    @if($order->is_bank_transfer)
+                                        <div class="summary-calc-row">
+                                            <span>Bukti Transfer:</span>
+                                            @if($order->has_payment_proof)
+                                                <a href="javascript:void(0)" onclick="openUploadProofModal({{ ($order->payment_status === 'Paid' || $isOrderProcessingOrDone) ? 'true' : 'false' }})" style="font-weight: 600; color: #0284c7; text-decoration: underline; font-size: 12.5px;">
+                                                    <i class="fa-solid fa-file-circle-check me-1"></i> Terkirim (Lihat)
+                                                </a>
+                                            @elseif($isRejected)
+                                                <a href="javascript:void(0)" onclick="openUploadProofModal(false)" style="font-weight: 600; color: #dc2626; text-decoration: underline; font-size: 12.5px;" title="{{ $order->payment_proof_rejection_reason }}">
+                                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Ditolak (Upload Ulang)
+                                                </a>
+                                            @elseif(!$isOrderProcessingOrDone && $order->payment_status !== 'Paid')
+                                                <a href="javascript:void(0)" onclick="openUploadProofModal(false)" style="font-weight: 600; color: #f59e0b; text-decoration: underline; font-size: 12.5px;">
+                                                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> Belum Diupload
+                                                </a>
+                                            @else
+                                                <span class="text-muted" style="font-size: 12.5px;">-</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                     <div class="summary-calc-row">
                                         <span>Ongkos Kirim:</span>
                                         @if(($shippingCost ?? 0) > 0)
@@ -2586,6 +2639,99 @@
     </div>
 </div>
 
+<!-- Upload Proof Modal for Customer Order Detail -->
+<div class="biteship-modal-backdrop" id="uploadProofModal" onclick="if(event.target === this) closeUploadProofModal();">
+    <div class="biteship-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalUploadTitle" style="max-width: 520px;">
+        <div class="biteship-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 20px;">
+            <div class="biteship-modal-title-group">
+                <h3 id="modalUploadTitle" class="biteship-modal-title" style="font-size: 16px; font-weight: 700; color: #1e293b;">
+                    <i class="fa-solid fa-receipt text-primary me-2"></i>Upload Bukti Pembayaran
+                </h3>
+                <div class="biteship-modal-subtitle" style="font-size: 12px; color: #64748b;">
+                    Pesanan <strong>{{ $order->order_number }}</strong> • Total Tagihan: <strong style="color: #00b207;">Rp. {{ number_format($order->total, 0, ',', '.') }}</strong>
+                </div>
+            </div>
+            <button type="button" class="biteship-modal-close" onclick="closeUploadProofModal()" aria-label="Tutup modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="biteship-modal-body" style="padding: 20px;">
+            <!-- Bank Info Mini Box -->
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 700; background: #1E2753; color: #fff; padding: 2px 6px; border-radius: 4px;">{{ $storeBank['name'] ?? 'BCA' }}</span>
+                    <span style="font-size: 11.5px; color: #475569; font-weight: 600;">a/n {{ $storeBank['account_holder'] ?? 'ZYH CORNER PASTRY' }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-family: monospace; font-size: 16px; font-weight: 700; color: #0f172a;">{{ $storeBank['account_number'] ?? '8295-0192-38' }}</span>
+                    <button type="button" onclick="copyDetailModalAcc('{{ $storeBank['account_number'] ?? '8295-0192-38' }}')" class="btn btn-sm btn-outline-secondary" style="font-size: 11px; padding: 2px 8px;">
+                        <i class="fa-regular fa-copy me-1"></i> Salin
+                    </button>
+                </div>
+            </div>
+            @if($isRejected)
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #991b1b; margin-bottom: 2px;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Bukti Sebelumnya Ditolak Kasir:
+                    </div>
+                    <div style="font-size: 11.5px; color: #b91c1c;">
+                        {{ $order->payment_proof_rejection_reason ?? 'Bukti pembayaran sebelumnya tidak valid.' }}
+                    </div>
+                </div>
+            @endif
+
+            @if($order->has_payment_proof)
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <a href="{{ $order->payment_proof_url }}" target="_blank">
+                            <img src="{{ $order->payment_proof_url }}" alt="Bukti Transfer" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #86efac;">
+                        </a>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #166534;"><i class="fa-solid fa-circle-check me-1"></i> Bukti Telah Diunggah</div>
+                            <div style="font-size: 11px; color: #15803d;">{{ $order->bukti_pembayaran_uploaded_at ? $order->bukti_pembayaran_uploaded_at->isoFormat('D MMMM YYYY, HH:mm') : '' }} WIB</div>
+                        </div>
+                    </div>
+                    <a href="{{ $order->payment_proof_url }}" target="_blank" class="btn btn-sm" style="font-size: 11.5px; color: #15803d; text-decoration: underline; font-weight: 600;">Lihat Foto</a>
+                </div>
+            @endif
+
+            <!-- Dropzone -->
+            <div class="proof-dropzone" id="modalProofDropzone" onclick="document.getElementById('modalProofInput').click()" style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 18px; text-align: center; background: #fafafa; cursor: pointer; transition: all 0.2s;">
+                <input type="file" id="modalProofInput" accept="image/jpeg,image/png,image/jpg,image/webp" style="display: none;" onchange="handleModalProofSelect(event)">
+                <div id="modalDropzonePrompt">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 28px; color: #94a3b8; margin-bottom: 6px;"></i>
+                    <div style="font-size: 13px; font-weight: 600; color: #334155;">
+                        @if($isRejected)
+                            Klik atau Drag Foto Bukti Transfer Baru ke Sini
+                        @elseif($order->has_payment_proof)
+                            Pilih foto baru untuk mengganti bukti
+                        @else
+                            Klik atau Drag Foto Bukti Transfer ke Sini
+                        @endif
+                    </div>
+                </div>
+                <div id="modalDropzonePreview" style="display: none; align-items: center; gap: 12px; text-align: left;">
+                    <img id="modalPreviewImg" src="" alt="Pratinjau" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <div style="flex-grow: 1; overflow: hidden;">
+                        <div id="modalPreviewFileName" style="font-size: 12px; font-weight: 700; color: #1e293b; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">nama_file.jpg</div>
+                        <div id="modalPreviewFileSize" style="font-size: 11px; color: #64748b;">120 KB</div>
+                    </div>
+                    <button type="button" onclick="clearModalProof(event)" style="background: none; border: none; color: #ef4444; font-size: 16px; cursor: pointer; padding: 4px;" title="Hapus Berkas">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="biteship-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="closeUploadProofModal()" style="font-size: 13px; padding: 7px 16px; border-radius: 6px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Batal</button>
+            <button type="button" class="btn btn-primary" id="btnSubmitModalProof" onclick="submitDetailModalProof()" style="font-size: 13px; padding: 7px 18px; border-radius: 6px; background: {{ $isRejected ? '#dc2626' : '#00b207' }}; border-color: {{ $isRejected ? '#dc2626' : '#00b207' }};">
+                <i class="fa-solid fa-cloud-arrow-up me-1"></i> {{ $isRejected ? 'Simpan & Kirim Ulang Bukti' : 'Simpan & Kirim Bukti' }}
+            </button>
+        </div>
+    </div>
+</div>
 <script>
     // Biteship Tracking Modal Handlers
     function openBiteshipTrackingModal() {
@@ -2624,6 +2770,184 @@
             modal.classList.remove('show');
             document.body.style.overflow = '';
         }
+    }
+
+    // Upload Proof Modal Handlers
+    function openUploadProofModal(isReadOnly = false) {
+        const modal = document.getElementById('uploadProofModal');
+        if (modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+
+            const dropzone = document.getElementById('modalProofDropzone');
+            const footerSubmitBtn = document.getElementById('btnSubmitDetailProof');
+            const dropzoneTitle = document.getElementById('modalDropzoneTitle');
+
+            if (isReadOnly) {
+                if (dropzone) dropzone.style.display = 'none';
+                if (footerSubmitBtn) footerSubmitBtn.style.display = 'none';
+            } else {
+                if (dropzone) dropzone.style.display = 'block';
+                if (footerSubmitBtn) footerSubmitBtn.style.display = 'inline-flex';
+            }
+
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeUploadProofModal() {
+        const modal = document.getElementById('uploadProofModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    let detailModalSelectedFile = null;
+
+    function handleModalProofSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            Swal.fire({
+                title: 'Ukuran Terlalu Besar!',
+                text: 'Maksimal ukuran berkas bukti transfer adalah 2MB.',
+                icon: 'warning',
+                confirmButtonColor: '#00b207'
+            });
+            event.target.value = '';
+            return;
+        }
+
+        const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            Swal.fire({
+                title: 'Format Tidak Didukung!',
+                text: 'Harap pilih berkas gambar berformat JPG, PNG, atau WEBP.',
+                icon: 'warning',
+                confirmButtonColor: '#00b207'
+            });
+            event.target.value = '';
+            return;
+        }
+
+        detailModalSelectedFile = file;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('modalPreviewImg');
+            const previewFileName = document.getElementById('modalPreviewFileName');
+            const previewFileSize = document.getElementById('modalPreviewFileSize');
+            const promptEl = document.getElementById('modalDropzonePrompt');
+            const previewBox = document.getElementById('modalDropzonePreview');
+
+            if (previewImg) previewImg.src = e.target.result;
+            if (previewFileName) previewFileName.textContent = file.name;
+            if (previewFileSize) previewFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+
+            if (promptEl) promptEl.style.display = 'none';
+            if (previewBox) previewBox.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearModalProof(event) {
+        if (event) event.stopPropagation();
+        detailModalSelectedFile = null;
+        const input = document.getElementById('modalProofInput');
+        if (input) input.value = '';
+
+        const promptEl = document.getElementById('modalDropzonePrompt');
+        const previewBox = document.getElementById('modalDropzonePreview');
+        if (promptEl) promptEl.style.display = 'block';
+        if (previewBox) previewBox.style.display = 'none';
+    }
+
+    function copyDetailModalAcc(acc) {
+        if (!acc) return;
+        navigator.clipboard.writeText(acc).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Nomor rekening berhasil disalin!',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        });
+    }
+
+    function submitDetailModalProof() {
+        if (!detailModalSelectedFile) {
+            Swal.fire({
+                title: 'Pilih Berkas!',
+                text: 'Silakan pilih foto bukti pembayaran terlebih dahulu sebelum menyimpan.',
+                icon: 'info',
+                confirmButtonColor: '#00b207'
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('bukti_pembayaran', detailModalSelectedFile);
+        formData.append('_token', "{{ csrf_token() }}");
+
+        const btn = document.getElementById('btnSubmitModalProof');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengunggah...`;
+        }
+
+        fetch("{{ route('order.upload.proof', $order->id) }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+
+            if (data.success) {
+                closeUploadProofModal();
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: data.message || 'Bukti pembayaran berhasil diunggah.',
+                    icon: 'success',
+                    confirmButtonColor: '#00b207'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Gagal Mengunggah',
+                    text: data.message || 'Terjadi kesalahan saat mengunggah bukti pembayaran.',
+                    icon: 'error',
+                    confirmButtonColor: '#00b207'
+                });
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+            console.error(err);
+            Swal.fire({
+                title: 'Kesalahan Sistem',
+                text: 'Gagal mengunggah berkas. Periksa koneksi internet Anda.',
+                icon: 'error',
+                confirmButtonColor: '#00b207'
+            });
+        });
     }
 
     // Close on Escape key
@@ -2684,9 +3008,9 @@
         const orderEmail = @json($order->email_pembeli ?? $user->email);
         const orderPhone = @json($formattedCustPhone ?? ($user->no_hp ? '(+62) ' . $user->no_hp : ''));
         
-        const storedName = orderName || localStorage.getItem('zyh_cust_name');
-        const storedEmail = orderEmail || localStorage.getItem('zyh_cust_email');
-        const storedPhone = orderPhone || localStorage.getItem('zyh_cust_phone');
+        const storedName = orderName;
+        const storedEmail = orderEmail;
+        const storedPhone = orderPhone;
         
         if (storedName) document.querySelectorAll('#displayBillingName').forEach(el => el.textContent = storedName);
         if (storedEmail) document.querySelectorAll('#displayBillingEmail').forEach(el => el.textContent = storedEmail);

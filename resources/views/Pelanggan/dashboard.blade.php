@@ -99,37 +99,63 @@
                             </button>
                         </div>
 
-                        <!-- Primary Default Address Display -->
-                        <div class="address-item-card is-default mb-2">
-                            <div class="saved-address-header">
-                                <span class="saved-address-label">Alamat Utama</span>
-                                <span class="saved-address-badge-default">Default</span>
-                            </div>
-                            <div class="billing-name" id="displayBillingName">{{ $user->nama }}</div>
-                            @if(!empty($user->alamat))
-                                <div class="billing-address" id="displayBillingAddress">{{ $user->alamat }}</div>
-                            @else
-                                <div class="billing-address" id="displayBillingAddress" style="color: #888; font-style: italic;">Belum ada alamat tagihan (Klik Edit Address)</div>
-                            @endif
-                            <div class="billing-contact">
-                                <span>Email:</span> <span id="displayBillingEmail">{{ $user->email }}</span>
-                            </div>
-                            <div class="billing-contact">
-                                <span>Phone:</span> <span id="displayBillingPhone">(+62) {{ $user->no_hp }}</span>
-                            </div>
-                            @php
-                                $defaultAddrObj = (isset($addresses) && $addresses->count() > 0) ? ($addresses->firstWhere('is_default', true) ?? $addresses->first()) : null;
-                                $extraCount = isset($addresses) ? $addresses->where('is_default', false)->count() : 0;
-                            @endphp
-                            <div class="address-item-actions">
-                                <a onclick="openEditAddress({{ $defaultAddrObj ? json_encode($defaultAddrObj) : 'null' }})" class="green-link" style="cursor: pointer;"><i class="fa-solid fa-pen-to-square"></i> Edit Alamat Utama</a>
-                                @if($extraCount > 0)
-                                    <button type="button" class="btn-other-addresses" onclick="openSavedAddressesModal()">
-                                        <i class="fa-solid fa-layer-group"></i> Lihat Alamat Lainnya ({{ $extraCount }})
-                                    </button>
+                        @php
+                            $defaultAddrObj = (isset($addresses) && $addresses->count() > 0) ? ($addresses->firstWhere('is_default', true) ?? $addresses->first()) : null;
+                            $hasAddress = $defaultAddrObj || !empty($user->alamat);
+                            $extraCount = isset($addresses) ? $addresses->where('is_default', false)->count() : 0;
+                        @endphp
+
+                        @if ($hasAddress)
+                            <!-- Primary Default Address Display (Populated State) -->
+                            <div class="address-item-card is-default mb-2">
+                                <div class="saved-address-header">
+                                    <span class="saved-address-label">{{ $defaultAddrObj->label ?? 'Alamat Utama' }}</span>
+                                    <span class="saved-address-badge-default">Default</span>
+                                </div>
+                                <div class="billing-name" id="displayBillingName">{{ $defaultAddrObj->recipient_name ?? $user->nama }}</div>
+                                <div class="billing-address" id="displayBillingAddress">{{ $defaultAddrObj->street_address ?? $user->alamat }}</div>
+                                @if($defaultAddrObj && !empty($defaultAddrObj->destination_area_name))
+                                    <div style="font-size: 12.5px; color: #475569; margin-top: 2px;">
+                                        {{ $defaultAddrObj->destination_area_name }}{{ !empty($defaultAddrObj->postal_code) ? ', ' . $defaultAddrObj->postal_code : '' }}
+                                    </div>
                                 @endif
+                                <div class="billing-contact" style="margin-top: 6px;">
+                                    <span>Email:</span> <span id="displayBillingEmail">{{ $user->email }}</span>
+                                </div>
+                                <div class="billing-contact">
+                                    <span>Phone:</span> <span id="displayBillingPhone">(+62) {{ $defaultAddrObj->recipient_phone ?? $user->no_hp }}</span>
+                                </div>
+                                <div class="address-item-actions">
+                                    <a onclick="openEditAddress({{ $defaultAddrObj ? json_encode($defaultAddrObj) : 'null' }})" class="green-link" style="cursor: pointer;"><i class="fa-solid fa-pen-to-square"></i> Edit Alamat Utama</a>
+                                    @if($extraCount > 0)
+                                        <button type="button" class="btn-other-addresses" onclick="openSavedAddressesModal()">
+                                            <i class="fa-solid fa-layer-group"></i> Lihat Alamat Lainnya ({{ $extraCount }})
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <!-- Empty State: Belum Ada Alamat Pengiriman -->
+                            <div class="address-empty-card" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 22px 16px; text-align: center;">
+                                <div style="width: 44px; height: 44px; border-radius: 50%; background: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                                    <i class="fa-solid fa-map-location-dot" style="font-size: 20px; color: #94a3b8;"></i>
+                                </div>
+                                <div style="font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">Belum Ada Alamat Pengiriman</div>
+                                <div style="font-size: 12.5px; color: #64748b; line-height: 1.5; max-width: 320px; margin: 0 auto 14px auto;">
+                                    Tambahkan alamat untuk mempermudah perhitungan ongkir otomatis dan pengiriman pesanan Anda.
+                                </div>
+                                <button type="button" onclick="openAddAddressModal()" class="btn-add-primary" style="background: #00b207; color: #ffffff; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                    <i class="fa-solid fa-plus"></i> Tambah Alamat Sekarang
+                                </button>
+                                <!-- Compatibility fallback hooks -->
+                                <div style="display: none;">
+                                    <span id="displayBillingName">{{ $user->nama }}</span>
+                                    <span id="displayBillingAddress"></span>
+                                    <span id="displayBillingEmail">{{ $user->email }}</span>
+                                    <span id="displayBillingPhone">{{ $user->no_hp }}</span>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -438,11 +464,32 @@
 
                 <!-- Group 3: Titik Lokasi Peta GPS Leaflet -->
                 <div class="modal-form-section">
-                    <div class="modal-section-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="modal-section-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span><i class="fa-solid fa-map"></i> Titik Lokasi Pengantaran di Peta</span>
                         <button type="button" class="btn-locate-me" onclick="locateUserPosition('edit')">
                             <i class="fa-solid fa-crosshairs"></i> Gunakan Lokasi Saya
                         </button>
+                    </div>
+
+                    <!-- Map Geocoding Search Bar -->
+                    <div class="map-search-container" id="editAddrMapSearchContainer">
+                        <div class="map-search-bar">
+                            <div class="map-search-input-wrap">
+                                <i class="fa-solid fa-magnifying-glass map-search-icon"></i>
+                                <input type="text" id="editAddrMapSearchInput" class="map-search-input" 
+                                       placeholder="Cari jalan, perumahan, atau gedung di peta..." 
+                                       autocomplete="off"
+                                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocationOnMap('edit'); }"
+                                       oninput="toggleClearSearchBtn('edit')">
+                                <button type="button" class="btn-clear-map-search" id="editAddrClearSearchBtn" onclick="clearMapSearch('edit')" style="display: none;" title="Hapus pencarian">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn-search-map" onclick="searchLocationOnMap('edit')">
+                                Cari
+                            </button>
+                        </div>
+                        <div id="editAddrMapSearchResults" class="map-search-dropdown" style="display: none;"></div>
                     </div>
 
                     <div class="modal-map-wrapper">
@@ -571,11 +618,32 @@
 
                 <!-- Group 3: Titik Lokasi Peta GPS Leaflet -->
                 <div class="modal-form-section">
-                    <div class="modal-section-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="modal-section-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span><i class="fa-solid fa-map"></i> Titik Lokasi Pengantaran di Peta</span>
                         <button type="button" class="btn-locate-me" onclick="locateUserPosition('add')">
                             <i class="fa-solid fa-crosshairs"></i> Gunakan Lokasi Saya
                         </button>
+                    </div>
+
+                    <!-- Map Geocoding Search Bar -->
+                    <div class="map-search-container" id="newAddrMapSearchContainer">
+                        <div class="map-search-bar">
+                            <div class="map-search-input-wrap">
+                                <i class="fa-solid fa-magnifying-glass map-search-icon"></i>
+                                <input type="text" id="newAddrMapSearchInput" class="map-search-input" 
+                                       placeholder="Cari jalan, perumahan, atau gedung di peta..." 
+                                       autocomplete="off"
+                                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocationOnMap('add'); }"
+                                       oninput="toggleClearSearchBtn('add')">
+                                <button type="button" class="btn-clear-map-search" id="newAddrClearSearchBtn" onclick="clearMapSearch('add')" style="display: none;" title="Hapus pencarian">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn-search-map" onclick="searchLocationOnMap('add')">
+                                Cari
+                            </button>
+                        </div>
+                        <div id="newAddrMapSearchResults" class="map-search-dropdown" style="display: none;"></div>
                     </div>
 
                     <div class="modal-map-wrapper">
@@ -686,11 +754,10 @@
         userNama: @json($user->nama),
         userEmail: @json($user->email),
         userPhone: @json($user->no_hp),
-        userAlamat: @json($user->alamat ?? ''),
-        userAddress: @json($user->alamat ?? ''),
+        userAlamat: @json($defaultAddrObj->street_address ?? ($user->alamat ?? '')),
+        userAddress: @json($defaultAddrObj->street_address ?? ($user->alamat ?? '')),
         csrfToken: '{{ csrf_token() }}'
     };
-
     function uploadDashboardAvatar(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];

@@ -100,6 +100,10 @@
                                     <td>
                                         @if($order->payment_status == 'Paid')
                                             <span class="badge badge-soft-success">Dibayar</span>
+                                        @elseif($order->has_payment_proof)
+                                            <span class="badge badge-soft-warning" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#verifyProofModal{{ $order->id }}" title="Klik untuk verifikasi bukti transfer">
+                                                <i class="mdi mdi-file-document-check-outline me-1"></i>Bukti Transfer
+                                            </span>
                                         @else
                                             <span class="badge badge-soft-warning">Tertunda</span>
                                         @endif
@@ -124,7 +128,17 @@
                                     <td class="font-weight-600 text-dark">Rp. {{ number_format($order->total, 0, ',', '.') }}</td>
                                     <td class="text-center">
                                         <div class="d-inline-flex align-items-center">
-                                            @if(in_array(strtolower($order->order_status ?? ''), ['menunggu konfirmasi', 'unconfirmed']))
+                                            @if($order->has_payment_proof)
+                                                <button type="button" 
+                                                    class="btn btn-sm btn-inverse-warning d-inline-flex align-items-center justify-content-center me-1" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#verifyProofModal{{ $order->id }}" 
+                                                    style="width: 32px; height: 32px; padding: 0; background: #fffbeb; color: #d97706; border: 1px solid #fde68a;" 
+                                                    title="Verifikasi Bukti Transfer">
+                                                    <i class="mdi mdi-file-document-check-outline" style="font-size: 16px; margin: 0;"></i>
+                                                </button>
+                                            @endif
+                                            @if(in_array(strtolower($order->order_status ?? ''), ['menunggu konfirmasi', 'unconfirmed']) && !$order->is_bank_transfer)
                                                 <button type="button" 
                                                     class="btn btn-sm btn-quick-confirm me-1" 
                                                     id="btn-quick-confirm-{{ $order->id }}"
@@ -265,16 +279,18 @@
 
                         <!-- Detail Order Modal -->
                         @include('Admin.kelola_penjualan.order_detail_modal', ['order' => $order])
+
+                        <!-- Verify Proof Modal -->
+                        @include('Admin.kelola_penjualan.verify_proof_modal', ['order' => $order])
                     @endforeach
 
                     <!-- Pagination -->
-                    <!-- Pagination -->
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 pt-3 border-top gap-3">
                         <div class="d-flex align-items-center overflow-auto w-100 w-md-auto">
                             {{ $orders->appends(request()->query())->links('pagination::bootstrap-4') }}
                         </div>
-                        <div class="text-muted text-center text-md-end w-100 w-md-auto" style="font-size: 14px;">
-                            {{ $orders->total() }} Hasil
+                        <div class="text-muted text-center text-md-end w-100 w-md-auto font-weight-500" style="font-size: 13.5px;">
+                            Menampilkan {{ $orders->firstItem() ?? 0 }} - {{ $orders->lastItem() ?? 0 }} dari {{ $orders->total() }} hasil
                         </div>
                     </div>
 

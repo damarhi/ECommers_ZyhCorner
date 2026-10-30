@@ -67,6 +67,24 @@ class StoreSettingSeeder extends Seeder
                 'label' => 'TikTok',
                 'group' => 'social',
             ],
+            [
+                'key' => 'bank_name',
+                'value' => 'Bank Central Asia (BCA)',
+                'label' => 'Nama Bank Toko',
+                'group' => 'payment',
+            ],
+            [
+                'key' => 'bank_account_number',
+                'value' => '8295-0192-38',
+                'label' => 'Nomor Rekening Bank',
+                'group' => 'payment',
+            ],
+            [
+                'key' => 'bank_account_holder',
+                'value' => 'ZYH CORNER PASTRY',
+                'label' => 'Atas Nama Rekening',
+                'group' => 'payment',
+            ],
         ];
 
         foreach ($settings as $setting) {

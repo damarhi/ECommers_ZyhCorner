@@ -60,8 +60,10 @@ class PembayaranController extends Controller
                 'email' => $pesanan->email_pembeli ?? 'customer@zyhcorner.com',
                 'phone' => Auth::check() ? (string) Auth::user()->no_hp : '08123456789',
             ],
+            'callbacks' => [
+                'finish' => route('order.success'),
+            ],
         ];
-
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',

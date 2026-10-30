@@ -232,6 +232,63 @@ class CustomerAddressManagementTest extends TestCase
             'street_address' => 'Jl. HR Soebrantas No. 45',
         ]);
     }
+    public function test_checkout_saves_new_address_with_coordinates_and_records_gps_in_order_notes()
+    {
+        $user = User::factory()->create(['role' => 'pelanggan']);
+        $product = Produk::create([
+            'nama_produk' => 'Bento Cake Matcha',
+            'harga' => 50000,
+            'status_produk' => '10',
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('checkout.post'), [
+            'items' => [
+                [
+                    'id' => $product->id_produk,
+                    'name' => $product->nama_produk,
+                    'price' => 50000,
+                    'qty' => 1,
+                ]
+            ],
+            'recipient_name' => 'Pak Joko',
+            'recipient_phone' => '081298765432',
+            'destination_area_name' => 'Payung Sekaki, Pekanbaru',
+            'destination_area_id' => 'ID_PKU_05',
+            'postal_code' => '28291',
+            'address' => 'Jl. Durian No. 88',
+            'notes' => 'Pagar putih samping pos',
+            'payment_method' => 'COD',
+            'shipping_method' => 'Maxim',
+            'shipping_cost' => 15000,
+            'save_address' => true,
+            'address_label' => 'Kantor Baru',
+            'latitude' => 0.51234567,
+            'longitude' => 101.44567890,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('user_addresses', [
+            'user_id' => $user->user_id,
+            'label' => 'Kantor Baru',
+            'recipient_name' => 'Pak Joko',
+            'street_address' => 'Jl. Durian No. 88',
+            'latitude' => 0.51234567,
+            'longitude' => 101.44567890,
+        ]);
+
+        $this->assertDatabaseHas('pesanans', [
+            'customer_name' => 'Pak Joko',
+            'alamat_pengiriman' => 'Jl. Durian No. 88 (Kode Pos: 28291)',
+        ]);
+
+        $order = \App\Models\Pesanan::latest('id')->first();
+        $this->assertStringContainsString('0.51234567', $order->catatan_pesanan);
+        $this->assertStringContainsString('101.4456789', $order->catatan_pesanan);
+        $this->assertStringContainsString('maps.google.com', $order->catatan_pesanan);
+    }
+
 
     public function test_customer_can_create_and_update_address_with_complete_fields_including_notes_and_gps()
     {

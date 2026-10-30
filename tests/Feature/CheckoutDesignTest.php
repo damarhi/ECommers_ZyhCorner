@@ -72,14 +72,14 @@ class CheckoutDesignTest extends TestCase
         $response->assertSee('id="payCod"', false);
         $response->assertSee('id="payTransfer"', false);
         $response->assertSee('id="payEwallet"', false);
-        $response->assertSee('id="transferSubOptions"', false);
-        $response->assertSee('id="ewalletSubOptions"', false);
+        $response->assertDontSee('Pembayaran digital instan via Midtrans Snap', false);
+        $response->assertDontSee('id="transferSubOptions"', false);
+        $response->assertDontSee('id="ewalletSubOptions"', false);
         $response->assertSee('btn-place-order', false);
         $response->assertSee('name="paymentGroup"', false);
         $response->assertSee('name="shippingGroup"', false);
-        $response->assertSee('name="bankSelect"', false);
-        $response->assertSee('name="walletSelect"', false);
-        $response->assertDontSee('Pembayaran Aman & Terenkripsi', false);
+        $response->assertDontSee('name="bankSelect"', false);
+        $response->assertDontSee('name="walletSelect"', false);
         $response->assertDontSee('Pastry Segar Dibuat Setiap Hari', false);
         $response->assertDontSee('Konfirmasi Pesanan Cepat', false);
 

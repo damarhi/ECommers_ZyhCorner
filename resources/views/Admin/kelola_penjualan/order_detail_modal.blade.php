@@ -99,6 +99,16 @@
                                 </div>
                             </div>
 
+                            @if($order->has_payment_proof)
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
+                                <span class="text-muted font-weight-500" style="font-size: 12px;">Bukti Transfer</span>
+                                <div>
+                                    <button type="button" class="btn btn-xs btn-outline-warning d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#verifyProofModal{{ $order->id }}" style="font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                                        <i class="mdi mdi-file-document-check-outline"></i> Verifikasi Bukti
+                                    </button>
+                                </div>
+                            </div>
+                            @endif
                             <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
                                 <span class="text-muted font-weight-500" style="font-size: 12px;">Status Pesanan</span>
                                 <div id="modal-detail-status-badge-{{ $order->id }}">

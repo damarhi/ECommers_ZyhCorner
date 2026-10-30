@@ -508,13 +508,18 @@
         .small-product-card {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             border: 1px solid #e6e6e6;
             border-radius: 10px;
-            padding: 12px;
+            padding: 10px 12px;
+            height: 108px;
+            min-height: 108px;
+            max-height: 108px;
+            box-sizing: border-box;
             transition: all 0.3s ease;
             background: #ffffff;
             cursor: pointer;
+            position: relative;
         }
         .small-product-card:hover {
             border-color: #00b207;
@@ -522,8 +527,8 @@
             transform: translateY(-2px);
         }
         .sp-image {
-            width: 78px;
-            height: 78px;
+            width: 76px;
+            height: 76px;
             flex-shrink: 0;
             background: #f9f9f9;
             border-radius: 8px;
@@ -542,26 +547,58 @@
         }
         .sp-info {
             flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             overflow: hidden;
         }
         .sp-name {
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 500;
             color: #2b2b2b;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             transition: color 0.2s ease;
+            line-height: 1.3;
         }
         .sp-name:hover {
             color: #00b207;
         }
-        .sp-price {
-            font-size: 14.5px;
+        .sp-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .sp-price-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            line-height: 1.15;
+            min-width: 0;
+        }
+        .sp-price-current {
+            font-size: 13.5px;
             font-weight: 700;
             color: #1a1a1a;
-            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+        .sp-price-old {
+            font-size: 11px;
+            color: #94a3b8;
+            text-decoration: line-through;
+            white-space: nowrap;
+            margin-top: 1px;
+        }
+        .sp-price {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0;
+            white-space: nowrap;
         }
         .sp-rating {
             color: #ff8a00;
@@ -569,9 +606,14 @@
             display: flex;
             gap: 2px;
         }
+        .sp-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
         .sp-action-btn {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             border: 1px solid #e6e6e6;
             background: #ffffff;
@@ -1190,16 +1232,16 @@
                             <div class="sp-info">
                                 <div class="sp-name">{{ $product->nama_produk }}</div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div class="sp-price" style="margin: 0;">
+                                <div class="sp-bottom-row">
+                                    <div class="sp-price-box">
                                         @if ($product->has_diskon)
-                                            Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
-                                            <span class="old" style="font-size: 11px; text-decoration: line-through; color: #999; margin-left: 3px;">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                            <span class="sp-price-current">Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}</span>
+                                            <span class="sp-price-old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @else
-                                            Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                            <span class="sp-price-current">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @endif
                                     </div>
-                                    <div style="display: flex; gap: 6px;">
+                                    <div class="sp-actions">
                                         <button type="button" class="sp-action-btn" title="Quick View"
                                             onclick="event.stopPropagation(); openProductModal(this)"
                                             data-id="{{ $product->id_produk }}" data-name="{{ $product->nama_produk }}"
@@ -1266,16 +1308,16 @@
                             <div class="sp-info">
                                 <div class="sp-name">{{ $product->nama_produk }}</div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div class="sp-price" style="margin: 0;">
+                                <div class="sp-bottom-row">
+                                    <div class="sp-price-box">
                                         @if ($product->has_diskon)
-                                            Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
-                                            <span class="old" style="font-size: 11px; text-decoration: line-through; color: #999; margin-left: 3px;">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                            <span class="sp-price-current">Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}</span>
+                                            <span class="sp-price-old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @else
-                                            Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                            <span class="sp-price-current">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @endif
                                     </div>
-                                    <div style="display: flex; gap: 6px;">
+                                    <div class="sp-actions">
                                         <button type="button" class="sp-action-btn" title="Quick View"
                                             onclick="event.stopPropagation(); openProductModal(this)"
                                             data-id="{{ $product->id_produk }}" data-name="{{ $product->nama_produk }}"
@@ -1342,16 +1384,16 @@
                             <div class="sp-info">
                                 <div class="sp-name">{{ $product->nama_produk }}</div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div class="sp-price" style="margin: 0;">
+                                <div class="sp-bottom-row">
+                                    <div class="sp-price-box">
                                         @if ($product->has_diskon)
-                                            Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
-                                            <span class="old" style="font-size: 11px; text-decoration: line-through; color: #999; margin-left: 3px;">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                            <span class="sp-price-current">Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}</span>
+                                            <span class="sp-price-old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @else
-                                            Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                            <span class="sp-price-current">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @endif
                                     </div>
-                                    <div style="display: flex; gap: 6px;">
+                                    <div class="sp-actions">
                                         <button type="button" class="sp-action-btn" title="Quick View"
                                             onclick="event.stopPropagation(); openProductModal(this)"
                                             data-id="{{ $product->id_produk }}" data-name="{{ $product->nama_produk }}"

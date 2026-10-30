@@ -8,6 +8,80 @@
     <span>Checkout</span>
 @endsection
 
+@section('styles')
+<style>
+    .btn-refresh-shipping {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #00b207 !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #00b207 !important;
+        border-radius: 8px !important;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        line-height: 1.2;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        text-decoration: none;
+    }
+    .btn-refresh-shipping:hover:not(:disabled) {
+        background-color: #00b207 !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 10px rgba(0, 178, 7, 0.22);
+        transform: translateY(-1px);
+    }
+    .btn-refresh-shipping:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0, 178, 7, 0.15);
+    }
+    .btn-refresh-shipping:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background-color: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #64748b !important;
+        box-shadow: none;
+        transform: none;
+    }
+    .btn-refresh-shipping:focus-visible {
+        outline: 2px solid #00b207;
+        outline-offset: 2px;
+    }
+    .shipping-card-content-simple .shipping-cost-tag {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        background-color: #f1f5f9;
+        padding: 3px 9px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    .shipping-card-option.active .shipping-card-content-simple .shipping-cost-tag {
+        color: #00b207;
+        background-color: #dcfce7;
+        border-color: #bbf7d0;
+    }
+    .payment-option-item.is-locked {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        background-color: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+    .payment-option-item.is-locked * {
+        cursor: not-allowed !important;
+    }
+    .payment-option-item.is-locked:hover {
+        border-color: #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        box-shadow: none !important;
+    }
+</style>
+@endsection
 @section('content')
 <!-- Leaflet Map CSS & JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -73,7 +147,14 @@
 
                     <!-- FAQ-Style Collapsible Address Details Card -->
                     <div class="checkout-address-accordion {{ $hasSavedAddresses ? '' : 'open' }}" id="checkoutAddressAccordion">
-                        <div class="checkout-faq-q" onclick="toggleAddressAccordion()" id="addressAccordionHeader">
+                        <div class="checkout-faq-q" 
+                             onclick="toggleAddressAccordion()" 
+                             onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleAddressAccordion(); }"
+                             id="addressAccordionHeader"
+                             role="button"
+                             tabindex="0"
+                             aria-expanded="{{ $hasSavedAddresses ? 'false' : 'true' }}"
+                             aria-controls="addressAccordionBody">
                             <div class="checkout-accordion-summary" id="addressSummaryPreview">
                                 <div class="address-summary-pill">
                                     <i class="fa-solid fa-location-dot" style="color: #00b207;"></i>
@@ -139,9 +220,35 @@
 
                                 <!-- Row 4: Map & GPS Coordinate (Biteship Point B) -->
                                 <div class="form-group-custom">
-                                    <label>
-                                        <i class="fa-solid fa-map-location-dot"></i> Titik Lokasi Pengantaran di Peta
-                                    </label>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <label style="margin-bottom: 0;">
+                                            <i class="fa-solid fa-map-location-dot"></i> Titik Lokasi Pengantaran di Peta
+                                        </label>
+                                        <button type="button" class="btn-locate-me-checkout" onclick="locateUserPositionCheckout()">
+                                            <i class="fa-solid fa-crosshairs"></i> Gunakan Lokasi Saya
+                                        </button>
+                                    </div>
+
+                                    <!-- Map Geocoding Search Bar -->
+                                    <div class="map-search-container" id="checkoutMapSearchContainer">
+                                        <div class="map-search-bar">
+                                            <div class="map-search-input-wrap">
+                                                <i class="fa-solid fa-magnifying-glass map-search-icon"></i>
+                                                <input type="text" id="checkoutMapSearchInput" class="map-search-input" 
+                                                       placeholder="Cari jalan, perumahan, atau gedung di peta..." 
+                                                       autocomplete="off"
+                                                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchLocationOnCheckoutMap(); }"
+                                                       oninput="toggleClearCheckoutSearchBtn()">
+                                                <button type="button" class="btn-clear-map-search" id="checkoutClearSearchBtn" onclick="clearCheckoutMapSearch()" style="display: none;" title="Hapus pencarian">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </button>
+                                            </div>
+                                            <button type="button" class="btn-search-map" onclick="searchLocationOnCheckoutMap()">
+                                                Cari
+                                            </button>
+                                        </div>
+                                        <div id="checkoutMapSearchResults" class="map-search-dropdown" style="display: none;"></div>
+                                    </div>
                                     <div class="map-wrapper">
                                         <div id="map"></div>
                                         <div class="map-note">
@@ -178,24 +285,31 @@
             </div>
             <!-- Step 2: Shipping Courier Method -->
             <div class="checkout-card">
-                <div class="checkout-step-header">
-                    <span class="step-badge">2</span>
-                    <div>
-                        <h2 class="checkout-section-title">Metode Pengiriman</h2>
-                        <p class="checkout-section-subtitle">Pilih kurir pengantaran pesanan atau ambil langsung di outlet</p>
+                <div class="checkout-step-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <span class="step-badge">2</span>
+                        <div>
+                            <h2 class="checkout-section-title">Metode Pengiriman</h2>
+                            <p class="checkout-section-subtitle">Pilih kurir pengantaran pesanan atau ambil langsung di outlet</p>
+                        </div>
                     </div>
+                    <button type="button" class="btn-refresh-shipping" id="btnRefreshShipping" onclick="refreshShippingRates()" title="Cek & perbarui tarif ongkir berdasarkan wilayah tujuan">
+                        <i class="fa-solid fa-arrows-rotate" id="refreshShippingIcon"></i>
+                        <span id="refreshShippingText">Cek Ongkir</span>
+                    </button>
                 </div>
 
                 <div id="shippingRatesContainer">
                     <div class="shipping-grid">
                         <!-- Gojek -->
-                        <label class="shipping-card-option" onclick="selectShippingOption(this)" data-cost="20000" data-service="Gojek">
+                        <label class="shipping-card-option" onclick="selectShippingOption(this)" data-cost="18000" data-service="Gojek">
                             <input type="radio" name="shippingGroup" value="Gojek">
                             <div class="shipping-card-content-simple">
                                 <span class="shipping-courier-logo">
                                     <img src="{{ asset('image/couriers/gojek.svg') }}" alt="Gojek" />
                                 </span>
                                 <span class="shipping-name">Gojek</span>
+                                <span class="shipping-cost-tag" id="costGojek">Rp. 18.000</span>
                             </div>
                         </label>
 
@@ -207,17 +321,19 @@
                                     <img src="{{ asset('image/couriers/grab.svg') }}" alt="Grab" />
                                 </span>
                                 <span class="shipping-name">Grab</span>
+                                <span class="shipping-cost-tag" id="costGrab">Rp. 20.000</span>
                             </div>
                         </label>
 
                         <!-- Maxim (Default Checked) -->
-                        <label class="shipping-card-option active" onclick="selectShippingOption(this)" data-cost="20000" data-service="Maxim">
+                        <label class="shipping-card-option active" onclick="selectShippingOption(this)" data-cost="12000" data-service="Maxim">
                             <input type="radio" name="shippingGroup" value="Maxim" checked>
                             <div class="shipping-card-content-simple">
                                 <span class="shipping-courier-logo">
                                     <img src="{{ asset('image/couriers/maxim.svg') }}" alt="Maxim" />
                                 </span>
                                 <span class="shipping-name">Maxim</span>
+                                <span class="shipping-cost-tag" id="costMaxim">Rp. 12.000</span>
                             </div>
                         </label>
 
@@ -309,6 +425,7 @@
                                 <label for="payTransfer" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                     <div>
                                         <div class="payment-title">Transfer Bank & Virtual Account</div>
+                                        <div class="payment-subtitle">Transfer manual atau Virtual Account terverifikasi</div>
                                     </div>
                                     <div class="payment-logos-preview">
                                         <span class="bank-pill">BCA</span>
@@ -317,26 +434,9 @@
                                     </div>
                                 </label>
                             </div>
-                            <div class="payment-sub-options" id="transferSubOptions" style="display: none;">
-                                <span class="sub-options-label">Pilih Bank Rekening:</span>
-                                <div class="bank-chips-grid">
-                                    <label class="payment-sub-chip">
-                                        <input type="radio" name="bankSelect" value="BRI" checked>
-                                        <span><i class="fa-solid fa-building-columns"></i> Bank BRI</span>
-                                    </label>
-                                    <label class="payment-sub-chip">
-                                        <input type="radio" name="bankSelect" value="BCA">
-                                        <span><i class="fa-solid fa-building-columns"></i> Bank BCA</span>
-                                    </label>
-                                    <label class="payment-sub-chip">
-                                        <input type="radio" name="bankSelect" value="Mandiri">
-                                        <span><i class="fa-solid fa-building-columns"></i> Bank Mandiri</span>
-                                    </label>
-                                </div>
-                            </div>
                         </div>
 
-                        <!-- E-Wallet -->
+                        <!-- E-Wallet & QRIS Digital -->
                         <div class="payment-option-item" onclick="selectPaymentMethod('ewallet')">
                             <div class="payment-option-header">
                                 <input type="radio" id="payEwallet" name="paymentGroup" value="E-Wallet">
@@ -350,21 +450,7 @@
                                     </div>
                                 </label>
                             </div>
-                            <div class="payment-sub-options" id="ewalletSubOptions" style="display: none;">
-                                <span class="sub-options-label">Pilih Layanan E-Wallet:</span>
-                                <div class="bank-chips-grid">
-                                    <label class="payment-sub-chip">
-                                        <input type="radio" name="walletSelect" value="DANA" checked>
-                                        <span><i class="fa-solid fa-wallet"></i> DANA</span>
-                                    </label>
-                                    <label class="payment-sub-chip">
-                                        <input type="radio" name="walletSelect" value="QRIS">
-                                        <span><i class="fa-solid fa-qrcode"></i> QRIS Universal</span>
-                                    </label>
-                                </div>
-                            </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -403,11 +489,12 @@
         userChartRoute: "{{ route('userChart') }}",
         checkoutPostRoute: "{{ route('checkout.post') }}",
         orderSuccessRoute: "{{ route('order.success') }}",
+        biteshipRatesRoute: "{{ route('biteship.rates') }}",
         customTextProductIds: @json($customTextProductIds ?? []),
         csrfToken: "{{ csrf_token() }}"
     };
 
-    window.currentShippingCost = 20000;
+    window.currentShippingCost = 12000;
 
     window.selectShippingOption = function(cardEl) {
         if (!cardEl) return;
@@ -422,6 +509,26 @@
         window.updateOrderTotalsWithShipping();
     };
 
+    window.selectPaymentMethod = function(method) {
+        document.querySelectorAll('.payment-option-item').forEach(el => el.classList.remove('active'));
+        const codRadio = document.getElementById('payCod');
+        const transferRadio = document.getElementById('payTransfer');
+        const ewalletRadio = document.getElementById('payEwallet');
+        if (method === 'cod' && codRadio) {
+            codRadio.checked = true;
+            const parent = codRadio.closest('.payment-option-item');
+            if (parent) parent.classList.add('active');
+        } else if (method === 'transfer' && transferRadio) {
+            transferRadio.checked = true;
+            const parent = transferRadio.closest('.payment-option-item');
+            if (parent) parent.classList.add('active');
+        } else if (method === 'ewallet' && ewalletRadio) {
+            ewalletRadio.checked = true;
+            const parent = ewalletRadio.closest('.payment-option-item');
+            if (parent) parent.classList.add('active');
+        }
+    };
+
     window.updateOrderTotalsWithShipping = function() {
         let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
         let subtotalVal = localCart.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -433,7 +540,7 @@
             subtotalEl.textContent = 'Rp. ' + new Intl.NumberFormat('id-ID').format(subtotalVal);
         }
         
-        const cost = window.currentShippingCost !== undefined ? window.currentShippingCost : 20000;
+        const cost = window.currentShippingCost !== undefined ? window.currentShippingCost : 12000;
         if (shippingEl) {
             if (cost === 0) {
                 shippingEl.className = 'value free-badge';
@@ -447,6 +554,115 @@
         if (totalEl) {
             totalEl.textContent = 'Rp. ' + new Intl.NumberFormat('id-ID').format(subtotalVal + cost);
         }
+    };
+
+    window.refreshShippingRates = function(silent) {
+        const btn = document.getElementById('btnRefreshShipping');
+        const icon = document.getElementById('refreshShippingIcon');
+        const text = document.getElementById('refreshShippingText');
+        const areaIdEl = document.getElementById('destinationAreaId');
+        const areaInput = document.getElementById('areaSearchInput');
+
+        const destinationAreaId = areaIdEl ? areaIdEl.value.trim() : '';
+        const destinationAreaName = areaInput ? areaInput.value.trim() : '';
+
+        if (!silent && !destinationAreaId && !destinationAreaName) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Pilih Wilayah Terlebih Dahulu',
+                    text: 'Silakan isi kelurahan atau kecamatan tujuan pada Langkah 1 terlebih dahulu untuk mengecek tarif ongkir.',
+                    icon: 'info',
+                    confirmButtonColor: '#00b207'
+                });
+            }
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+        if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
+        if (text) text.textContent = 'Memuat...';
+
+        let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
+        const itemsPayload = localCart.map(item => ({
+            name: item.name,
+            value: item.price,
+            weight: 1000,
+            quantity: item.qty || 1
+        }));
+
+        fetch(window.checkoutConfig.biteshipRatesRoute || '/biteship/rates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': window.checkoutConfig.csrfToken
+            },
+            body: JSON.stringify({
+                destination_area_id: destinationAreaId,
+                destination_area_name: destinationAreaName,
+                items: itemsPayload
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) btn.disabled = false;
+            if (icon) icon.className = 'fa-solid fa-arrows-rotate';
+            if (text) text.textContent = 'Cek Ongkir';
+
+            if (data && data.success && data.couriers) {
+                const couriers = data.couriers;
+                const formatRupiah = (num) => 'Rp. ' + new Intl.NumberFormat('id-ID').format(num);
+
+                const gojekCard = document.querySelector('.shipping-card-option[data-service="Gojek"]');
+                const grabCard = document.querySelector('.shipping-card-option[data-service="Grab"]');
+                const maximCard = document.querySelector('.shipping-card-option[data-service="Maxim"]');
+                const costGojek = document.getElementById('costGojek');
+                const costGrab = document.getElementById('costGrab');
+                const costMaxim = document.getElementById('costMaxim');
+
+                if (gojekCard && couriers.Gojek !== undefined) {
+                    gojekCard.setAttribute('data-cost', couriers.Gojek);
+                    if (costGojek) costGojek.textContent = formatRupiah(couriers.Gojek);
+                }
+                if (grabCard && couriers.Grab !== undefined) {
+                    grabCard.setAttribute('data-cost', couriers.Grab);
+                    if (costGrab) costGrab.textContent = formatRupiah(couriers.Grab);
+                }
+                if (maximCard && couriers.Maxim !== undefined) {
+                    maximCard.setAttribute('data-cost', couriers.Maxim);
+                    if (costMaxim) costMaxim.textContent = formatRupiah(couriers.Maxim);
+                }
+
+                // Recalculate currently active shipping option
+                const activeCard = document.querySelector('.shipping-card-option.active');
+                if (activeCard) {
+                    const costAttr = activeCard.getAttribute('data-cost');
+                    const cost = costAttr !== null ? parseInt(costAttr, 10) : 0;
+                    window.currentShippingCost = isNaN(cost) ? 0 : cost;
+                    window.updateOrderTotalsWithShipping();
+                }
+
+                if (!silent && typeof Swal !== 'undefined') {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Tarif ongkir berhasil diperbarui'
+                    });
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Failed to refresh shipping rates:', err);
+            if (btn) btn.disabled = false;
+            if (icon) icon.className = 'fa-solid fa-arrows-rotate';
+            if (text) text.textContent = 'Cek Ongkir';
+        });
     };
     window.toggleAddressLabel = function(chk) {
         const wrapper = document.getElementById('addressLabelWrapper');
@@ -462,6 +678,7 @@
         const acc = document.getElementById('checkoutAddressAccordion');
         const body = document.getElementById('addressAccordionBody');
         const label = document.getElementById('accordionToggleLabel');
+        const header = document.getElementById('addressAccordionHeader');
         if (!acc || !body) return;
 
         const isCurrentlyOpen = acc.classList.contains('open');
@@ -471,6 +688,7 @@
             acc.classList.add('open');
             body.style.maxHeight = '2500px';
             if (label) label.textContent = 'Tutup Detail';
+            if (header) header.setAttribute('aria-expanded', 'true');
 
             // Invalidate Leaflet map layout after animation
             setTimeout(() => {
@@ -484,6 +702,7 @@
             acc.classList.remove('open');
             body.style.maxHeight = '0px';
             if (label) label.textContent = 'Detail Alamat';
+            if (header) header.setAttribute('aria-expanded', 'false');
         }
     };
 
@@ -558,6 +777,13 @@
                 checkoutMarker.setLatLng(pos);
                 checkoutMap.setView(pos, 15);
             }
+        } else {
+            if (latEl) latEl.value = '';
+            if (lngEl) lngEl.value = '';
+            if (coordsDisplay) coordsDisplay.textContent = 'Klik peta atau seret marker untuk menandai lokasi tepat Anda';
+        }
+        if (typeof window.clearCheckoutMapSearch === 'function') {
+            window.clearCheckoutMapSearch();
         }
 
         window.updateSummaryPreview(addr.recipient_name, addr.street_address, hasGps);
@@ -569,6 +795,9 @@
             const labelWrap = document.getElementById('addressLabelWrapper');
             if (labelWrap) labelWrap.style.display = 'none';
         }
+        if (typeof window.refreshShippingRates === 'function') {
+            window.refreshShippingRates(true);
+        }
     };
 
     window.selectNewAddress = function(cardEl) {
@@ -578,6 +807,9 @@
         const selectEl = document.getElementById('savedAddressSelect');
         if (selectEl && selectEl.value !== 'new') {
             selectEl.value = 'new';
+        }
+        if (typeof window.clearCheckoutMapSearch === 'function') {
+            window.clearCheckoutMapSearch();
         }
 
         const nameEl = document.getElementById('recipientName');
@@ -596,6 +828,12 @@
         if (streetEl) {
             streetEl.value = '';
         }
+        const latEl = document.getElementById('latitude');
+        const lngEl = document.getElementById('longitude');
+        const coordsDisplay = document.getElementById('coordsDisplay');
+        if (latEl) latEl.value = '';
+        if (lngEl) lngEl.value = '';
+        if (coordsDisplay) coordsDisplay.textContent = 'Klik peta atau seret marker untuk menandai lokasi tepat Anda';
 
         window.updateSummaryPreview('Alamat Baru', 'Masukkan rincian alamat baru...', false);
 
@@ -731,6 +969,9 @@
         if (areaIdInput) areaIdInput.value = id;
         if (postalInput) postalInput.value = postal;
         if (resultsContainer) resultsContainer.style.display = 'none';
+        if (typeof window.refreshShippingRates === 'function') {
+            window.refreshShippingRates(true);
+        }
     };
     function renderCustomTextCard() {
         let localCart = JSON.parse(localStorage.getItem('zyh_cart')) || [];
@@ -820,6 +1061,8 @@
         const postalEl = document.getElementById('postalCode');
         const addrEl = document.getElementById('streetAddress');
         const notesEl = document.getElementById('orderNotes');
+        const latEl = document.getElementById('latitude');
+        const lngEl = document.getElementById('longitude');
 
         let recipientName = recipientNameEl ? recipientNameEl.value.trim() : '';
         let recipientPhone = recipientPhoneEl ? recipientPhoneEl.value.trim() : '';
@@ -827,7 +1070,8 @@
         let postalCode = postalEl ? postalEl.value.trim() : '';
         let streetAddress = addrEl ? addrEl.value : '';
         let notes = notesEl ? notesEl.value : '';
-        
+        let latitudeVal = latEl && latEl.value ? parseFloat(latEl.value) : null;
+        let longitudeVal = lngEl && lngEl.value ? parseFloat(lngEl.value) : null;
         const payRadio = document.querySelector('input[name="paymentGroup"]:checked');
         const shipRadio = document.querySelector('input[name="shippingGroup"]:checked');
         let paymentVal = payRadio ? payRadio.value : 'COD';
@@ -866,7 +1110,9 @@
                 postal_code: postalCode,
                 shipping_cost: shippingCost,
                 save_address: document.getElementById('saveAddressCheckbox')?.checked || false,
-                address_label: document.getElementById('newAddressLabel')?.value.trim() || ''
+                address_label: document.getElementById('newAddressLabel')?.value.trim() || '',
+                latitude: latitudeVal,
+                longitude: longitudeVal
             })
         })
         .then(response => response.json())
@@ -905,5 +1151,15 @@
             console.error(err);
         });
     };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const destinationAreaId = document.getElementById('destinationAreaId')?.value;
+        const destinationAreaName = document.getElementById('areaSearchInput')?.value;
+        if (destinationAreaId || destinationAreaName) {
+            if (typeof window.refreshShippingRates === 'function') {
+                window.refreshShippingRates(true);
+            }
+        }
+    });
 </script>
 @endsection

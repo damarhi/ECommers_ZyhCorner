@@ -70,6 +70,61 @@ class BiteshipServiceTest extends TestCase
         $this->assertCount(4, $result['rates']);
     }
 
+    public function test_biteship_rates_route_returns_json_and_couriers_mapping(): void
+    {
+        $this->withoutExceptionHandling();
+        $response = $this->postJson(route('biteship.rates'), [
+            'destination_area_id' => 'ID_PLW_01',
+            'destination_area_name' => 'Pangkalan Kerinci Kota'
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'success',
+            'source',
+            'destination_area_id',
+            'couriers' => ['Gojek', 'Grab', 'Maxim', 'Pick Up'],
+            'rates'
+        ]);
+        $this->assertEquals(12000, $response->json('couriers.Maxim'));
+        $this->assertEquals(18000, $response->json('couriers.Gojek'));
+        $this->assertEquals(20000, $response->json('couriers.Grab'));
+        $this->assertEquals(0, $response->json('couriers.Pick Up'));
+    }
+
+    public function test_biteship_rates_adapts_to_pekanbaru_zone(): void
+    {
+        $response = $this->postJson(route('biteship.rates'), [
+            'destination_area_id' => 'ID_PKU_01',
+            'destination_area_name' => 'Sukajadi, Pekanbaru'
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals(35000, $response->json('couriers.Maxim'));
+        $this->assertEquals(42000, $response->json('couriers.Gojek'));
+        $this->assertEquals(45000, $response->json('couriers.Grab'));
+        $this->assertEquals(0, $response->json('couriers.Pick Up'));
+    }
+
+    public function test_format_checkout_rates_maps_api_pricing_accurately(): void
+    {
+        $mockRatesResult = [
+            'success' => true,
+            'source' => 'biteship_api',
+            'rates' => [
+                ['company' => 'gojek', 'courier_name' => 'Gojek Instant', 'price' => 22000],
+                ['company' => 'grab', 'courier_name' => 'Grab Express', 'price' => 25000],
+                ['company' => 'maxim', 'courier_name' => 'Maxim Delivery', 'price' => 18000],
+            ]
+        ];
+
+        $formatted = BiteshipService::formatCheckoutRates($mockRatesResult);
+
+        $this->assertEquals(22000, $formatted['Gojek']);
+        $this->assertEquals(25000, $formatted['Grab']);
+        $this->assertEquals(18000, $formatted['Maxim']);
+        $this->assertEquals(0, $formatted['Pick Up']);
+    }
     public function test_redirect_to_google_fails_safely_when_client_id_missing(): void
     {
         config(['services.google.client_id' => null]);

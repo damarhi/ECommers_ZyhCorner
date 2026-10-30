@@ -829,6 +829,7 @@ footer.footer a:hover {
 
 .modal-map-wrapper {
     position: relative;
+    z-index: 1;
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #cbd5e1;
@@ -874,6 +875,167 @@ footer.footer a:hover {
 .btn-locate-me:hover {
     background: #00b207;
     color: #ffffff;
+}
+
+/* Map Search Bar Minimalist */
+.map-search-container {
+    position: relative;
+    margin-bottom: 8px;
+    z-index: 1050;
+}
+
+.map-search-container:focus-within {
+    z-index: 1100;
+}
+
+.map-search-bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.map-search-input-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.map-search-icon {
+    position: absolute;
+    left: 11px;
+    font-size: 13px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.map-search-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 30px 0 32px;
+    font-size: 13px;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+}
+
+.map-search-input:focus {
+    border-color: #00b207;
+    box-shadow: 0 0 0 2px rgba(0, 178, 7, 0.12);
+}
+
+.map-search-input::placeholder {
+    color: #94a3b8;
+    font-size: 12.5px;
+}
+
+.btn-clear-map-search {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.btn-clear-map-search:hover {
+    color: #475569;
+}
+
+.btn-search-map {
+    height: 36px;
+    padding: 0 14px;
+    background: #00b207;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s;
+}
+
+.btn-search-map:hover {
+    background: #009406;
+}
+
+.btn-search-map:active {
+    transform: scale(0.98);
+}
+
+.map-search-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.16), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 1050;
+}
+
+.map-search-loading {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.map-search-empty {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #dc2626;
+    line-height: 1.4;
+}
+
+.map-search-item {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.map-search-item:last-child {
+    border-bottom: none;
+}
+
+.map-search-item:hover {
+    background: #f8fafc;
+}
+
+.map-search-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.map-search-item-title i {
+    color: #00b207;
+    font-size: 11px;
+}
+
+.map-search-item-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 2px;
+    padding-left: 17px;
+    line-height: 1.35;
 }
 
 .default-address-toggle {

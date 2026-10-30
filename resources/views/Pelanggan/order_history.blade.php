@@ -204,7 +204,22 @@
 
                                     <div class="order-right-actions">
                                         <div class="order-buttons-group">
-                                            @if ($order->is_pending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
+                                            @php
+                                                $isHistRejected = $order->is_payment_proof_rejected;
+                                            @endphp
+                                            @if ($order->is_bank_transfer && $order->payment_status !== 'Paid' && !in_array(strtolower($order->order_status ?? ''), ['dikemas', 'dikirim', 'selesai', 'batal', 'cancelled']))
+                                                <button type="button"
+                                                    onclick="openHistoryProofModal('{{ $order->id }}', '{{ $order->order_number }}', '{{ number_format($order->total, 0, ',', '.') }}', '{{ $order->payment_proof_url }}', {{ $order->has_payment_proof ? 1 : 0 }}, '{{ $order->bukti_pembayaran_uploaded_at ? $order->bukti_pembayaran_uploaded_at->isoFormat('D MMMM YYYY, HH:mm') : '' }}', false, {{ $isHistRejected ? 1 : 0 }}, '{{ addslashes($order->payment_proof_rejection_reason ?? '') }}')"
+                                                    class="btn-pay-now-solid" style="background: {{ $isHistRejected ? '#dc2626 !important' : '#0284c7 !important' }}; border-color: {{ $isHistRejected ? '#dc2626 !important' : '#0284c7 !important' }}; color: #ffffff !important;">
+                                                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> {{ $isHistRejected ? 'Upload Ulang Bukti' : ($order->has_payment_proof ? 'Ganti Bukti' : 'Upload Bukti') }}
+                                                </button>
+                                            @elseif ($order->is_bank_transfer && $order->has_payment_proof)
+                                                <button type="button"
+                                                    onclick="openHistoryProofModal('{{ $order->id }}', '{{ $order->order_number }}', '{{ number_format($order->total, 0, ',', '.') }}', '{{ $order->payment_proof_url }}', 1, '{{ $order->bukti_pembayaran_uploaded_at ? $order->bukti_pembayaran_uploaded_at->isoFormat('D MMMM YYYY, HH:mm') : '' }}', true)"
+                                                    class="btn-pay-now-solid" style="background: #f1f5f9 !important; border-color: #cbd5e1 !important; color: #475569 !important;">
+                                                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> Lihat Bukti
+                                                </button>
+                                            @elseif ($order->is_pending && strtoupper($order->payment_method) !== 'COD' && $order->payment_status !== 'Paid')
                                                 <button type="button"
                                                     onclick="payOrderNow('{{ $order->id }}')"
                                                     class="btn-pay-now-solid"><i class="fa-solid fa-credit-card"></i> Pay Now</button>
@@ -430,7 +445,324 @@
         </div>
     </div>
 
+    <!-- Upload Proof Modal for Order History -->
+    <div class="biteship-modal-backdrop" id="historyProofModal" style="display: none;" onclick="if(event.target === this) closeHistoryProofModal();">
+        <div class="biteship-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="historyUploadTitle" style="max-width: 520px;">
+            <div class="biteship-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 20px;">
+                <div class="biteship-modal-title-group">
+                    <h3 id="historyUploadTitle" class="biteship-modal-title" style="font-size: 16px; font-weight: 700; color: #1e293b;">
+                        <i class="fa-solid fa-receipt text-primary me-2"></i>Upload Bukti Pembayaran
+                    </h3>
+                    <div class="biteship-modal-subtitle" style="font-size: 12px; color: #64748b;">
+                        Pesanan <strong id="histModalOrderNum">-</strong> • Tagihan: <strong style="color: #00b207;">Rp. <span id="histModalOrderTotal">0</span></strong>
+                    </div>
+                </div>
+                <button type="button" class="biteship-modal-close" onclick="closeHistoryProofModal()" aria-label="Tutup modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="biteship-modal-body" style="padding: 20px;">
+                <!-- Bank Info Mini Box -->
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 11px; font-weight: 700; background: #1E2753; color: #fff; padding: 2px 6px; border-radius: 4px;">{{ $storeBank['name'] ?? 'BCA' }}</span>
+                        <span style="font-size: 11.5px; color: #475569; font-weight: 600;">a/n {{ $storeBank['account_holder'] ?? 'ZYH CORNER PASTRY' }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-family: monospace; font-size: 16px; font-weight: 700; color: #0f172a;">{{ $storeBank['account_number'] ?? '8295-0192-38' }}</span>
+                        <button type="button" onclick="copyHistoryModalAcc('{{ $storeBank['account_number'] ?? '8295-0192-38' }}')" class="btn btn-sm btn-outline-secondary" style="font-size: 11px; padding: 2px 8px;">
+                            <i class="fa-regular fa-copy me-1"></i> Salin
+                        </button>
+                    </div>
+                </div>
+                <!-- Rejection alert container (hidden by default) -->
+                <div id="histRejectionAlertBox" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #991b1b; margin-bottom: 2px;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Bukti Pembayaran Sebelumnya Ditolak Kasir:
+                    </div>
+                    <div id="histRejectionAlertText" style="font-size: 11.5px; color: #b91c1c;">
+                        -
+                    </div>
+                </div>
+
+                <!-- Existing proof container (hidden by default) -->
+                <div id="histCurrentProofBox" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                            <img id="histCurrentProofImg" src="" alt="Bukti Transfer" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #86efac;">
+                        </a>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #166534;"><i class="fa-solid fa-circle-check me-1"></i> Bukti Telah Diunggah</div>
+                            <div id="histCurrentProofTime" style="font-size: 11px; color: #15803d;">-</div>
+                        </div>
+                    </div>
+                    <a id="histCurrentProofLinkBtn" href="#" target="_blank" class="btn btn-sm" style="font-size: 11.5px; color: #15803d; text-decoration: underline; font-weight: 600;">Lihat Foto</a>
+                </div>
+
+                <!-- Dropzone -->
+                <div class="proof-dropzone" id="histModalProofDropzone" onclick="document.getElementById('histModalProofInput').click()" style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 18px; text-align: center; background: #fafafa; cursor: pointer; transition: all 0.2s;">
+                    <input type="file" id="histModalProofInput" accept="image/jpeg,image/png,image/jpg,image/webp" style="display: none;" onchange="handleHistoryProofSelect(event)">
+                    <div id="histModalDropzonePrompt">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 28px; color: #94a3b8; margin-bottom: 6px;"></i>
+                        <div id="histModalDropzoneTitle" style="font-size: 13px; font-weight: 600; color: #334155;">
+                            Klik atau Drag Foto Bukti Transfer ke Sini
+                        </div>
+                        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Format JPG, PNG, WEBP (Maksimal 2MB)</div>
+                    </div>
+                    <div id="histModalDropzonePreview" style="display: none; align-items: center; gap: 12px; text-align: left;">
+                        <img id="histModalPreviewImg" src="" alt="Pratinjau" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">
+                        <div style="flex-grow: 1; overflow: hidden;">
+                            <div id="histModalPreviewFileName" style="font-size: 12px; font-weight: 700; color: #1e293b; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">nama_file.jpg</div>
+                            <div id="histModalPreviewFileSize" style="font-size: 11px; color: #64748b;">120 KB</div>
+                        </div>
+                        <button type="button" onclick="clearHistoryProof(event)" style="background: none; border: none; color: #ef4444; font-size: 16px; cursor: pointer; padding: 4px;" title="Hapus Berkas">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="biteship-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeHistoryProofModal()" style="font-size: 13px; padding: 7px 16px; border-radius: 6px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitHistProof" onclick="submitHistoryProof()" style="font-size: 13px; padding: 7px 18px; border-radius: 6px; background: #00b207; border-color: #00b207;">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Simpan & Kirim Bukti
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let currentActiveOrderIdForProof = null;
+        let histModalSelectedFile = null;
+
+        function openHistoryProofModal(orderId, orderNumber, totalFormatted, proofUrl, hasProof, uploadedAt, isReadOnly = false, isRejected = false, rejectionReason = '') {
+            currentActiveOrderIdForProof = orderId;
+            histModalSelectedFile = null;
+
+            document.getElementById('histModalOrderNum').textContent = orderNumber;
+            document.getElementById('histModalOrderTotal').textContent = totalFormatted;
+
+            const rejectBox = document.getElementById('histRejectionAlertBox');
+            const rejectText = document.getElementById('histRejectionAlertText');
+            const currentBox = document.getElementById('histCurrentProofBox');
+            const dropzone = document.getElementById('histModalProofDropzone');
+            const dropzoneTitle = document.getElementById('histModalDropzoneTitle');
+            const submitBtn = document.getElementById('btnSubmitHistProof');
+
+            if (isRejected && rejectBox) {
+                rejectBox.style.display = 'block';
+                if (rejectText) rejectText.textContent = rejectionReason || 'Bukti transfer tidak valid atau tidak terbaca.';
+                if (dropzoneTitle) dropzoneTitle.textContent = 'Klik atau Drag Foto Bukti Transfer Baru ke Sini';
+                if (submitBtn) {
+                    submitBtn.style.background = '#dc2626';
+                    submitBtn.style.borderColor = '#dc2626';
+                    submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Simpan & Kirim Ulang Bukti';
+                }
+            } else {
+                if (rejectBox) rejectBox.style.display = 'none';
+                if (submitBtn) {
+                    submitBtn.style.background = '#00b207';
+                    submitBtn.style.borderColor = '#00b207';
+                    submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Simpan & Kirim Bukti';
+                }
+            }
+
+            if (currentBox) {
+                if (hasProof && proofUrl) {
+                    currentBox.style.display = 'flex';
+                    const imgEl = document.getElementById('histCurrentProofImg');
+                    if (imgEl) imgEl.src = proofUrl;
+                    const linkEl = document.getElementById('histCurrentProofLink');
+                    if (linkEl) linkEl.href = proofUrl;
+                    const linkBtnEl = document.getElementById('histCurrentProofLinkBtn');
+                    if (linkBtnEl) linkBtnEl.href = proofUrl;
+                    const timeEl = document.getElementById('histCurrentProofTime');
+                    if (timeEl) timeEl.textContent = uploadedAt ? uploadedAt + ' WIB' : 'Terkirim';
+                    if (!isRejected && dropzoneTitle) dropzoneTitle.textContent = 'Pilih foto baru jika ingin mengganti bukti';
+                } else {
+                    currentBox.style.display = 'none';
+                    if (!isRejected && dropzoneTitle) dropzoneTitle.textContent = 'Klik atau Drag Foto Bukti Transfer ke Sini';
+                }
+            }
+
+            if (isReadOnly) {
+                if (dropzone) dropzone.style.display = 'none';
+                if (submitBtn) submitBtn.style.display = 'none';
+            } else {
+                if (dropzone) dropzone.style.display = 'block';
+                if (submitBtn) submitBtn.style.display = 'inline-flex';
+            }
+            clearHistoryProof();
+
+            const modal = document.getElementById('historyProofModal');
+            if (modal) {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('show'), 10);
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeHistoryProofModal() {
+            const modal = document.getElementById('historyProofModal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 200);
+                document.body.style.overflow = '';
+            }
+            currentActiveOrderIdForProof = null;
+            histModalSelectedFile = null;
+        }
+
+        function handleHistoryProofSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    title: 'Ukuran Terlalu Besar!',
+                    text: 'Maksimal ukuran berkas bukti transfer adalah 2MB.',
+                    icon: 'warning',
+                    confirmButtonColor: '#00b207'
+                });
+                event.target.value = '';
+                return;
+            }
+
+            const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!allowed.includes(file.type)) {
+                Swal.fire({
+                    title: 'Format Tidak Didukung!',
+                    text: 'Harap pilih berkas gambar berformat JPG, PNG, atau WEBP.',
+                    icon: 'warning',
+                    confirmButtonColor: '#00b207'
+                });
+                event.target.value = '';
+                return;
+            }
+
+            histModalSelectedFile = file;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewImg = document.getElementById('histModalPreviewImg');
+                const previewFileName = document.getElementById('histModalPreviewFileName');
+                const previewFileSize = document.getElementById('histModalPreviewFileSize');
+                const promptEl = document.getElementById('histModalDropzonePrompt');
+                const previewBox = document.getElementById('histModalDropzonePreview');
+
+                if (previewImg) previewImg.src = e.target.result;
+                if (previewFileName) previewFileName.textContent = file.name;
+                if (previewFileSize) previewFileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+
+                if (promptEl) promptEl.style.display = 'none';
+                if (previewBox) previewBox.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearHistoryProof(event) {
+            if (event) event.stopPropagation();
+            histModalSelectedFile = null;
+            const input = document.getElementById('histModalProofInput');
+            if (input) input.value = '';
+
+            const promptEl = document.getElementById('histModalDropzonePrompt');
+            const previewBox = document.getElementById('histModalDropzonePreview');
+            if (promptEl) promptEl.style.display = 'block';
+            if (previewBox) previewBox.style.display = 'none';
+        }
+
+        function copyHistoryModalAcc(acc) {
+            if (!acc) return;
+            navigator.clipboard.writeText(acc).then(() => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Nomor rekening berhasil disalin!',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        }
+
+        function submitHistoryProof() {
+            if (!currentActiveOrderIdForProof) return;
+
+            if (!histModalSelectedFile) {
+                Swal.fire({
+                    title: 'Pilih Berkas!',
+                    text: 'Silakan pilih foto bukti pembayaran terlebih dahulu sebelum menyimpan.',
+                    icon: 'info',
+                    confirmButtonColor: '#00b207'
+                });
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('bukti_pembayaran', histModalSelectedFile);
+            formData.append('_token', "{{ csrf_token() }}");
+
+            const btn = document.getElementById('btnSubmitHistProof');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengunggah...`;
+            }
+
+            fetch(`/order-history/${currentActiveOrderIdForProof}/upload-proof`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+
+                if (data.success) {
+                    closeHistoryProofModal();
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: data.message || 'Bukti pembayaran berhasil diunggah.',
+                        icon: 'success',
+                        confirmButtonColor: '#00b207'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Gagal Mengunggah',
+                        text: data.message || 'Terjadi kesalahan saat mengunggah bukti pembayaran.',
+                        icon: 'error',
+                        confirmButtonColor: '#00b207'
+                    });
+                }
+            })
+            .catch(err => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+                console.error(err);
+                Swal.fire({
+                    title: 'Kesalahan Sistem',
+                    text: 'Gagal mengunggah berkas. Periksa koneksi internet Anda.',
+                    icon: 'error',
+                    confirmButtonColor: '#00b207'
+                });
+            });
+        }
+
         let currentTrackingData = null;
 
         function openOrderHistoryTracking(data) {

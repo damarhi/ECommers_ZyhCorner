@@ -38,6 +38,7 @@ Route::get('/product/{id}', [PelangganController::class, 'detail'])->name('produ
 Route::get('/search-suggestions', [PelangganController::class, 'searchSuggestions'])->name('search.suggestions');
 Route::get('/cart', [CartCheckoutController::class, 'userChart'])->name('userChart');
 Route::get('/biteship/areas', [CartCheckoutController::class, 'biteshipAreas'])->name('biteship.areas');
+Route::post('/biteship/rates', [CartCheckoutController::class, 'biteshipRates'])->name('biteship.rates');
 
 Route::middleware(['auth', 'preventBackHistory'])->group(function () {
     Route::get('/checkout', [CartCheckoutController::class, 'checkout'])->name('checkout');
@@ -47,6 +48,7 @@ Route::middleware(['auth', 'preventBackHistory'])->group(function () {
     Route::get('/order-history', [CustomerOrderController::class, 'orderHistory'])->name('order.history');
     Route::get('/order-history/{id}', [CustomerOrderController::class, 'orderDetail'])->name('order.detail');
     Route::post('/order-history/{id}/cancel', [CustomerOrderController::class, 'cancelOrder'])->name('order.cancel');
+    Route::post('/order-history/{id}/upload-proof', [CustomerOrderController::class, 'uploadPaymentProof'])->name('order.upload.proof');
     Route::get('/order-history/{id}/pay', [PembayaranController::class, 'getSnapTokenForOrder'])->name('order.pay');
     Route::get('/order-history/{id}/check-payment', [PembayaranController::class, 'checkPaymentStatus'])->name('order.checkPayment');
     Route::get('/order-history/{id}/return', [CustomerReturnController::class, 'returnOrder'])->name('order.return');
@@ -131,6 +133,10 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
     Route::get('admin/all-sales/report', [PesananController::class, 'salesReport'])->name('all-sales.report');
     Route::get('admin/orders/{id}/invoice', [PesananController::class, 'printInvoice'])->name('orders.invoice');
     Route::post('admin/orders/{id}/quick-confirm', [PesananController::class, 'quickConfirm'])->name('orders.quickConfirm');
+    Route::post('admin/orders/{id}/confirm-proof', [PesananController::class, 'confirmProof'])->name('orders.confirm-proof');
+    Route::post('admin/orders/{id}/reject-proof', [PesananController::class, 'rejectProof'])->name('orders.reject-proof');
+    Route::post('admin/orders/{id}/confirmProof', [PesananController::class, 'confirmProof'])->name('orders.confirmProof');
+    Route::post('admin/orders/{id}/rejectProof', [PesananController::class, 'rejectProof'])->name('orders.rejectProof');
     Route::resource('admin/banners', BannerController::class)->names('banners');
     Route::post('admin/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');
     Route::post('admin/banners/{banner}/toggle', [BannerController::class, 'toggleStatus'])->name('banners.toggle');

@@ -1,39 +1,14 @@
-// Load persisted address details from localStorage on page load
+// Dashboard initialization & state management
 document.addEventListener('DOMContentLoaded', function() {
-    if (!window.dashboardConfig) return;
-    const storedName = localStorage.getItem('zyh_cust_name') || window.dashboardConfig.userNama;
-    const storedAddress = localStorage.getItem('zyh_cust_address') || window.dashboardConfig.userAlamat || "";
-    const storedEmail = localStorage.getItem('zyh_cust_email') || window.dashboardConfig.userEmail;
-    const storedPhone = localStorage.getItem('zyh_cust_phone') || "(+62) " + window.dashboardConfig.userPhone;
-    
-    if (storedName) {
-        const dpn = document.getElementById('displayProfileName');
-        if (dpn) dpn.textContent = storedName;
-        const dbn = document.getElementById('displayBillingName');
-        if (dbn) dbn.textContent = storedName;
+    // Ensure any legacy stale cross-account localStorage is cleared
+    try {
+        localStorage.removeItem('zyh_cust_name');
+        localStorage.removeItem('zyh_cust_address');
+        localStorage.removeItem('zyh_cust_email');
+        localStorage.removeItem('zyh_cust_phone');
+    } catch (e) {
+        // Ignore localStorage access errors
     }
-    if (storedAddress) {
-        const dba = document.getElementById('displayBillingAddress');
-        if (dba) dba.textContent = storedAddress;
-    }
-    if (storedEmail) {
-        const dbe = document.getElementById('displayBillingEmail');
-        if (dbe) dbe.textContent = storedEmail;
-    }
-    if (storedPhone) {
-        const dbp = document.getElementById('displayBillingPhone');
-        if (dbp) dbp.textContent = storedPhone;
-    }
-    
-    // Sync values to form inputs
-    const ipn = document.getElementById('inputProfileName');
-    if (ipn && storedName) ipn.value = storedName;
-    const iba = document.getElementById('inputBillingAddress');
-    if (iba && storedAddress) iba.value = storedAddress;
-    const ibe = document.getElementById('inputBillingEmail');
-    if (ibe && storedEmail) ibe.value = storedEmail;
-    const ibp = document.getElementById('inputBillingPhone');
-    if (ibp && storedPhone) ibp.value = storedPhone;
 });
 
 // Profile modal toggles
@@ -47,22 +22,68 @@ window.closeEditProfile = function() {
 
 window.saveProfile = function(e) {
     e.preventDefault();
-    const newName = document.getElementById('inputProfileName').value;
-    localStorage.setItem('zyh_cust_name', newName);
-    
-    document.getElementById('displayProfileName').textContent = newName;
-    document.getElementById('displayBillingName').textContent = newName;
-    
-    window.closeEditProfile();
-    
+    const newName = document.getElementById('inputProfileName').value.trim();
+    const config = window.dashboardConfig || {};
+    const csrfToken = config.csrfToken || '';
+
+    if (!newName) return;
+
     Swal.fire({
-        title: 'Berhasil!',
-        text: 'Profil berhasil diperbarui.',
-        icon: 'success',
-        confirmButtonColor: '#00b207',
-        customClass: { popup: 'rounded-4' }
+        title: 'Menyimpan Profil...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
     });
-}
+
+    fetch('/settings/account', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            nama: newName,
+            email: config.userEmail,
+            no_hp: config.userPhone
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        Swal.close();
+        if (data.success) {
+            document.getElementById('displayProfileName').textContent = newName;
+            const dbn = document.getElementById('displayBillingName');
+            if (dbn) dbn.textContent = newName;
+            window.closeEditProfile();
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Profil berhasil diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#00b207',
+                customClass: { popup: 'rounded-4' }
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Gagal!',
+                text: data.message || 'Gagal memperbarui profil.',
+                icon: 'error',
+                confirmButtonColor: '#00b207'
+            });
+        }
+    })
+    .catch(err => {
+        Swal.close();
+        console.error(err);
+        Swal.fire({
+            title: 'Kesalahan Sistem',
+            text: 'Gagal menyimpan perubahan profil.',
+            icon: 'error',
+            confirmButtonColor: '#00b207'
+        });
+    });
+};
 
 // Quick chip setter for address labels
 window.setLabelChip = function(inputId, labelText) {
@@ -220,6 +241,139 @@ window.locateUserPosition = function(type) {
     );
 };
 
+// Map Location Search (OpenStreetMap Nominatim Geocoding)
+window.toggleClearSearchBtn = function(type) {
+    const inputEl = document.getElementById(type === 'edit' ? 'editAddrMapSearchInput' : 'newAddrMapSearchInput');
+    const clearBtn = document.getElementById(type === 'edit' ? 'editAddrClearSearchBtn' : 'newAddrClearSearchBtn');
+    if (clearBtn) {
+        clearBtn.style.display = (inputEl && inputEl.value.trim().length > 0) ? 'block' : 'none';
+    }
+};
+
+window.clearMapSearch = function(type) {
+    const inputEl = document.getElementById(type === 'edit' ? 'editAddrMapSearchInput' : 'newAddrMapSearchInput');
+    const clearBtn = document.getElementById(type === 'edit' ? 'editAddrClearSearchBtn' : 'newAddrClearSearchBtn');
+    const resultsContainer = document.getElementById(type === 'edit' ? 'editAddrMapSearchResults' : 'newAddrMapSearchResults');
+    if (inputEl) {
+        inputEl.value = '';
+    }
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.style.display = 'none';
+    }
+};
+
+window.searchLocationOnMap = function(type) {
+    const inputEl = document.getElementById(type === 'edit' ? 'editAddrMapSearchInput' : 'newAddrMapSearchInput');
+    const resultsContainer = document.getElementById(type === 'edit' ? 'editAddrMapSearchResults' : 'newAddrMapSearchResults');
+    const query = inputEl ? inputEl.value.trim() : '';
+
+    if (!query) {
+        if (inputEl) inputEl.focus();
+        return;
+    }
+
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = `
+        <div class="map-search-loading">
+            <i class="fa-solid fa-spinner fa-spin" style="color: #00b207;"></i>
+            <span>Mencari titik lokasi di peta...</span>
+        </div>
+    `;
+    resultsContainer.style.display = 'block';
+
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id&limit=5`;
+
+    fetch(url, {
+        headers: { 'Accept-Language': 'id' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data || data.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="map-search-empty">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+                    Lokasi tidak ditemukan. Coba gunakan nama jalan atau daerah yang lebih umum.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        data.forEach(item => {
+            const rawTitle = item.name || query;
+            const cleanTitle = rawTitle.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const cleanDisplay = (item.display_name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const lat = parseFloat(item.lat);
+            const lon = parseFloat(item.lon);
+
+            html += `
+                <div class="map-search-item" onclick="selectMapSearchResult('${type}', ${lat}, ${lon}, '${cleanTitle}')">
+                    <div class="map-search-item-title">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>${cleanTitle}</span>
+                    </div>
+                    <div class="map-search-item-sub">${cleanDisplay}</div>
+                </div>
+            `;
+        });
+        resultsContainer.innerHTML = html;
+    })
+    .catch(err => {
+        console.error('OSM Geocoding search error:', err);
+        resultsContainer.innerHTML = `
+            <div class="map-search-empty">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                Gagal memuat hasil pencarian. Periksa koneksi internet Anda.
+            </div>
+        `;
+    });
+};
+
+window.selectMapSearchResult = function(type, lat, lon, title) {
+    const targetMap = type === 'edit' ? modalEditMap : modalAddMap;
+    const targetMarker = type === 'edit' ? modalEditMarker : modalAddMarker;
+    const latInput = document.getElementById(type === 'edit' ? 'editAddrLatitude' : 'newAddrLatitude');
+    const lngInput = document.getElementById(type === 'edit' ? 'editAddrLongitude' : 'newAddrLongitude');
+    const coordsDisplay = document.getElementById(type === 'edit' ? 'modalEditCoordsDisplay' : 'modalAddCoordsDisplay');
+    const resultsContainer = document.getElementById(type === 'edit' ? 'editAddrMapSearchResults' : 'newAddrMapSearchResults');
+    const inputEl = document.getElementById(type === 'edit' ? 'editAddrMapSearchInput' : 'newAddrMapSearchInput');
+
+    if (targetMap && targetMarker) {
+        targetMap.flyTo([lat, lon], 17);
+        targetMarker.setLatLng([lat, lon]);
+    }
+
+    if (latInput) latInput.value = lat;
+    if (lngInput) lngInput.value = lon;
+    if (coordsDisplay) {
+        coordsDisplay.textContent = `Titik Terpilih: (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+    }
+    if (inputEl && title) {
+        inputEl.value = title;
+        window.toggleClearSearchBtn(type);
+    }
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+};
+
+document.addEventListener('click', function(e) {
+    const editContainer = document.getElementById('editAddrMapSearchContainer');
+    const addContainer = document.getElementById('newAddrMapSearchContainer');
+    
+    if (editContainer && !editContainer.contains(e.target)) {
+        const editResults = document.getElementById('editAddrMapSearchResults');
+        if (editResults) editResults.style.display = 'none';
+    }
+    if (addContainer && !addContainer.contains(e.target)) {
+        const addResults = document.getElementById('newAddrMapSearchResults');
+        if (addResults) addResults.style.display = 'none';
+    }
+});
+
 // Saved Addresses Modal Controls
 window.openSavedAddressesModal = function() {
     const modal = document.getElementById('modalSavedAddresses');
@@ -289,11 +443,13 @@ window.openEditAddress = function(addr) {
     if (modal) modal.style.display = 'flex';
 
     initModalLeafletMap('edit', targetAddr?.latitude, targetAddr?.longitude);
+    window.clearMapSearch('edit');
 };
 
 window.closeEditAddress = function() {
     const modal = document.getElementById('modalEditAddress');
     if (modal) modal.style.display = 'none';
+    window.clearMapSearch('edit');
 };
 
 window.openEditExtraAddress = function(addr) {
@@ -322,8 +478,6 @@ window.saveAddress = function(e) {
     const longitude = document.getElementById('editAddrLongitude')?.value || null;
     const isDefault = document.getElementById('editAddrIsDefault')?.checked ? 1 : 0;
 
-    localStorage.setItem('zyh_cust_address', streetAddress);
-    localStorage.setItem('zyh_cust_phone', recipientPhone);
     const displayAddr = document.getElementById('displayBillingAddress');
     const displayPhone = document.getElementById('displayBillingPhone');
     if (displayAddr) displayAddr.textContent = streetAddress;
@@ -426,11 +580,13 @@ window.openAddAddressModal = function() {
     if (m) m.style.display = 'flex';
 
     initModalLeafletMap('add', null, null);
+    window.clearMapSearch('add');
 };
 
 window.closeAddAddressModal = function() {
     const m = document.getElementById('modalAddAddress');
     if (m) m.style.display = 'none';
+    window.clearMapSearch('add');
 };
 
 window.submitNewAddress = function(e) {

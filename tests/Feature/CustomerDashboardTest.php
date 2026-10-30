@@ -136,4 +136,56 @@ class CustomerDashboardTest extends TestCase
         $response->assertSee('Kantor Cabang');
         $response->assertSee('Jl. Tuanku Tambusai No. 88');
     }
+
+    public function test_dashboard_renders_empty_state_when_customer_has_no_address(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'pelanggan',
+            'nama' => 'User Baru Tanpa Alamat',
+            'email' => 'userbaru@example.com',
+            'no_hp' => '081298765432',
+            'alamat' => null,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Belum Ada Alamat Pengiriman');
+        $response->assertSee('Tambah Alamat Sekarang');
+        $response->assertDontSee('Edit Alamat Utama');
+    }
+
+    public function test_dashboard_renders_populated_state_with_full_details_when_customer_has_address(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'pelanggan',
+            'nama' => 'Pelanggan Setia',
+            'email' => 'setia@example.com',
+            'no_hp' => '081233445566',
+            'alamat' => 'Jl. Merdeka No. 45',
+        ]);
+
+        \App\Models\UserAddress::create([
+            'user_id' => $user->user_id,
+            'label' => 'Rumah Utama',
+            'recipient_name' => 'Budi Merdeka',
+            'recipient_phone' => '081233445566',
+            'street_address' => 'Jl. Merdeka No. 45, Kecamatan Tampan',
+            'destination_area_name' => 'Tampan, Pekanbaru',
+            'postal_code' => '28292',
+            'is_default' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Rumah Utama');
+        $response->assertSee('Default');
+        $response->assertSee('Budi Merdeka');
+        $response->assertSee('Jl. Merdeka No. 45, Kecamatan Tampan');
+        $response->assertSee('Tampan, Pekanbaru');
+        $response->assertSee('28292');
+        $response->assertSee('Edit Alamat Utama');
+        $response->assertDontSee('Belum Ada Alamat Pengiriman');
+    }
 }

@@ -24,6 +24,9 @@ class AdminSettingsController extends Controller
             'social_instagram' => StoreSetting::get('social_instagram', 'https://instagram.com/zyhcorner'),
             'social_facebook' => StoreSetting::get('social_facebook', 'https://facebook.com/zyhcorner'),
             'social_tiktok' => StoreSetting::get('social_tiktok', 'https://tiktok.com/@zyhcorner'),
+            'bank_name' => StoreSetting::get('bank_name', 'Bank Central Asia (BCA)'),
+            'bank_account_number' => StoreSetting::get('bank_account_number', '8295-0192-38'),
+            'bank_account_holder' => StoreSetting::get('bank_account_holder', 'ZYH CORNER PASTRY'),
         ];
         return view('Admin.kelola_akun.settings', compact('admin', 'storeInfo'));
     }
@@ -87,8 +90,10 @@ class AdminSettingsController extends Controller
             'social_instagram' => 'nullable|string|max:255',
             'social_facebook' => 'nullable|string|max:255',
             'social_tiktok' => 'nullable|string|max:255',
+            'bank_name' => 'nullable|string|max:100',
+            'bank_account_number' => ['nullable', 'string', 'max:50', 'regex:/^[0-9\-\s]+$/'],
+            'bank_account_holder' => 'nullable|string|max:150',
         ]);
-
         // Simpan langsung ke database store_settings
         StoreSetting::set('store_name', $validated['store_name'], 'Nama Toko', 'general');
         StoreSetting::set('store_phone', $validated['store_phone'], 'Nomor WhatsApp / Telepon', 'contact');
@@ -108,6 +113,16 @@ class AdminSettingsController extends Controller
         if ($request->has('social_tiktok')) {
             StoreSetting::set('social_tiktok', $validated['social_tiktok'] ?? '', 'TikTok', 'social');
         }
+        if ($request->has('bank_name') || $request->has('bank_account_number')) {
+            $sanitizeBankText = function($text, $default = '') {
+                if (empty($text)) return $default;
+                $clean = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $text);
+                return strip_tags(trim($clean));
+            };
+            StoreSetting::set('bank_name', $sanitizeBankText($validated['bank_name'] ?? '', 'Bank Central Asia (BCA)'), 'Nama Bank Toko', 'payment');
+            StoreSetting::set('bank_account_number', $sanitizeBankText($validated['bank_account_number'] ?? '', '8295-0192-38'), 'Nomor Rekening Bank', 'payment');
+            StoreSetting::set('bank_account_holder', $sanitizeBankText($validated['bank_account_holder'] ?? '', 'ZYH CORNER PASTRY'), 'Atas Nama Rekening', 'payment');
+        }
 
         // Sinkronkan nomor toko ke profil admin yang sedang login
         $admin = auth()->user();
@@ -122,6 +137,9 @@ class AdminSettingsController extends Controller
             'store_email' => $validated['store_email'],
             'store_address' => $validated['store_address'],
             'store_hours' => $validated['store_hours'] ?? '',
+            'bank_name' => $validated['bank_name'] ?? 'Bank Central Asia (BCA)',
+            'bank_account_number' => $validated['bank_account_number'] ?? '8295-0192-38',
+            'bank_account_holder' => $validated['bank_account_holder'] ?? 'ZYH CORNER PASTRY',
         ]);
 
         return redirect(route('settings.index') . '#store-tab')->with('success', 'Informasi Toko berhasil disimpan ke database.');

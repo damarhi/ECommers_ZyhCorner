@@ -21,6 +21,9 @@ class Pesanan extends Model
         'total',
         'items',
         'cancel_reason',
+        'bukti_pembayaran',
+        'bukti_pembayaran_uploaded_at',
+        'catatan_verifikasi_pembayaran',
     ];
 
     public function getIsCanceledAttribute(): bool
@@ -148,7 +151,50 @@ class Pesanan extends Model
         $subtotal = $this->items_subtotal;
         return max(0.0, $total - $subtotal);
     }
+    public function getHasPaymentProofAttribute(): bool
+    {
+        return !empty($this->bukti_pembayaran);
+    }
+
+    public function getPaymentProofUrlAttribute(): ?string
+    {
+        if (empty($this->bukti_pembayaran)) {
+            return null;
+        }
+        if (str_starts_with($this->bukti_pembayaran, 'http://') || str_starts_with($this->bukti_pembayaran, 'https://')) {
+            return $this->bukti_pembayaran;
+        }
+        return asset('storage/' . ltrim($this->bukti_pembayaran, '/'));
+    }
+
+    public function getIsBankTransferAttribute(): bool
+    {
+        $method = strtoupper((string) ($this->payment_method ?? ''));
+        return str_contains($method, 'TRANSFER') || str_contains($method, 'BANK');
+    }
+
+    public function getIsPaymentProofRejectedAttribute(): bool
+    {
+        if (empty($this->catatan_verifikasi_pembayaran)) {
+            return false;
+        }
+        return str_contains(strtolower($this->catatan_verifikasi_pembayaran), 'ditolak') && empty($this->bukti_pembayaran);
+    }
+
+    public function getPaymentProofRejectionReasonAttribute(): ?string
+    {
+        if (!$this->is_payment_proof_rejected) {
+            return null;
+        }
+        $text = $this->catatan_verifikasi_pembayaran;
+        // Format biasanya: "Bukti ditolak: <alasan> (<timestamp> WIB)"
+        if (preg_match('/Bukti ditolak:\s*(.*?)(?:\s*\([^\)]+\))?$/i', $text, $matches)) {
+            return trim($matches[1]);
+        }
+        return $text;
+    }
     protected $casts = [
         'items' => 'array',
+        'bukti_pembayaran_uploaded_at' => 'datetime',
     ];
 }

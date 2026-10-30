@@ -631,6 +631,12 @@ window.confirmLogout = function() {
         }
     }).then((result) => {
         if (result.isConfirmed) {
+            try {
+                localStorage.removeItem('zyh_cust_name');
+                localStorage.removeItem('zyh_cust_address');
+                localStorage.removeItem('zyh_cust_email');
+                localStorage.removeItem('zyh_cust_phone');
+            } catch (e) {}
             const logoutForm = document.getElementById('logoutForm');
             if (logoutForm) logoutForm.submit();
         }
@@ -1116,10 +1122,12 @@ window.saveAccountSettings = function(e) {
         .then(data => {
             Swal.close();
             if (data.success) {
-                localStorage.setItem('zyh_cust_name', fullName);
-                localStorage.setItem('zyh_cust_email', email);
-                localStorage.setItem('zyh_cust_phone', phone);
-
+                try {
+                    localStorage.removeItem('zyh_cust_name');
+                    localStorage.removeItem('zyh_cust_address');
+                    localStorage.removeItem('zyh_cust_email');
+                    localStorage.removeItem('zyh_cust_phone');
+                } catch (e) {}
                 Swal.fire({
                     title: 'Berhasil!',
                     text: data.message || 'Pengaturan akun berhasil disimpan.',
@@ -1430,10 +1438,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load order detail address sync
     if (window.orderDetailConfig) {
         const conf = window.orderDetailConfig;
-        const storedName = localStorage.getItem('zyh_cust_name') || conf.userNama;
-        const storedAddress = localStorage.getItem('zyh_cust_address') || conf.userAlamat || "";
-        const storedEmail = localStorage.getItem('zyh_cust_email') || conf.userEmail;
-        const storedPhone = localStorage.getItem('zyh_cust_phone') || "(+62) " + conf.userPhone;
+        const storedName = conf.userNama;
+        const storedAddress = conf.userAlamat || "";
+        const storedEmail = conf.userEmail;
+        const storedPhone = conf.userPhone ? "(+62) " + conf.userPhone : "";
 
         if (storedName) document.querySelectorAll('#displayBillingName').forEach(el => el.textContent = storedName);
         if (storedAddress) document.querySelectorAll('#displayBillingAddress').forEach(el => el.textContent = storedAddress);
@@ -2078,9 +2086,15 @@ window.initCheckoutMap = function() {
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
 
-    // Zyh Corner coordinates in Pangkalan Kerinci, Pelalawan as starting point
-    const initialCoords = [0.40384, 101.85588];
-    
+    const latEl = document.getElementById('latitude');
+    const lngEl = document.getElementById('longitude');
+    const savedLat = (latEl && latEl.value) ? parseFloat(latEl.value) : null;
+    const savedLng = (lngEl && lngEl.value) ? parseFloat(lngEl.value) : null;
+
+    // Saved coordinates or Zyh Corner in Pangkalan Kerinci, Pelalawan as starting fallback point
+    const initialCoords = (savedLat && savedLng && !isNaN(savedLat) && !isNaN(savedLng)) 
+        ? [savedLat, savedLng] 
+        : [0.40384, 101.85588];
     // Check if Leaflet is loaded
     if (typeof L === 'undefined') {
         console.warn('Leaflet map library is not loaded.');
@@ -2122,12 +2136,189 @@ window.updateCoordsInputs = function(lat, lng) {
     const latEl = document.getElementById('latitude');
     const lngEl = document.getElementById('longitude');
     const displayEl = document.getElementById('coordsDisplay');
+    const sumGps = document.getElementById('summaryGpsBadge');
     if (latEl) latEl.value = lat;
     if (lngEl) lngEl.value = lng;
     if (displayEl) {
-        displayEl.innerHTML = `Lokasi Terpilih: (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+        displayEl.innerHTML = `Titik koordinat terpilih: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+    if (sumGps) {
+        sumGps.style.display = 'inline-flex';
     }
 };
+
+// ==========================================================================
+// CHECKOUT MAP LOCATION SEARCH & GEOLOCATION
+// ==========================================================================
+window.toggleClearCheckoutSearchBtn = function() {
+    const inputEl = document.getElementById('checkoutMapSearchInput');
+    const clearBtn = document.getElementById('checkoutClearSearchBtn');
+    if (clearBtn) {
+        clearBtn.style.display = (inputEl && inputEl.value.trim().length > 0) ? 'block' : 'none';
+    }
+};
+
+window.clearCheckoutMapSearch = function() {
+    const inputEl = document.getElementById('checkoutMapSearchInput');
+    const clearBtn = document.getElementById('checkoutClearSearchBtn');
+    const resultsContainer = document.getElementById('checkoutMapSearchResults');
+    if (inputEl) {
+        inputEl.value = '';
+    }
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.style.display = 'none';
+    }
+};
+
+window.searchLocationOnCheckoutMap = function() {
+    const inputEl = document.getElementById('checkoutMapSearchInput');
+    const resultsContainer = document.getElementById('checkoutMapSearchResults');
+    const query = inputEl ? inputEl.value.trim() : '';
+
+    if (!query) {
+        if (inputEl) inputEl.focus();
+        return;
+    }
+
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = `
+        <div class="map-search-loading">
+            <i class="fa-solid fa-spinner fa-spin" style="color: #00b207;"></i>
+            <span>Mencari titik lokasi di peta...</span>
+        </div>
+    `;
+    resultsContainer.style.display = 'block';
+
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id&limit=5`;
+
+    fetch(url, {
+        headers: { 'Accept-Language': 'id' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data || data.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="map-search-empty">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+                    Lokasi tidak ditemukan. Coba gunakan nama jalan atau daerah yang lebih umum.
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        data.forEach(item => {
+            const rawTitle = item.name || query;
+            const cleanTitle = rawTitle.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const cleanDisplay = (item.display_name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const lat = parseFloat(item.lat);
+            const lon = parseFloat(item.lon);
+
+            html += `
+                <div class="map-search-item" onclick="selectCheckoutMapSearchResult(${lat}, ${lon}, '${cleanTitle}')">
+                    <div class="map-search-item-title">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>${cleanTitle}</span>
+                    </div>
+                    <div class="map-search-item-sub">${cleanDisplay}</div>
+                </div>
+            `;
+        });
+        resultsContainer.innerHTML = html;
+    })
+    .catch(err => {
+        console.error('OSM Geocoding search error:', err);
+        resultsContainer.innerHTML = `
+            <div class="map-search-empty">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                Gagal memuat hasil pencarian. Periksa koneksi internet Anda.
+            </div>
+        `;
+    });
+};
+
+window.selectCheckoutMapSearchResult = function(lat, lon, title) {
+    if (checkoutMap && checkoutMarker) {
+        checkoutMap.flyTo([lat, lon], 17);
+        checkoutMarker.setLatLng([lat, lon]);
+        window.updateCoordsInputs(lat, lon);
+    }
+
+    const inputEl = document.getElementById('checkoutMapSearchInput');
+    const resultsContainer = document.getElementById('checkoutMapSearchResults');
+
+    if (inputEl && title) {
+        inputEl.value = title;
+        window.toggleClearCheckoutSearchBtn();
+    }
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+};
+
+window.locateUserPositionCheckout = function() {
+    if (!navigator.geolocation) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Geolocation Tidak Didukung',
+                text: 'Browser Anda tidak mendukung deteksi lokasi otomatis.',
+                icon: 'warning'
+            });
+        } else {
+            alert('Browser Anda tidak mendukung deteksi lokasi otomatis.');
+        }
+        return;
+    }
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Mendeteksi Lokasi...',
+            text: 'Mohon tunggu, sedang mencari koordinat GPS Anda...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            if (typeof Swal !== 'undefined') Swal.close();
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            if (checkoutMap && checkoutMarker) {
+                checkoutMap.flyTo([lat, lng], 17);
+                checkoutMarker.setLatLng([lat, lng]);
+                window.updateCoordsInputs(lat, lng);
+            }
+        },
+        function(error) {
+            if (typeof Swal !== 'undefined') {
+                Swal.close();
+                Swal.fire({
+                    title: 'Lokasi Tidak Ditemukan',
+                    text: 'Harap izinkan akses lokasi pada browser Anda.',
+                    icon: 'warning'
+                });
+            } else {
+                alert('Harap izinkan akses lokasi pada browser Anda.');
+            }
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+};
+
+document.addEventListener('click', function(e) {
+    const checkoutContainer = document.getElementById('checkoutMapSearchContainer');
+    if (checkoutContainer && !checkoutContainer.contains(e.target)) {
+        const checkoutResults = document.getElementById('checkoutMapSearchResults');
+        if (checkoutResults) checkoutResults.style.display = 'none';
+    }
+});
 
 window.renderOrderSummaryCheckout = function() {
     const orderSummaryDiv = document.getElementById('orderItemsSummary');
@@ -2249,9 +2440,12 @@ if (!window.submitOrder) {
         // Gather details
         const addrEl = document.getElementById('streetAddress');
         const notesEl = document.getElementById('orderNotes');
+        const latEl = document.getElementById('latitude');
+        const lngEl = document.getElementById('longitude');
         let streetAddress = addrEl ? addrEl.value : '';
         let notes = notesEl ? notesEl.value : '';
-        
+        let latitudeVal = latEl && latEl.value ? parseFloat(latEl.value) : null;
+        let longitudeVal = lngEl && lngEl.value ? parseFloat(lngEl.value) : null;
         const payRadio = document.querySelector('input[name="paymentGroup"]:checked');
         const shipRadio = document.querySelector('input[name="shippingGroup"]:checked');
         let paymentVal = payRadio ? payRadio.value : 'COD';
@@ -2283,7 +2477,9 @@ if (!window.submitOrder) {
                 address: streetAddress,
                 notes: notes,
                 payment_method: paymentVal,
-                shipping_method: shippingVal
+                shipping_method: shippingVal,
+                latitude: latitudeVal,
+                longitude: longitudeVal
             })
         })
         .then(response => response.json())
