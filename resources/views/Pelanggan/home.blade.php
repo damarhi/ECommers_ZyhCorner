@@ -377,6 +377,96 @@
         .sale-badge.out-of-stock {
             background-color: #6c757d;
         }
+        /* Solusi 3: Grayscale out of stock */
+        .product-card.is-out-of-stock .product-image img,
+        .small-product-card.is-out-of-stock .sp-image img {
+            filter: grayscale(85%) opacity(0.72);
+            transition: filter 0.3s ease, opacity 0.3s ease;
+        }
+        .product-card.is-out-of-stock:hover .product-image img,
+        .small-product-card.is-out-of-stock:hover .sp-image img {
+            filter: grayscale(60%) opacity(0.85);
+        }
+        /* Solusi 1: Eyebrow pills and inline status */
+        .product-meta-eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 4.5px;
+            margin-bottom: 3.5px;
+            flex-wrap: wrap;
+        }
+        .eyebrow-signature,
+        .signature-badge.eyebrow-signature {
+            position: static;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 8.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
+            color: #d97706;
+            background: rgba(217, 119, 6, 0.12);
+            padding: 1.5px 5.5px;
+            border-radius: 3px;
+            box-shadow: none;
+            line-height: 1.2;
+        }
+        .eyebrow-signature i,
+        .signature-badge.eyebrow-signature i {
+            font-size: 7.5px;
+            color: #d97706;
+        }
+        .eyebrow-discount {
+            display: inline-flex;
+            align-items: center;
+            font-size: 8.5px;
+            font-weight: 700;
+            color: #ea4b48;
+            background: rgba(234, 75, 72, 0.1);
+            padding: 1.5px 5px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+        }
+        .stock-status-inline {
+            font-size: 9px;
+            font-weight: 600;
+            color: #6c757d;
+            background: #f1f3f5;
+            padding: 1px 5px;
+            border-radius: 2.5px;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+        }
+        .signature-badge:not(.eyebrow-signature) {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #d97706;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 7px;
+            border-radius: 3px;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            gap: 3.5px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .signature-badge:not(.eyebrow-signature) i {
+            font-size: 8.5px;
+        }
+        .sp-image .signature-badge,
+        .sp-image .sale-badge {
+            display: none !important;
+        }
         .product-actions {
             position: absolute;
             top: 10px;
@@ -525,6 +615,10 @@
             border-color: #00b207;
             box-shadow: 0 6px 18px rgba(0, 178, 7, 0.1);
             transform: translateY(-2px);
+        }
+        .small-product-card.is-signature:hover {
+            border-color: #d97706;
+            box-shadow: 0 6px 18px rgba(217, 119, 6, 0.18);
         }
         .sp-image {
             width: 76px;
@@ -1138,13 +1232,11 @@
 
         <div class="product-grid">
             @forelse ($featuredProducts as $product)
-                <div class="product-card scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.06 }}s; cursor: pointer;"
+                <div class="product-card {{ $product->stok == 0 ? 'is-out-of-stock' : '' }} {{ $product->is_signature ? 'is-signature' : '' }} scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.06 }}s; cursor: pointer;"
                     onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                     <div class="product-image">
                         @if ($product->has_diskon)
                             <div class="sale-badge">{{ $product->diskon_badge }}</div>
-                        @elseif ($product->stok == 0)
-                            <div class="sale-badge out-of-stock">Habis</div>
                         @endif
                         <div class="product-actions">
                             <div class="action-btn" title="Quick View" onclick="event.stopPropagation(); openProductModal(this)"
@@ -1155,6 +1247,8 @@
                                 data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1169,14 +1263,24 @@
                         </a>
                     </div>
                     <div class="product-info">
+                        @if ($product->is_signature)
+                            <div class="product-meta-eyebrow">
+                                <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                            </div>
+                        @endif
                         <a href="{{ route('product.detail', $product->id_produk) }}"
                             class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
-                        <div class="product-price">
-                            @if ($product->has_diskon)
-                                Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
-                                <span class="old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
-                            @else
-                                Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                        <div class="product-price d-flex align-items-center justify-content-between">
+                            <div>
+                                @if ($product->has_diskon)
+                                    Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
+                                    <span class="old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                @else
+                                    Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                @endif
+                            </div>
+                            @if ($product->stok == 0)
+                                <span class="stock-status-inline">Habis</span>
                             @endif
                         </div>
                         @if ($product->stok > 0)
@@ -1189,6 +1293,8 @@
                                 data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1217,19 +1323,24 @@
                 <h3 class="col-title">Hot Deals</h3>
                 <div class="small-product-list">
                     @forelse ($hotDeals as $product)
-                        <div class="small-product-card scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.05 }}s;"
+                        <div class="small-product-card {{ $product->stok == 0 ? 'is-out-of-stock' : '' }} {{ $product->is_signature ? 'is-signature' : '' }} scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.05 }}s;"
                             onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                             <div class="sp-image">
-                                @if ($product->has_diskon)
-                                    <div class="sale-badge" style="top: 4px; left: 4px; font-size: 9px; padding: 2px 5px;">{{ $product->diskon_badge }}</div>
-                                @elseif ($product->stok == 0)
-                                    <div class="sale-badge out-of-stock" style="top: 4px; left: 4px; font-size: 9px; padding: 2px 5px;">Habis</div>
-                                @endif
                                 @if ($product->foto_1)
                                     <img src="{{ asset('storage/' . $product->foto_1) }}" alt="{{ $product->nama_produk }}">
                                 @endif
                             </div>
                             <div class="sp-info">
+                                @if ($product->is_signature || $product->has_diskon)
+                                    <div class="product-meta-eyebrow">
+                                        @if ($product->is_signature)
+                                            <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                        @endif
+                                        @if ($product->has_diskon)
+                                            <span class="eyebrow-discount">{{ $product->diskon_badge }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                                 <div class="sp-name">{{ $product->nama_produk }}</div>
 
                                 <div class="sp-bottom-row">
@@ -1239,6 +1350,9 @@
                                             <span class="sp-price-old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @else
                                             <span class="sp-price-current">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                        @endif
+                                        @if ($product->stok == 0)
+                                            <div class="mt-1"><span class="stock-status-inline">Habis</span></div>
                                         @endif
                                     </div>
                                     <div class="sp-actions">
@@ -1251,6 +1365,8 @@
                                             data-desc="{{ $product->deskripsi }}"
                                             data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                             data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                            data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                            data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                             data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                             data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                             data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1267,6 +1383,8 @@
                                                 data-desc="{{ $product->deskripsi }}"
                                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1293,19 +1411,24 @@
                 <h3 class="col-title">Best Seller</h3>
                 <div class="small-product-list">
                     @forelse ($bestSellers as $product)
-                        <div class="small-product-card scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.05 }}s;"
+                        <div class="small-product-card {{ $product->stok == 0 ? 'is-out-of-stock' : '' }} {{ $product->is_signature ? 'is-signature' : '' }} scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.05 }}s;"
                             onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                             <div class="sp-image">
-                                @if ($product->has_diskon)
-                                    <div class="sale-badge" style="top: 4px; left: 4px; font-size: 9px; padding: 2px 5px;">{{ $product->diskon_badge }}</div>
-                                @elseif ($product->stok == 0)
-                                    <div class="sale-badge out-of-stock" style="top: 4px; left: 4px; font-size: 9px; padding: 2px 5px;">Habis</div>
-                                @endif
                                 @if ($product->foto_1)
                                     <img src="{{ asset('storage/' . $product->foto_1) }}" alt="{{ $product->nama_produk }}">
                                 @endif
                             </div>
                             <div class="sp-info">
+                                @if ($product->is_signature || $product->has_diskon)
+                                    <div class="product-meta-eyebrow">
+                                        @if ($product->is_signature)
+                                            <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                        @endif
+                                        @if ($product->has_diskon)
+                                            <span class="eyebrow-discount">{{ $product->diskon_badge }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                                 <div class="sp-name">{{ $product->nama_produk }}</div>
 
                                 <div class="sp-bottom-row">
@@ -1315,6 +1438,9 @@
                                             <span class="sp-price-old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @else
                                             <span class="sp-price-current">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                        @endif
+                                        @if ($product->stok == 0)
+                                            <div class="mt-1"><span class="stock-status-inline">Habis</span></div>
                                         @endif
                                     </div>
                                     <div class="sp-actions">
@@ -1327,6 +1453,8 @@
                                             data-desc="{{ $product->deskripsi }}"
                                             data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                             data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                            data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                            data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                             data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                             data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                             data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1343,6 +1471,8 @@
                                                 data-desc="{{ $product->deskripsi }}"
                                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1364,24 +1494,34 @@
                 </div>
             </div>
 
-            <!-- 3. Top Rated -->
+            <!-- 3. Zyh Signatures -->
             <div>
-                <h3 class="col-title">Top Rated</h3>
+                <h3 class="col-title d-flex align-items-center justify-content-between">
+                    <span>Zyh Signatures</span>
+                    <span class="badge" style="background: rgba(217, 119, 6, 0.12); color: #d97706; font-size: 10px; font-weight: 600; padding: 2.5px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px;">
+                        <i class="fa-solid fa-crown me-1" style="font-size: 9px;"></i> Mahakarya
+                    </span>
+                </h3>
                 <div class="small-product-list">
-                    @forelse ($topRated as $product)
-                        <div class="small-product-card scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.05 }}s;"
+                    @forelse (($signatureProducts ?? $topRated) as $product)
+                        <div class="small-product-card {{ $product->stok == 0 ? 'is-out-of-stock' : '' }} {{ $product->is_signature ? 'is-signature' : '' }} scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.05 }}s;"
                             onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                             <div class="sp-image">
-                                @if ($product->has_diskon)
-                                    <div class="sale-badge" style="top: 4px; left: 4px; font-size: 9px; padding: 2px 5px;">{{ $product->diskon_badge }}</div>
-                                @elseif ($product->stok == 0)
-                                    <div class="sale-badge out-of-stock" style="top: 4px; left: 4px; font-size: 9px; padding: 2px 5px;">Habis</div>
-                                @endif
                                 @if ($product->foto_1)
                                     <img src="{{ asset('storage/' . $product->foto_1) }}" alt="{{ $product->nama_produk }}">
                                 @endif
                             </div>
                             <div class="sp-info">
+                                @if ($product->is_signature || $product->has_diskon)
+                                    <div class="product-meta-eyebrow">
+                                        @if ($product->is_signature)
+                                            <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                        @endif
+                                        @if ($product->has_diskon)
+                                            <span class="eyebrow-discount">{{ $product->diskon_badge }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                                 <div class="sp-name">{{ $product->nama_produk }}</div>
 
                                 <div class="sp-bottom-row">
@@ -1391,6 +1531,9 @@
                                             <span class="sp-price-old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                         @else
                                             <span class="sp-price-current">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                        @endif
+                                        @if ($product->stok == 0)
+                                            <div class="mt-1"><span class="stock-status-inline">Habis</span></div>
                                         @endif
                                     </div>
                                     <div class="sp-actions">
@@ -1403,6 +1546,8 @@
                                             data-desc="{{ $product->deskripsi }}"
                                             data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                             data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                            data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                            data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                             data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                             data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                             data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1419,6 +1564,8 @@
                                                 data-desc="{{ $product->deskripsi }}"
                                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1435,11 +1582,10 @@
                             </div>
                         </div>
                     @empty
-                        <div style="padding: 15px; color: #777; font-size: 13px;">Belum ada produk top rated.</div>
+                        <div style="padding: 15px; color: #777; font-size: 13px;">Belum ada produk signature.</div>
                     @endforelse
                 </div>
             </div>
-
             <!-- 4. Promotional Banner (Ecobazar Figma Replica) -->
             <div>
                 @php
@@ -1533,13 +1679,11 @@
 
         <div class="product-grid">
             @forelse ($newestProducts as $product)
-                <div class="product-card scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.06 }}s; cursor: pointer;"
+                <div class="product-card {{ $product->stok == 0 ? 'is-out-of-stock' : '' }} {{ $product->is_signature ? 'is-signature' : '' }} scroll-reveal" style="--reveal-delay: {{ $loop->index * 0.06 }}s; cursor: pointer;"
                     onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}'">
                     <div class="product-image">
                         @if ($product->has_diskon)
                             <div class="sale-badge">{{ $product->diskon_badge }}</div>
-                        @elseif ($product->stok == 0)
-                            <div class="sale-badge out-of-stock">Habis</div>
                         @endif
                         <div class="product-actions">
                             <div class="action-btn" title="Quick View" onclick="event.stopPropagation(); openProductModal(this)"
@@ -1550,6 +1694,8 @@
                                 data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"
@@ -1564,14 +1710,24 @@
                         </a>
                     </div>
                     <div class="product-info">
+                        @if ($product->is_signature)
+                            <div class="product-meta-eyebrow">
+                                <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                            </div>
+                        @endif
                         <a href="{{ route('product.detail', $product->id_produk) }}"
                             class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
-                        <div class="product-price">
-                            @if ($product->has_diskon)
-                                Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
-                                <span class="old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
-                            @else
-                                Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                        <div class="product-price d-flex align-items-center justify-content-between">
+                            <div>
+                                @if ($product->has_diskon)
+                                    Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
+                                    <span class="old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                @else
+                                    Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                @endif
+                            </div>
+                            @if ($product->stok == 0)
+                                <span class="stock-status-inline">Habis</span>
                             @endif
                         </div>
 
@@ -1585,6 +1741,8 @@
                                 data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                 data-sale="{{ $product->has_diskon ? '1' : '0' }}" data-stock="{{ $product->stok }}"
+                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
+                                data-expired="{{ $product->tanggal_expired ? \Carbon\Carbon::parse($product->tanggal_expired)->format('d M Y') : '' }}"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
                                 data-f3="{{ $product->foto_3 ? asset('storage/' . $product->foto_3) : '' }}"

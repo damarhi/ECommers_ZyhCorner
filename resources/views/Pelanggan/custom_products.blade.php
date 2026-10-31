@@ -111,7 +111,7 @@
         <!-- Product Grid -->
         <div class="product-grid">
             @forelse ($products as $index => $product)
-                <div class="product-card shop-product-col" style="cursor: pointer;"
+                <div class="product-card shop-product-col {{ $product->stok == 0 ? 'is-out-of-stock' : '' }} {{ $product->is_signature ? 'is-signature' : '' }}" style="cursor: pointer;"
                     data-search="{{ strtolower($product->nama_produk . ' ' . ($product->kategori->nama_kategori ?? '') . ' ' . $product->deskripsi) }}"
                     onclick="window.location.href='{{ route('product.detail', $product->id_produk) }}?custom=1'">
                     <div class="product-image">
@@ -125,6 +125,7 @@
                                 data-price="{{ $product->harga }}" data-desc="{{ $product->deskripsi }}"
                                 data-cat="{{ $product->kategori->nama_kategori ?? 'Uncategorized' }}"
                                 data-sale="0" data-stock="{{ $product->stok }}"
+                                data-is-signature="{{ $product->is_signature ? '1' : '0' }}"
                                 data-custom="1"
                                 data-f1="{{ $product->foto_1 ? asset('storage/' . $product->foto_1) : '' }}"
                                 data-f2="{{ $product->foto_2 ? asset('storage/' . $product->foto_2) : '' }}"
@@ -141,6 +142,11 @@
                         </a>
                     </div>
                     <div class="product-info">
+                        @if ($product->is_signature)
+                            <div class="product-meta-eyebrow mb-1">
+                                <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                            </div>
+                        @endif
                         <a href="{{ route('product.detail', $product->id_produk) }}?custom=1"
                             class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
                         <div class="product-price">

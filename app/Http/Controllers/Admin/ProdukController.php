@@ -99,6 +99,7 @@ class ProdukController extends Controller
             'deskripsi' => 'nullable|string',
             'tanggal_expired' => 'nullable|date',
             'bisa_custom_teks' => 'nullable|boolean',
+            'is_signature' => 'nullable|boolean',
             'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
@@ -106,6 +107,7 @@ class ProdukController extends Controller
         ]);
 
         $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
+        $validated['is_signature'] = $request->boolean('is_signature');
 
         if (empty($validated['jenis_produk'])) {
             $validated['jenis_produk'] = $request->input('jenis_produk', 'showcase');
@@ -147,6 +149,7 @@ class ProdukController extends Controller
             'deskripsi' => 'nullable|string',
             'tanggal_expired' => 'nullable|date',
             'bisa_custom_teks' => 'nullable|boolean',
+            'is_signature' => 'nullable|boolean',
             'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
             'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
@@ -154,6 +157,7 @@ class ProdukController extends Controller
         ]);
 
         $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
+        $validated['is_signature'] = $request->boolean('is_signature');
 
         if (empty($validated['jenis_produk'])) {
             $validated['jenis_produk'] = $product->jenis_produk ?? 'showcase';

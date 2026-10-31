@@ -30,6 +30,12 @@ class NotificationService
             $recipients = array_values(array_unique(array_filter(array_merge([$testEmail], $activeKasirEmails))));
 
             if (!empty($recipients)) {
+                // If in testing or Mail fake is active, invoke Mail::to directly for test isolation
+                if (app()->runningUnitTests() || app()->environment('testing')) {
+                    Mail::to($recipients)->send($mailable);
+                    return;
+                }
+
                 // Build mailable to extract subject and HTML view content
                 $mailable->build();
                 $subject = $mailable->subject;
@@ -40,11 +46,6 @@ class NotificationService
                 // Send via Brevo API
                 BrevoMailService::sendRecipients($recipients, $subject, $htmlContent);
                 Log::info('Kasir email notification sent via Brevo API to: ' . implode(', ', $recipients));
-
-                // If in testing or Mail fake is active, also invoke Mail::to for test assertions
-                if (app()->environment('testing')) {
-                    Mail::to($recipients)->send($mailable);
-                }
             }
         } catch (\Exception $e) {
             Log::error('Failed to send Kasir email notification via Brevo: ' . $e->getMessage());
@@ -88,8 +89,13 @@ class NotificationService
             if (empty($recipients)) {
                 $recipients = ['admin@zyhcorner.com'];
             }
-
             if (!empty($recipients)) {
+                // If in testing or Mail fake is active, invoke Mail::to directly for test isolation
+                if (app()->runningUnitTests() || app()->environment('testing')) {
+                    Mail::to($recipients)->send($mailable);
+                    return;
+                }
+
                 // Build mailable to extract subject and HTML view content
                 $mailable->build();
                 $subject = $mailable->subject;
@@ -100,11 +106,6 @@ class NotificationService
                 // Send via Brevo API
                 BrevoMailService::sendRecipients($recipients, $subject, $htmlContent);
                 Log::info('Admin email notification sent via Brevo API to: ' . implode(', ', $recipients));
-
-                // If in testing or Mail fake is active, also invoke Mail::to for test assertions
-                if (app()->environment('testing')) {
-                    Mail::to($recipients)->send($mailable);
-                }
             }
         } catch (\Exception $e) {
             Log::error('Failed to send Admin email notification via Brevo: ' . $e->getMessage());

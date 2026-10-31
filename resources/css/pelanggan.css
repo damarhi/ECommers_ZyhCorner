@@ -868,6 +868,11 @@
             font-weight: 600;
         }
 
+        .pm-expired-text strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
         /* Price Area */
         .pm-price-area {
             display: flex;

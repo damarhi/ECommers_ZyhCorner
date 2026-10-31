@@ -34,6 +34,14 @@ window.openProductModal = function(btn) {
     if (pmActions) pmActions.classList.remove('is-out-of-stock');
     if (pmName) pmName.textContent = data.name;
     if (pmEyebrow) pmEyebrow.textContent = data.cat || 'Kue & Bakery';
+    const pmSignatureBadge = document.getElementById('pmSignatureBadge');
+    if (pmSignatureBadge) {
+        if (data.isSignature === '1' || data.signature === '1') {
+            pmSignatureBadge.style.display = 'inline-flex';
+        } else {
+            pmSignatureBadge.style.display = 'none';
+        }
+    }
     if (pmQtyInput) pmQtyInput.value = 1;
     let price = parseInt(data.price);
     if (pmNewPrice) {
@@ -212,6 +220,20 @@ window.openProductModal = function(btn) {
     }
 
     if (pmSku) pmSku.textContent = 'ZYH-' + String(data.id || '1').padStart(4, '0');
+
+    const pmExpired = document.getElementById('pmExpired');
+    const pmExpiredVal = document.getElementById('pmExpiredVal');
+    const pmExpiredSep = document.getElementById('pmExpiredSep');
+    if (pmExpired && pmExpiredVal && pmExpiredSep) {
+        if (data.expired && String(data.expired).trim() !== '') {
+            pmExpiredVal.textContent = data.expired;
+            pmExpired.style.display = 'inline-block';
+            pmExpiredSep.style.display = 'inline-block';
+        } else {
+            pmExpired.style.display = 'none';
+            pmExpiredSep.style.display = 'none';
+        }
+    }
 
     // Handle gallery & thumbnails
     if (thumbContainer) {

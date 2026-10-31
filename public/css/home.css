@@ -506,6 +506,119 @@
     transform: translateY(-2px);
 }
 
+.small-product-card.is-signature:hover {
+    border-color: #d97706;
+    box-shadow: 0 6px 18px rgba(217, 119, 6, 0.18);
+}
+
+/* ==========================================================================
+   SOLUSI 3: EFEK FOTO PRODUK STOK HABIS (GRAYSCALE & MUTED OPACITY)
+   ========================================================================== */
+.product-card.is-out-of-stock .product-image img,
+.small-product-card.is-out-of-stock .sp-image img {
+    filter: grayscale(85%) opacity(0.72);
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.product-card.is-out-of-stock:hover .product-image img,
+.small-product-card.is-out-of-stock:hover .sp-image img {
+    filter: grayscale(60%) opacity(0.85);
+}
+
+/* ==========================================================================
+   SOLUSI 1: MICRO-EYEBROW & STATUS PADA INFORMASI PRODUK
+   ========================================================================== */
+.product-meta-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 4.5px;
+    margin-bottom: 3.5px;
+    flex-wrap: wrap;
+}
+
+/* Signature Eyebrow Pill */
+.eyebrow-signature,
+.signature-badge.eyebrow-signature {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    color: #d97706;
+    background: rgba(217, 119, 6, 0.12);
+    padding: 1.5px 5.5px;
+    border-radius: 3px;
+    box-shadow: none;
+    line-height: 1.2;
+}
+
+.eyebrow-signature i,
+.signature-badge.eyebrow-signature i {
+    font-size: 7.5px;
+    color: #d97706;
+}
+
+/* Discount Eyebrow Pill on Small Cards */
+.eyebrow-discount {
+    display: inline-flex;
+    align-items: center;
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #ea4b48;
+    background: rgba(234, 75, 72, 0.1);
+    padding: 1.5px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+
+/* Stock Status Inline (Habis) */
+.stock-status-inline {
+    font-size: 9px;
+    font-weight: 600;
+    color: #6c757d;
+    background: #f1f3f5;
+    padding: 1px 5px;
+    border-radius: 2.5px;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+}
+
+/* Standalone Signature Badge (when positioned absolute if needed) */
+.signature-badge:not(.eyebrow-signature) {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #d97706;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 3px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 3.5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.signature-badge:not(.eyebrow-signature) i {
+    font-size: 8.5px;
+}
+
+/* Solusi 1: Bebaskan foto thumbnail kecil 76x76px dari badge overlay */
+.sp-image .signature-badge,
+.sp-image .sale-badge {
+    display: none !important;
+}
 .sp-image {
     width: 76px;
     height: 76px;

@@ -98,9 +98,15 @@
 
             {{-- Info --}}
             <div class="product-info-panel">
-                <div class="pi-category">{{ $product->kategori->nama_kategori ?? 'Produk' }}</div>
+                <div class="pi-eyebrow-row">
+                    <div class="pi-category">{{ $product->kategori->nama_kategori ?? 'Produk' }}</div>
+                    @if ($product->is_signature)
+                        <span class="signature-badge detail-signature-badge">
+                            <i class="fa-solid fa-crown"></i> Zyh Signature
+                        </span>
+                    @endif
+                </div>
                 <h1 class="pi-name">{{ $product->nama_produk }}</h1>
-
 
                 <div class="pi-price-block">
                     @if ($product->has_diskon)
@@ -256,13 +262,11 @@
                 </div>
                 <div class="product-grid related-grid">
                     @foreach ($relatedProducts as $rp)
-                        <div class="product-card" style="cursor: pointer;"
+                        <div class="product-card {{ $rp->stok == 0 ? 'is-out-of-stock' : '' }} {{ $rp->is_signature ? 'is-signature' : '' }}" style="cursor: pointer;"
                             onclick="window.location.href='{{ route('product.detail', $rp->id_produk) }}{{ request()->query('custom') == 1 ? '?custom=1' : '' }}'">
                             <div class="product-image">
                                 @if ($rp->has_diskon)
-                                    <div class="badge" style="background-color: #ff8a00; color: white;">{{ $rp->diskon_badge }}</div>
-                                @elseif ($rp->stok == 0)
-                                    <div class="badge out-of-stock">Habis</div>
+                                    <div class="sale-badge">{{ $rp->diskon_badge }}</div>
                                 @endif
 
                                 <div class="product-actions">
@@ -274,6 +278,8 @@
                                         data-desc="{{ $rp->deskripsi }}"
                                         data-cat="{{ $rp->kategori->nama_kategori ?? 'Uncategorized' }}"
                                         data-sale="{{ $rp->has_diskon ? '1' : '0' }}" data-stock="{{ $rp->stok }}"
+                                        data-is-signature="{{ $rp->is_signature ? '1' : '0' }}"
+                                        data-expired="{{ $rp->tanggal_expired ? \Carbon\Carbon::parse($rp->tanggal_expired)->format('d M Y') : '' }}"
                                         @if(request()->query('custom') == 1) data-custom="1" @endif
                                         data-f1="{{ $rp->foto_1 ? asset('storage/' . $rp->foto_1) : '' }}"
                                         data-f2="{{ $rp->foto_2 ? asset('storage/' . $rp->foto_2) : '' }}"
@@ -290,14 +296,24 @@
                                 </a>
                             </div>
                             <div class="product-info">
+                                @if ($rp->is_signature)
+                                    <div class="product-meta-eyebrow mb-1">
+                                        <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                    </div>
+                                @endif
                                 <a href="{{ route('product.detail', $rp->id_produk) }}{{ request()->query('custom') == 1 ? '?custom=1' : '' }}"
                                     class="product-name" onclick="event.stopPropagation();">{{ $rp->nama_produk }}</a>
-                                <div class="product-price">
-                                    @if ($rp->has_diskon)
-                                        Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}
-                                        <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
-                                    @else
-                                        Rp. {{ number_format($rp->harga, 0, ',', '.') }}
+                                <div class="product-price d-flex align-items-center justify-content-between">
+                                    <div>
+                                        @if ($rp->has_diskon)
+                                            Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}
+                                            <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
+                                        @else
+                                            Rp. {{ number_format($rp->harga, 0, ',', '.') }}
+                                        @endif
+                                    </div>
+                                    @if ($rp->stok == 0)
+                                        <span class="stock-status-inline">Habis</span>
                                     @endif
                                 </div>
 
@@ -327,6 +343,8 @@
                                             data-desc="{{ $rp->deskripsi }}"
                                             data-cat="{{ $rp->kategori->nama_kategori ?? 'Uncategorized' }}"
                                             data-sale="{{ $rp->has_diskon ? '1' : '0' }}" data-stock="{{ $rp->stok }}"
+                                            data-is-signature="{{ $rp->is_signature ? '1' : '0' }}"
+                                            data-expired="{{ $rp->tanggal_expired ? \Carbon\Carbon::parse($rp->tanggal_expired)->format('d M Y') : '' }}"
                                             data-f1="{{ $rp->foto_1 ? asset('storage/' . $rp->foto_1) : '' }}"
                                             data-f2="{{ $rp->foto_2 ? asset('storage/' . $rp->foto_2) : '' }}"
                                             data-f3="{{ $rp->foto_3 ? asset('storage/' . $rp->foto_3) : '' }}"

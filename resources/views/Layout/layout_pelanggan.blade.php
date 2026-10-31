@@ -336,7 +336,12 @@
                 <!-- Product Details Section -->
                 <div class="pm-details">
                     <div class="pm-header-group">
-                        <span class="pm-eyebrow" id="pmEyebrow">Kategori Produk</span>
+                        <div class="pm-eyebrow-row">
+                            <span class="pm-eyebrow" id="pmEyebrow">Kategori Produk</span>
+                            <span class="signature-badge pm-signature-badge" id="pmSignatureBadge" style="display: none;">
+                                <i class="fa-solid fa-crown"></i> Signature
+                            </span>
+                        </div>
                         <h2 class="pm-title" id="pmName">Product Name</h2>
                         <div class="pm-meta-row">
                             <span class="pm-stock-pill" id="pmStock">
@@ -345,6 +350,8 @@
                             </span>
                             <span class="pm-meta-separator">•</span>
                             <span class="pm-sku-text">SKU: <strong id="pmSku">ZYH-0001</strong></span>
+                            <span class="pm-meta-separator" id="pmExpiredSep" style="display: none;">•</span>
+                            <span class="pm-expired-text" id="pmExpired" style="display: none;">Expired: <strong id="pmExpiredVal">-</strong></span>
                         </div>
                     </div>
 

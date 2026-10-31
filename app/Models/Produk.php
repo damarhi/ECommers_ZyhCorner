@@ -25,12 +25,18 @@ class Produk extends Model
         'foto_2',
         'foto_3',
         'foto_4',
+        'is_signature',
     ];
 
     protected $casts = [
         'bisa_custom_teks' => 'boolean',
+        'is_signature' => 'boolean',
     ];
 
+    public function setTanggalExpiredAttribute($value)
+    {
+        $this->attributes['tanggal_expired'] = !empty($value) ? \Carbon\Carbon::parse($value)->format('Y-m-d') : null;
+    }
     public function getStokAttribute()
     {
         $val = $this->status_produk;

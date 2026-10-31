@@ -52,16 +52,43 @@ class PelangganController extends Controller
         // Best Sellers: Real sales aggregated from completed/paid order items
         $bestSellers = Produk::getBestSellers(3);
 
-        // Top Rated / Recommended
-        $topRated = Produk::with(['kategori', 'diskonAktif'])
+        // Zyh Signatures: Curated master recipes with smart fallback
+        $signatureProducts = Produk::with(['kategori', 'diskonAktif'])
+            ->where('is_signature', true)
             ->where(function($q) {
                 $q->where('jenis_produk', 'showcase')
                   ->orWhereNull('jenis_produk');
             })
+            ->orderByRaw("CASE
+                WHEN LOWER(status_produk) = 'tersedia' THEN 1
+                WHEN status_produk IS NOT NULL AND status_produk != '' AND status_produk != '0' AND LOWER(status_produk) != 'habis' THEN 1
+                ELSE 0
+            END DESC")
             ->orderBy('id_produk', 'desc')
             ->limit(3)
             ->get();
 
+        if ($signatureProducts->count() < 3) {
+            $excludeIds = $signatureProducts->pluck('id_produk')->toArray();
+            $fillers = Produk::with(['kategori', 'diskonAktif'])
+                ->whereNotIn('id_produk', $excludeIds)
+                ->where(function($q) {
+                    $q->where('jenis_produk', 'showcase')
+                      ->orWhereNull('jenis_produk');
+                })
+                ->orderByRaw("CASE
+                    WHEN LOWER(status_produk) = 'tersedia' THEN 1
+                    WHEN status_produk IS NOT NULL AND status_produk != '' AND status_produk != '0' AND LOWER(status_produk) != 'habis' THEN 1
+                    ELSE 0
+                END DESC")
+                ->orderBy('harga', 'desc')
+                ->orderBy('id_produk', 'desc')
+                ->limit(3 - $signatureProducts->count())
+                ->get();
+
+            $signatureProducts = $signatureProducts->concat($fillers);
+        }
+        $topRated = $signatureProducts;
         $categories = Kategori::withCount('produks')
             ->orderBy('produks_count', 'desc')
             ->orderBy('id_kategori', 'asc')
@@ -89,6 +116,7 @@ class PelangganController extends Controller
             'featuredProducts',
             'hotDeals',
             'bestSellers',
+            'signatureProducts',
             'topRated',
             'categories',
             'newestProducts',

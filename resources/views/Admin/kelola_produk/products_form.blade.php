@@ -196,9 +196,28 @@
                             <div class="form-group mb-0">
                                 <label>Tanggal Kedaluwarsa (Opsional)</label>
                                 <input type="date" name="tanggal_expired" id="tanggal_expired_input" class="form-control"
-                                    value="{{ old('tanggal_expired', $produk->tanggal_expired) }}">
+                                    value="{{ old('tanggal_expired', $produk->tanggal_expired ? \Carbon\Carbon::parse($produk->tanggal_expired)->format('Y-m-d') : '') }}">
                                 <small id="expired_help_text" class="form-text text-muted mt-1" style="display: none; font-size: 12px;"></small>
                             </div>
+                        </div>
+                    </div>
+                    <div class="card mb-2" id="signature-container">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h4 class="card-title mb-0">Produk Signature</h4>
+                                <span class="badge" style="background: rgba(217, 119, 6, 0.12); color: #d97706; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px;">
+                                    <i class="mdi mdi-crown me-1"></i> Resep Unggulan
+                                </span>
+                            </div>
+                            <div class="form-check form-switch d-flex align-items-center mb-2 p-0">
+                                <input class="form-check-input m-0 me-2" type="checkbox" name="is_signature" id="is_signature" value="1" {{ old('is_signature', $produk->is_signature) ? 'checked' : '' }} role="switch" style="cursor: pointer; width: 2.25em; height: 1.15em; float: none; opacity: 1; position: relative; top: 0; left: 0;">
+                                <label class="form-check-label font-weight-bold mb-0" for="is_signature" style="cursor: pointer; user-select: none; margin-left: 0;">
+                                    Tandai sebagai Zyh Signature
+                                </label>
+                            </div>
+                            <small class="form-text text-muted" style="font-size: 12px; line-height: 1.4; display: block;">
+                                Produk ini akan diprioritaskan tampil pada kolom <strong>Zyh Signatures</strong> di halaman utama toko.
+                            </small>
                         </div>
                     </div>
 
@@ -241,9 +260,10 @@
             var maxInput = document.getElementById('range_harga_max_input');
             var expiredInput = document.getElementById('tanggal_expired_input');
             var expiredHelp = document.getElementById('expired_help_text');
+            var signatureContainer = document.getElementById('signature-container');
+            var signatureInput = document.getElementById('is_signature');
 
             function updateFormFields() {
-                if (!jenisSelect) return;
                 var jenis = jenisSelect.value;
 
                 if (jenis === 'kustom') {
@@ -283,6 +303,12 @@
                         expiredHelp.style.display = 'block';
                         expiredHelp.style.color = '#6c757d';
                     }
+
+                    // Hide signature container for custom products
+                    if (signatureContainer) {
+                        signatureContainer.style.display = 'none';
+                        if (signatureInput) signatureInput.disabled = true;
+                    }
                 } else {
                     // Showcase product
                     if (statusInput) {
@@ -317,6 +343,11 @@
                     }
                     if (expiredHelp) {
                         expiredHelp.style.display = 'none';
+                    }
+
+                    if (signatureContainer) {
+                        signatureContainer.style.display = 'block';
+                        if (signatureInput) signatureInput.disabled = false;
                     }
                 }
             }

@@ -141,6 +141,9 @@
                                                         @if ($p->bisa_custom_teks)
                                                             <span class="badge badge-soft-info ms-1" style="font-size: 10px; padding: 2px 6px;" title="Dapat diberi tulisan di atas kue"><i class="mdi mdi-lead-pencil me-1"></i>Custom Teks</span>
                                                         @endif
+                                                        @if ($p->is_signature)
+                                                            <span class="badge ms-1" style="background: rgba(217, 119, 6, 0.12); color: #d97706; font-size: 10px; padding: 2px 6px;" title="Produk Signature / Resep Unggulan Toko"><i class="mdi mdi-crown me-1"></i>Signature</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>

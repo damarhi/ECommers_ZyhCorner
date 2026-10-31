@@ -796,15 +796,83 @@
             margin-bottom: 12px;
         }
 
+        .pm-eyebrow-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+
         .pm-eyebrow {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.2px;
             color: #00b207;
-            margin-bottom: 6px;
+            margin-bottom: 0;
             display: inline-block;
         }
+
+        .pm-signature-badge {
+            position: static;
+            display: inline-flex;
+            align-items: center;
+            gap: 3.5px;
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
+            color: #d97706;
+            background: rgba(217, 119, 6, 0.12);
+            border: 1px solid rgba(217, 119, 6, 0.25);
+            padding: 2px 7px;
+            border-radius: 3.5px;
+            box-shadow: none;
+            line-height: 1.2;
+        }
+
+        .pm-signature-badge i {
+            font-size: 8px;
+            color: #d97706;
+        }
+
+        /* Detail page signature styles */
+        .pi-eyebrow-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pi-eyebrow-row .pi-category {
+            margin-bottom: 0 !important;
+        }
+
+        .detail-signature-badge {
+            position: static;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #d97706;
+            background: rgba(217, 119, 6, 0.12);
+            border: 1px solid rgba(217, 119, 6, 0.28);
+            padding: 2.5px 8.5px;
+            border-radius: 4px;
+            box-shadow: none;
+            line-height: 1.2;
+        }
+
+        .detail-signature-badge i {
+            font-size: 8.5px;
+            color: #d97706;
+        }
+
 
         .pm-title {
             font-size: 24px;
@@ -857,6 +925,11 @@
         }
 
         .pm-sku-text strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .pm-expired-text strong {
             color: #1e293b;
             font-weight: 600;
         }
