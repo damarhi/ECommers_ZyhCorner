@@ -26,8 +26,13 @@ class CustomerController extends Controller
             $query->where('status', $request->filter);
         }
 
-        $customers = $query->latest()->paginate(10);
-        return view('Admin.kelola_akun.customers', compact('customers'));
+        $customers = $query->latest()->paginate(10)->withQueryString();
+        $customerCounts = [
+            'All' => Customer::count(),
+            'Active' => Customer::where('status', 'Active')->count(),
+            'Blocked' => Customer::where('status', 'Blocked')->count(),
+        ];
+        return view('Admin.kelola_akun.customers', compact('customers', 'customerCounts'));
     }
 
     public function store(Request $request)

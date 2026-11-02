@@ -391,59 +391,7 @@
                 }
             @endif
 
-            // Delete Confirmation
-            const deleteForms = document.querySelectorAll('.delete-form');
-            deleteForms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Apakah Anda yakin?',
-                        text: "Data yang dihapus tidak dapat dikembalikan!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#EF4444',
-                        cancelButtonColor: '#9CA3AF',
-                        confirmButtonText: 'Ya, Hapus!',
-                        cancelButtonText: 'Batal',
-                        customClass: {
-                            popup: 'rounded-4',
-                            confirmButton: 'btn btn-gradient-danger',
-                            cancelButton: 'btn btn-light'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                });
-            });
 
-            // Edit Confirmation
-            const editForms = document.querySelectorAll('.edit-form');
-            editForms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Simpan Perubahan?',
-                        text: "Apakah Anda yakin ingin memperbarui data ini?",
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonColor: '#4F46E5',
-                        cancelButtonColor: '#9CA3AF',
-                        confirmButtonText: 'Ya, Simpan!',
-                        cancelButtonText: 'Batal',
-                        customClass: {
-                            popup: 'rounded-4',
-                            confirmButton: 'btn btn-gradient-primary',
-                            cancelButton: 'btn btn-light'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                });
-            });
         });
 
         // --- Admin Confirm Logout Alert ---
@@ -490,6 +438,8 @@
     <!-- Custom js for this page -->
     <!-- End custom js for this page -->
     <script src="{{ asset('js/live-instant-search.js') }}"></script>
+    <script src="{{ asset('js/admin-confirmations.js') }}"></script>
+    <script src="{{ asset('js/admin-bulk-actions.js') }}"></script>
     @yield('scripts')
 </body>
 

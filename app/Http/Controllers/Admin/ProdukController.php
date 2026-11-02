@@ -27,6 +27,10 @@ class ProdukController extends Controller
                   ->orWhere('deskripsi', 'like', $searchTerm);
             });
         }
+        if ($request->has('kategori') && !empty($request->kategori)) {
+            $kategoriIds = is_array($request->kategori) ? $request->kategori : [$request->kategori];
+            $query->whereIn('id_kategori', $kategoriIds);
+        }
 
         if ($request->has('status') && is_array($request->status)) {
             $query->whereIn('status_produk', $request->status);
@@ -42,8 +46,9 @@ class ProdukController extends Controller
             $query->latest();
         }
 
-        $produks = $query->paginate(10);
-        return view('Admin.kelola_produk.products', compact('produks'));
+        $produks = $query->paginate(10)->withQueryString();
+        $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get();
+        return view('Admin.kelola_produk.products', compact('produks', 'kategoris'));
     }
 
     public function customIndex(Request $request)
@@ -58,6 +63,10 @@ class ProdukController extends Controller
                   ->orWhere('deskripsi', 'like', $searchTerm);
             });
         }
+        if ($request->has('kategori') && !empty($request->kategori)) {
+            $kategoriIds = is_array($request->kategori) ? $request->kategori : [$request->kategori];
+            $query->whereIn('id_kategori', $kategoriIds);
+        }
 
         if ($request->has('status') && is_array($request->status)) {
             $query->whereIn('status_produk', $request->status);
@@ -73,8 +82,9 @@ class ProdukController extends Controller
             $query->latest();
         }
 
-        $produks = $query->paginate(10);
-        return view('Admin.kelola_produk.custom_products', compact('produks'));
+        $produks = $query->paginate(10)->withQueryString();
+        $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get();
+        return view('Admin.kelola_produk.custom_products', compact('produks', 'kategoris'));
     }
 
     public function create(Request $request)

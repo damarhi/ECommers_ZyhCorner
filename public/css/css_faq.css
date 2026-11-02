@@ -1,0 +1,77 @@
+.faq-tab {
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1.5px solid #e5e7eb;
+        background: #fff;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .faq-tab:hover { border-color: #86efac; color: #15803d; }
+    .faq-tab.active {
+        background: #00b207;
+        color: #fff;
+        border-color: #00b207;
+    }
+
+    .faq-card {
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 14px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .faq-card:hover { border-color: #86efac; }
+    .faq-card.open { border-color: #00b207; box-shadow: 0 4px 16px rgba(0,178,7,0.08); }
+
+    .faq-q {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px;
+        cursor: pointer;
+        gap: 12px;
+    }
+    .faq-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: #1e293b;
+        line-height: 1.5;
+        flex: 1;
+    }
+    .faq-card.open .faq-title { color: #00b207; }
+
+    .faq-icon {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: #f0fdf4;
+        color: #00b207;
+        font-size: 13px;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+    .faq-card.open .faq-icon {
+        background: #00b207;
+        color: #fff;
+        transform: rotate(180deg);
+    }
+
+    .faq-a {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s ease;
+    }
+    .faq-a-inner {
+        padding: 0 20px 18px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #475569;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 14px;
+        margin: 0 20px;
+        padding-left: 0; padding-right: 0;
+    }

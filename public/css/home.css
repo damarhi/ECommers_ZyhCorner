@@ -591,7 +591,7 @@
 }
 
 /* Standalone Signature Badge (when positioned absolute if needed) */
-.signature-badge:not(.eyebrow-signature) {
+.signature-badge:not(.eyebrow-signature):not(.floating-signature-tag) {
     position: absolute;
     top: 10px;
     left: 10px;
@@ -610,7 +610,7 @@
     letter-spacing: 0.4px;
 }
 
-.signature-badge:not(.eyebrow-signature) i {
+.signature-badge:not(.eyebrow-signature):not(.floating-signature-tag) i {
     font-size: 8.5px;
 }
 

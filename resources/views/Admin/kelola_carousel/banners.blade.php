@@ -45,10 +45,10 @@
                         <!-- Position Filter Dropdown -->
                         <div class="dropdown">
                             <button
-                                class="btn btn-sm {{ $activePosisi ? 'btn-gradient-primary text-white' : 'btn-outline-primary' }} dropdown-toggle d-inline-flex align-items-center justify-content-between"
-                                type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false" style="height: 38px; padding: 0 15px; min-width: 170px; border-radius: 8px;">
-                                <span class="d-flex align-items-center"><i class="mdi mdi-filter-variant me-2"></i>
+                                class="btn btn-sm admin-filter-btn {{ $activePosisi ? 'active' : '' }} dropdown-toggle"
+                                type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true"
+                                aria-expanded="false" style="min-width: 170px;">
+                                <span class="d-inline-flex align-items-center"><i class="mdi mdi-filter-variant me-1.5"></i>
                                     {{ $activePosisiLabel }}</span>
                             </button>
                             <div class="dropdown-menu p-3 shadow-sm" aria-labelledby="filterDropdown"
@@ -85,17 +85,22 @@
                                     </label>
                                 </div>
 
-                                <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
+                                <button type="submit" class="btn btn-sm btn-gradient-primary w-100" style="height: 34px; font-weight: 600;">Terapkan Filter</button>
                             </div>
                         </div>
 
                         <!-- Search Input -->
-                        <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                        <div class="position-relative w-100 w-sm-auto" style="min-width: 240px; max-width: 320px;">
                             <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                 class="form-control form-control-sm ps-5 pe-3" placeholder="Cari judul banner..." 
-                                style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px;">
                             <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                         </div>
+                        @if($activePosisi || request('search'))
+                            <a href="{{ route('banners.index') }}" class="admin-btn-reset" title="Reset Filter">
+                                <i class="mdi mdi-refresh me-1"></i> Reset
+                            </a>
+                        @endif
                     </div>
 
                     <!-- Bulk Delete Button -->
@@ -122,7 +127,7 @@
                                     <img src="{{ asset('storage/' . $b->gambar_banner) }}" alt="{{ $b->judul_banner }}"
                                         class="w-100 h-100 banner-img" style="object-fit: cover; transition: transform 0.3s ease;">
                                 @else
-                                    <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-gradient-light text-muted">
+                                    <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light text-muted" style="background-color: #f8fafc !important;">
                                         <i class="mdi mdi-image-off" style="font-size: 42px;"></i>
                                         <small class="mt-1">Gambar Tidak Tersedia</small>
                                     </div>
@@ -317,7 +322,7 @@
                                                         <i class="mdi mdi-creation me-1"></i> {{ $b->subjudul ?? 'SUMMER SALE' }}
                                                     </span>
                                                     <h3 class="fw-bold mb-1" style="color: #00b207; font-size: 26px; letter-spacing: -0.5px;">{{ $b->judul_banner }}</h3>
-                                                    <span class="btn btn-sm text-white fw-bold rounded-pill px-3 shadow-sm mb-1" style="background: linear-gradient(135deg, #00b207, #009906); font-size: 11.5px;">
+                                                    <span class="btn btn-sm text-white fw-bold rounded-pill px-3 shadow-sm mb-1" style="background: #00b207; font-size: 11.5px;">
                                                         Shop Now <i class="mdi mdi-arrow-right ms-1"></i>
                                                     </span>
                                                 </div>
@@ -334,7 +339,7 @@
                                                         <i class="mdi {{ $b->posisi_banner === 'custom_header' ? 'mdi-cake-variant' : 'mdi-tag' }} me-1"></i> {{ $b->subjudul ?? ($b->posisi_banner === 'custom_header' ? 'Custom Bakery Studio' : 'Exclusive Pastry') }}
                                                     </span>
                                                     <h3 class="font-weight-bold text-white mb-2">{{ $b->judul_banner }}</h3>
-                                                    <span class="btn btn-sm text-white rounded-pill px-4 mt-2 shadow-sm" style="background: linear-gradient(135deg, #00b207, #009906); font-weight: 700; font-size: 12.5px;">
+                                                    <span class="btn btn-sm text-white rounded-pill px-4 mt-2 shadow-sm" style="background: #00b207; font-weight: 700; font-size: 12.5px;">
                                                         {{ $b->posisi_banner === 'custom_header' ? 'Pesan Sekarang' : 'Shop Now' }} <i class="mdi mdi-arrow-right ms-1"></i>
                                                     </span>
                                                 </div>
@@ -564,7 +569,7 @@
         <!-- Pagination -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-3">
             <div class="d-flex align-items-center overflow-auto w-100 w-md-auto">
-                {{ $banners->links('pagination::bootstrap-4') }}
+                {{ $banners->appends(request()->query())->links('pagination::bootstrap-4') }}
             </div>
             <div class="text-muted text-center text-md-end w-100 w-md-auto" style="font-size: 14px;">
                 {{ $banners->total() }} Hasil Banner
@@ -752,166 +757,5 @@
         }
     </style>
 
-    <script>
-        // Helper: Update Badge Posisi Edit
-        function updatePosisiBadge(selectEl, id) {
-            const badge = document.getElementById('badgePosisi' + id);
-            if (!badge) return;
-            const labels = {
-                'home_hero': 'Home Hero',
-                'shop_header': 'Header Showcase',
-                'custom_header': 'Header Kustom',
-                'popup_promo': 'Pop-up Promo'
-            };
-            badge.textContent = labels[selectEl.value] || 'Banner';
-        }
-
-        // Helper: Update Badge Posisi Add
-        function updatePosisiBadgeAdd(selectEl) {
-            const badge = document.getElementById('badgePosisiAdd');
-            if (!badge) return;
-            const labels = {
-                'home_hero': 'Home Hero',
-                'shop_header': 'Header Showcase',
-                'custom_header': 'Header Kustom',
-                'popup_promo': 'Pop-up Promo'
-            };
-            badge.textContent = labels[selectEl.value] || 'Banner';
-        }
-
-        // Live Preview: Edit Banner
-        function previewEditBanner(event, id) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('editPreviewImg' + id);
-                const btnReset = document.getElementById('btnResetImg' + id);
-                if (img) img.src = e.target.result;
-                if (btnReset) btnReset.classList.remove('d-none');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Reset Preview: Edit Banner
-        function resetEditBanner(id) {
-            const input = document.getElementById('inputGambarEdit' + id);
-            const img = document.getElementById('editPreviewImg' + id);
-            const btnReset = document.getElementById('btnResetImg' + id);
-            if (input) input.value = '';
-            if (img && img.dataset.originalSrc) img.src = img.dataset.originalSrc;
-            if (btnReset) btnReset.classList.add('d-none');
-        }
-
-        // Live Preview: Add Banner
-        function previewAddBanner(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('addPreviewImg');
-                const placeholder = document.getElementById('addPreviewPlaceholder');
-                const btnReset = document.getElementById('btnResetAddImg');
-                if (img) {
-                    img.src = e.target.result;
-                    img.classList.remove('d-none');
-                }
-                if (placeholder) placeholder.classList.add('d-none');
-                if (btnReset) btnReset.classList.remove('d-none');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Reset Preview: Add Banner
-        function resetAddBanner() {
-            const input = document.getElementById('inputGambarAdd');
-            const img = document.getElementById('addPreviewImg');
-            const placeholder = document.getElementById('addPreviewPlaceholder');
-            const btnReset = document.getElementById('btnResetAddImg');
-            if (input) input.value = '';
-            if (img) {
-                img.src = '';
-                img.classList.add('d-none');
-            }
-            if (placeholder) placeholder.classList.remove('d-none');
-            if (btnReset) btnReset.classList.add('d-none');
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check All & Bulk Delete Logic
-            const checkAllHeader = document.getElementById('checkAllBanners');
-            const rowCheckboxes = document.querySelectorAll('.banner-row-checkbox');
-            const btnBulkDelete = document.getElementById('btnBulkDelete');
-            const selectedCountSpan = document.getElementById('selectedCount');
-            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-
-            function updateBulkDeleteState() {
-                const checkedRows = document.querySelectorAll('.banner-row-checkbox:checked');
-                const count = checkedRows.length;
-
-                if (count > 0) {
-                    btnBulkDelete.classList.remove('d-none');
-                    btnBulkDelete.classList.add('d-flex');
-                    selectedCountSpan.textContent = count;
-                } else {
-                    btnBulkDelete.classList.remove('d-flex');
-                    btnBulkDelete.classList.add('d-none');
-                    selectedCountSpan.textContent = '0';
-                }
-
-                if (checkAllHeader) {
-                    checkAllHeader.checked = rowCheckboxes.length > 0 && count === rowCheckboxes.length;
-                }
-            }
-
-            if (checkAllHeader) {
-                checkAllHeader.addEventListener('change', function() {
-                    rowCheckboxes.forEach(cb => cb.checked = this.checked);
-                    updateBulkDeleteState();
-                });
-            }
-
-            rowCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateBulkDeleteState);
-            });
-
-            if (btnBulkDelete && bulkDeleteForm) {
-                btnBulkDelete.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const selectedCheckboxes = document.querySelectorAll('.banner-row-checkbox:checked');
-                    const count = selectedCheckboxes.length;
-                    if (count === 0) return;
-
-                    Swal.fire({
-                        title: 'Hapus Banner Terpilih?',
-                        text: `Apakah Anda yakin ingin menghapus ${count} banner yang dipilih?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#EF4444',
-                        cancelButtonColor: '#9CA3AF',
-                        confirmButtonText: 'Ya, Hapus Terpilih!',
-                        cancelButtonText: 'Batal',
-                        customClass: {
-                            popup: 'rounded-4',
-                            confirmButton: 'btn btn-gradient-danger',
-                            cancelButton: 'btn btn-light'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const inputsContainer = document.getElementById('bulkDeleteInputs');
-                            inputsContainer.innerHTML = '';
-                            selectedCheckboxes.forEach(cb => {
-                                const input = document.createElement('input');
-                                input.type = 'hidden';
-                                input.name = 'ids[]';
-                                input.value = cb.value;
-                                inputsContainer.appendChild(input);
-                            });
-                            bulkDeleteForm.submit();
-                        }
-                    });
-                });
-            }
-        });
-    </script>
+    <script src="{{ asset('js/js_banners.js') }}?v={{ file_exists(public_path('js/js_banners.js')) ? filemtime(public_path('js/js_banners.js')) : time() }}"></script>
 @endsection

@@ -33,47 +33,181 @@
             </div>
         @endif
 
+        @php
+            $activeCat = $categories->firstWhere('id_kategori', request('category'));
+            $rawMin = request('min_price');
+            $rawMax = request('max_price');
+            $minPriceVal = ($rawMin !== null && $rawMin !== '') ? intval(preg_replace('/[^0-9]/', '', (string)$rawMin)) : null;
+            $maxPriceVal = ($rawMax !== null && $rawMax !== '') ? intval(preg_replace('/[^0-9]/', '', (string)$rawMax)) : null;
+            $legacyPriceVal = request('price');
+            $hasPriceFilter = ($minPriceVal !== null || $maxPriceVal !== null || request()->filled('price'));
+            $priceDisplay = 'Semua Harga';
+            if ($minPriceVal && $maxPriceVal) {
+                $priceDisplay = 'Rp ' . number_format($minPriceVal, 0, ',', '.') . ' - Rp ' . number_format($maxPriceVal, 0, ',', '.');
+            } elseif ($minPriceVal) {
+                $priceDisplay = '≥ Rp ' . number_format($minPriceVal, 0, ',', '.');
+            } elseif ($maxPriceVal) {
+                $priceDisplay = '≤ Rp ' . number_format($maxPriceVal, 0, ',', '.');
+            } elseif ($legacyPriceVal) {
+                $priceDisplay = $legacyPriceVal == '10-50' ? 'Rp 10.000 - Rp 50.000' : ($legacyPriceVal == '50-100' ? 'Rp 50.000 - Rp 100.000' : $legacyPriceVal);
+            }
+
+            $sortByVal = request('sort_by', 'latest');
+            $sortLabels = [
+                'latest' => 'Terbaru',
+                'price_asc' => 'Harga: Rendah ke Tinggi',
+                'price_desc' => 'Harga: Tinggi ke Rendah',
+            ];
+            $sortDisplay = $sortLabels[$sortByVal] ?? 'Terbaru';
+            $showVal = request('show', '16');
+        @endphp
+
         <!-- Filter Toolbar -->
         <div class="filter-toolbar">
             <div class="filter-group">
-                <div class="select-wrapper">
-                    <select name="category" id="filterCategory" class="filter-select">
-                        <option value="">Select Category</option>
-                        @foreach ($categories as $cat)
-                            <option value="{{ $cat->id_kategori }}" {{ request('category') == $cat->id_kategori ? 'selected' : '' }}>
-                                {{ $cat->nama_kategori }}
-                            </option>
-                        @endforeach
-                    </select>
+                <!-- Dropdown Kategori -->
+                <div class="filter-dropdown-container" id="categoryDropdownContainer">
+                    <button type="button" class="filter-pill-trigger {{ request()->filled('category') ? 'active' : '' }}" title="Pilih Kategori">
+                        <i class="fa-solid fa-layer-group trigger-icon"></i>
+                        <span>{{ $activeCat ? $activeCat->nama_kategori : 'Semua Kategori' }}</span>
+                        @if(request()->filled('category'))
+                            <span class="active-dot"></span>
+                        @endif
+                        <i class="fa-solid fa-chevron-down trigger-chevron"></i>
+                    </button>
+                    <div class="modern-filter-dropdown-menu">
+                        <ul class="modern-dropdown-list">
+                            <li>
+                                <button type="button" class="modern-dropdown-item {{ !request()->filled('category') ? 'active' : '' }}" onclick="selectCategoryFilter('')">
+                                    <span>Semua Kategori</span>
+                                    <i class="fa-solid fa-check check-icon"></i>
+                                </button>
+                            </li>
+                            @foreach ($categories as $cat)
+                                <li>
+                                    <button type="button" class="modern-dropdown-item {{ request('category') == $cat->id_kategori ? 'active' : '' }}" onclick="selectCategoryFilter('{{ $cat->id_kategori }}')">
+                                        <span>{{ $cat->nama_kategori }}</span>
+                                        <i class="fa-solid fa-check check-icon"></i>
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
-                <div class="select-wrapper">
-                    <select name="price" id="filterPrice" class="filter-select">
-                        <option value="">Select Price</option>
-                        <option value="10-50" {{ request('price') == '10-50' ? 'selected' : '' }}>Rp. 10.000 - Rp. 50.000</option>
-                        <option value="50-100" {{ request('price') == '50-100' ? 'selected' : '' }}>Rp. 50.000 - Rp. 100.000</option>
-                    </select>
+
+                <!-- Dropdown Range Harga (Interactive Price Popover) -->
+                <div class="filter-dropdown-container" id="priceDropdownContainer">
+                    <button type="button" class="filter-pill-trigger {{ $hasPriceFilter ? 'active' : '' }}" title="Filter Berdasarkan Rentang Harga">
+                        <i class="fa-solid fa-tag trigger-icon"></i>
+                        <span>{{ $priceDisplay }}</span>
+                        @if($hasPriceFilter)
+                            <span class="active-dot"></span>
+                        @endif
+                        <i class="fa-solid fa-chevron-down trigger-chevron"></i>
+                    </button>
+                    <div class="price-popover-card">
+                        <div class="price-popover-header">
+                            <div class="price-popover-title">
+                                <i class="fa-solid fa-sliders"></i>
+                                <span>Atur Rentang Harga</span>
+                            </div>
+                        </div>
+
+                        <div class="price-inputs-grid">
+                            <div class="price-input-box">
+                                <label class="price-input-label" for="customMinPrice">Minimum</label>
+                                <div class="price-input-wrapper">
+                                    <span class="price-currency">Rp</span>
+                                    <input type="text" id="customMinPrice" class="price-input-field" placeholder="0" inputmode="numeric" value="{{ $minPriceVal ? number_format($minPriceVal, 0, ',', '.') : '' }}">
+                                </div>
+                            </div>
+                            <div class="price-input-sep">-</div>
+                            <div class="price-input-box">
+                                <label class="price-input-label" for="customMaxPrice">Maksimum</label>
+                                <div class="price-input-wrapper">
+                                    <span class="price-currency">Rp</span>
+                                    <input type="text" id="customMaxPrice" class="price-input-field" placeholder="Tanpa batas" inputmode="numeric" value="{{ $maxPriceVal ? number_format($maxPriceVal, 0, ',', '.') : '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="price-presets-title">Pilihan Cepat</div>
+                        <div class="price-presets-grid">
+                            <button type="button" class="price-preset-chip {{ $maxPriceVal == 50000 && !$minPriceVal ? 'active' : '' }}" data-min="" data-max="50000">&lt; Rp 50 rb</button>
+                            <button type="button" class="price-preset-chip {{ $minPriceVal == 50000 && $maxPriceVal == 100000 ? 'active' : '' }}" data-min="50000" data-max="100000">Rp 50 rb - 100 rb</button>
+                            <button type="button" class="price-preset-chip {{ $minPriceVal == 100000 && $maxPriceVal == 250000 ? 'active' : '' }}" data-min="100000" data-max="250000">Rp 100 rb - 250 rb</button>
+                            <button type="button" class="price-preset-chip {{ $minPriceVal == 250000 && !$maxPriceVal ? 'active' : '' }}" data-min="250000" data-max="">&gt; Rp 250 rb</button>
+                        </div>
+
+                        <div class="price-popover-actions">
+                            <button type="button" class="price-btn-reset" onclick="resetPriceFilter()">Reset</button>
+                            <button type="button" class="price-btn-apply" onclick="applyCustomPriceFilter()">Terapkan</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="filter-group">
-                <div class="select-wrapper">
-                    <select name="sort_by" id="filterSortBy" class="filter-select" style="min-width: 150px;">
-                        <option value="latest" {{ request('sort_by', 'latest') == 'latest' ? 'selected' : '' }}>Sort by: Latest</option>
-                        <option value="price_asc" {{ request('sort_by') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
-                        <option value="price_desc" {{ request('sort_by') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
-                    </select>
+                <!-- Dropdown Sort By -->
+                <div class="filter-dropdown-container">
+                    <button type="button" class="filter-pill-trigger" title="Urutkan Produk">
+                        <i class="fa-solid fa-arrow-down-wide-short trigger-icon"></i>
+                        <span>Urutkan: {{ $sortDisplay }}</span>
+                        <i class="fa-solid fa-chevron-down trigger-chevron"></i>
+                    </button>
+                    <div class="modern-filter-dropdown-menu" style="min-width: 200px;">
+                        <ul class="modern-dropdown-list">
+                            <li>
+                                <button type="button" class="modern-dropdown-item {{ $sortByVal == 'latest' ? 'active' : '' }}" onclick="selectSortFilter('latest')">
+                                    <span>Terbaru</span>
+                                    <i class="fa-solid fa-check check-icon"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="modern-dropdown-item {{ $sortByVal == 'price_asc' ? 'active' : '' }}" onclick="selectSortFilter('price_asc')">
+                                    <span>Harga: Rendah ke Tinggi</span>
+                                    <i class="fa-solid fa-check check-icon"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="modern-dropdown-item {{ $sortByVal == 'price_desc' ? 'active' : '' }}" onclick="selectSortFilter('price_desc')">
+                                    <span>Harga: Tinggi ke Rendah</span>
+                                    <i class="fa-solid fa-check check-icon"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="select-wrapper">
-                    <select name="show" id="filterShow" class="filter-select" style="min-width: 100px;">
-                        <option value="16" {{ request('show', '16') == '16' ? 'selected' : '' }}>Show: 16</option>
-                        <option value="32" {{ request('show') == '32' ? 'selected' : '' }}>Show: 32</option>
-                    </select>
+
+                <!-- Dropdown Show per Page -->
+                <div class="filter-dropdown-container">
+                    <button type="button" class="filter-pill-trigger" title="Jumlah Tampilan per Halaman">
+                        <i class="fa-solid fa-grip trigger-icon"></i>
+                        <span>Tampilkan: {{ $showVal }}</span>
+                        <i class="fa-solid fa-chevron-down trigger-chevron"></i>
+                    </button>
+                    <div class="modern-filter-dropdown-menu" style="min-width: 140px;">
+                        <ul class="modern-dropdown-list">
+                            <li>
+                                <button type="button" class="modern-dropdown-item {{ $showVal == '16' ? 'active' : '' }}" onclick="selectShowFilter('16')">
+                                    <span>16 per halaman</span>
+                                    <i class="fa-solid fa-check check-icon"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="modern-dropdown-item {{ $showVal == '32' ? 'active' : '' }}" onclick="selectShowFilter('32')">
+                                    <span>32 per halaman</span>
+                                    <i class="fa-solid fa-check check-icon"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Active Filters -->
-        @if (request()->filled('category') || request()->filled('price') || request()->filled('search'))
+        @if (request()->filled('category') || $hasPriceFilter || request()->filled('search'))
             <div class="active-filters-row">
                 <div class="active-filters">
                     <span>Active Filters:</span>
@@ -82,23 +216,14 @@
                             Search: "{{ request('search') }}" <i class="fa-solid fa-xmark"></i>
                         </div>
                     @endif
-                    @if (request()->filled('category'))
-                        @php
-                            $activeCat = $categories->firstWhere('id_kategori', request('category'));
-                        @endphp
-                        @if ($activeCat)
-                            <div class="filter-tag" onclick="removeShopFilter('category')">
-                                {{ $activeCat->nama_kategori }} <i class="fa-solid fa-xmark"></i>
-                            </div>
-                        @endif
+                    @if (request()->filled('category') && $activeCat)
+                        <div class="filter-tag" onclick="removeShopFilter('category')">
+                            {{ $activeCat->nama_kategori }} <i class="fa-solid fa-xmark"></i>
+                        </div>
                     @endif
-                    @if (request()->filled('price'))
-                        @php
-                            $priceVal = request('price');
-                            $priceLabel = $priceVal == '10-50' ? 'Rp. 10.000 - Rp. 50.000' : ($priceVal == '50-100' ? 'Rp. 50.000 - Rp. 100.000' : $priceVal);
-                        @endphp
+                    @if ($hasPriceFilter)
                         <div class="filter-tag" onclick="removeShopFilter('price')">
-                            {{ $priceLabel }} <i class="fa-solid fa-xmark"></i>
+                            {{ $priceDisplay }} <i class="fa-solid fa-xmark"></i>
                         </div>
                     @endif
                     <a href="{{ route('shop') }}" class="clear-all-filters-btn">Clear All</a>
@@ -154,9 +279,14 @@
                         </a>
                     </div>
                     <div class="product-info">
-                        @if ($product->is_signature)
+                        @if ($product->is_signature || $product->stok == 0)
                             <div class="product-meta-eyebrow mb-1">
-                                <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                @if ($product->is_signature)
+                                    <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                @endif
+                                @if ($product->stok == 0)
+                                    <span class="stock-status-inline">Habis</span>
+                                @endif
                             </div>
                         @endif
                         <a href="{{ route('product.detail', $product->id_produk) }}"

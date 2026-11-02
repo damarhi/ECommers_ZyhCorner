@@ -69,16 +69,24 @@
                 <div class="card shadow-sm" style="border-radius: 12px;">
                     <div class="card-body">
                         <!-- Filter & Search Form -->
+                        @php
+                            $activeFilterCount = request('status') ? 1 : 0;
+                            $hasActiveFilters = $activeFilterCount > 0 || request('search');
+                        @endphp
                         <form method="GET" action="{{ route('products.expired.index') }}"
                             class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100 w-md-auto">
+                            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 w-100 w-md-auto flex-wrap">
                                 <div class="dropdown">
                                     <button
-                                        class="btn btn-sm btn-outline-primary dropdown-toggle d-inline-flex align-items-center justify-content-between w-100"
-                                        type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true"
-                                        aria-expanded="false" style="height: 36px; padding: 0 15px; min-width: 150px;">
-                                        <span class="d-flex align-items-center"><i class="mdi mdi-filter-variant me-2"></i>
-                                            Status Tindakan</span>
+                                        class="btn btn-sm admin-filter-btn {{ $activeFilterCount > 0 ? 'active' : '' }} dropdown-toggle"
+                                        type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true"
+                                        aria-expanded="false" style="min-width: 155px;">
+                                        <span class="d-inline-flex align-items-center"><i class="mdi mdi-filter-variant me-1.5"></i>
+                                            Status Tindakan
+                                            @if($activeFilterCount > 0)
+                                                <span class="admin-filter-badge ms-1.5">{{ $activeFilterCount }}</span>
+                                            @endif
+                                        </span>
                                     </button>
                                     <div class="dropdown-menu p-3 shadow-sm" aria-labelledby="filterDropdown"
                                         style="width: 230px; border-radius: 8px; margin-top: 5px;">
@@ -114,16 +122,21 @@
                                             </label>
                                         </div>
 
-                                        <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
+                                        <button type="submit" class="btn btn-sm btn-gradient-primary w-100" style="height: 34px; font-weight: 600;">Terapkan Filter</button>
                                     </div>
                                 </div>
-                                <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                                <div class="position-relative w-100 w-sm-auto" style="min-width: 240px; max-width: 320px;">
                                     <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                         class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama produk..." 
-                                        style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                        style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px;">
                                     <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                                 </div>
-                                <button type="button" id="btnBulkDelete" class="btn btn-gradient-danger btn-sm d-none align-items-center justify-content-center ms-auto" style="height: 36px;">
+                                @if($hasActiveFilters)
+                                    <a href="{{ route('products.expired.index') }}" class="admin-btn-reset" title="Reset Filter">
+                                        <i class="mdi mdi-refresh me-1"></i> Reset
+                                    </a>
+                                @endif
+                                <button type="button" id="btnBulkDelete" class="btn btn-gradient-danger btn-sm d-none align-items-center justify-content-center ms-auto" style="height: 38px;">
                                     <i class="mdi mdi-delete me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                                 </button>
                             </div>
@@ -310,9 +323,18 @@
                                             <tr>
                                                 <td colspan="7" class="text-center py-5">
                                                     <div class="d-flex flex-column align-items-center justify-content-center">
-                                                        <i class="mdi mdi-check-circle-outline text-success mb-2" style="font-size: 64px;"></i>
-                                                        <h5 class="text-muted font-weight-bold">Tidak Ada Produk Kadaluarsa</h5>
-                                                        <p class="text-muted mb-0" style="font-size: 14px;">Semua produk showcase terawat dengan baik dan aman!</p>
+                                                        @if($hasActiveFilters)
+                                                            <i class="mdi mdi-clock-alert-outline text-muted mb-2" style="font-size: 64px;"></i>
+                                                            <h5 class="text-dark font-weight-bold mb-1">Tidak Ditemukan Data yang Sesuai</h5>
+                                                            <p class="text-muted mb-3" style="font-size: 14px;">Tidak ada produk kadaluarsa untuk kriteria filter yang sedang aktif.</p>
+                                                            <a href="{{ route('products.expired.index') }}" class="btn btn-sm btn-gradient-primary rounded-pill px-4">
+                                                                <i class="mdi mdi-refresh me-1"></i> Reset Filter & Pencarian
+                                                            </a>
+                                                        @else
+                                                            <i class="mdi mdi-check-circle-outline text-success mb-2" style="font-size: 64px;"></i>
+                                                            <h5 class="text-muted font-weight-bold">Tidak Ada Produk Kadaluarsa</h5>
+                                                            <p class="text-muted mb-0" style="font-size: 14px;">Semua produk showcase terawat dengan baik dan aman!</p>
+                                                        @endif
                                                     </div>
                                                 </td>
                                             </tr>
@@ -325,7 +347,7 @@
                         <!-- Pagination -->
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
                             <div class="d-flex align-items-center overflow-auto w-100 w-md-auto">
-                                {{ $expiredItems->links('pagination::bootstrap-4') }}
+                                {{ $expiredItems->appends(request()->query())->links('pagination::bootstrap-4') }}
                             </div>
                             <div class="text-muted text-center text-md-end w-100 w-md-auto" style="font-size: 14px;">
                                 {{ $expiredItems->total() }} Hasil
@@ -336,83 +358,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check All & Bulk Delete Logic
-            const checkAllHeader = document.getElementById('checkAllExpired');
-            const rowCheckboxes = document.querySelectorAll('.expired-row-checkbox');
-            const btnBulkDelete = document.getElementById('btnBulkDelete');
-            const selectedCountSpan = document.getElementById('selectedCount');
-            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-
-            function updateBulkDeleteState() {
-                const checkedRows = document.querySelectorAll('.expired-row-checkbox:checked');
-                const count = checkedRows.length;
-
-                if (count > 0) {
-                    btnBulkDelete.classList.remove('d-none');
-                    btnBulkDelete.classList.add('d-flex');
-                    selectedCountSpan.textContent = count;
-                } else {
-                    btnBulkDelete.classList.remove('d-flex');
-                    btnBulkDelete.classList.add('d-none');
-                    selectedCountSpan.textContent = '0';
-                }
-
-                if (checkAllHeader) {
-                    checkAllHeader.checked = rowCheckboxes.length > 0 && count === rowCheckboxes.length;
-                }
-            }
-
-            if (checkAllHeader) {
-                checkAllHeader.addEventListener('change', function() {
-                    rowCheckboxes.forEach(cb => cb.checked = this.checked);
-                    updateBulkDeleteState();
-                });
-            }
-
-            rowCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateBulkDeleteState);
-            });
-
-            if (btnBulkDelete && bulkDeleteForm) {
-                btnBulkDelete.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const selectedCheckboxes = document.querySelectorAll('.expired-row-checkbox:checked');
-                    const count = selectedCheckboxes.length;
-                    if (count === 0) return;
-
-                    Swal.fire({
-                        title: 'Hapus Data Kadaluarsa Terpilih?',
-                        text: `Apakah Anda yakin ingin menghapus ${count} data produk kadaluarsa yang dipilih?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#EF4444',
-                        cancelButtonColor: '#9CA3AF',
-                        confirmButtonText: 'Ya, Hapus Terpilih!',
-                        cancelButtonText: 'Batal',
-                        customClass: {
-                            popup: 'rounded-4',
-                            confirmButton: 'btn btn-gradient-danger',
-                            cancelButton: 'btn btn-light'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const inputsContainer = document.getElementById('bulkDeleteInputs');
-                            inputsContainer.innerHTML = '';
-                            selectedCheckboxes.forEach(cb => {
-                                const input = document.createElement('input');
-                                input.type = 'hidden';
-                                input.name = 'ids[]';
-                                input.value = cb.value;
-                                inputsContainer.appendChild(input);
-                            });
-                            bulkDeleteForm.submit();
-                        }
-                    });
-                });
-            }
-        });
-    </script>
 @endsection

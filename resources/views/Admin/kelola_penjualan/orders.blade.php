@@ -25,13 +25,23 @@
             <div class="card border-0 shadow-sm" style="border-radius: 8px;">
                 <div class="card-body p-4">
                     <!-- Toolbar -->
+                    @php
+                        $paymentCount = is_array(request('payment_status')) ? count(request('payment_status')) : (request('payment_status') ? 1 : 0);
+                        $orderStatusCount = is_array(request('order_status')) ? count(request('order_status')) : (request('order_status') ? 1 : 0);
+                        $activeFilterCount = $paymentCount + $orderStatusCount;
+                        $hasActiveFilters = $activeFilterCount > 0 || request('search');
+                    @endphp
                     <form method="GET" action="{{ route('orders.index') }}" class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100 w-md-auto">
+                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 w-100 w-md-auto flex-wrap">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle d-inline-flex align-items-center justify-content-between w-100" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height: 32px; padding: 0 15px; min-width: 120px;">
-                                    <span class="d-flex align-items-center"><i class="mdi mdi-filter-variant me-2"></i> Filter</span>
+                                <button class="btn btn-sm admin-filter-btn {{ $activeFilterCount > 0 ? 'active' : '' }} dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false" style="min-width: 130px;">
+                                    <span class="d-inline-flex align-items-center"><i class="mdi mdi-filter-variant me-1.5"></i> Filter
+                                        @if($activeFilterCount > 0)
+                                            <span class="admin-filter-badge ms-1.5">{{ $activeFilterCount }}</span>
+                                        @endif
+                                    </span>
                                 </button>
-                                <div class="dropdown-menu p-3 shadow" aria-labelledby="filterDropdown" style="width: 220px; border-radius: 8px; margin-top: 5px;">
+                                <div class="dropdown-menu p-3 shadow" aria-labelledby="filterDropdown" style="width: 240px; border-radius: 8px; margin-top: 5px;">
                                     <h6 class="dropdown-header px-0 mb-2 text-primary" style="font-size: 13px; font-weight: 600;">Status Pembayaran</h6>
                                     <div class="form-check mb-2">
                                         <label class="form-check-label text-muted" style="cursor: pointer;">
@@ -43,15 +53,50 @@
                                             <input type="checkbox" name="payment_status[]" value="Paid" class="form-check-input" {{ is_array(request('payment_status')) && in_array('Paid', request('payment_status')) ? 'checked' : '' }}> Dibayar
                                         </label>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
+
+                                    <div class="dropdown-divider mb-3"></div>
+
+                                    <h6 class="dropdown-header px-0 mb-2 text-primary" style="font-size: 13px; font-weight: 600;">Status Pengiriman</h6>
+                                    <div class="form-check mb-2">
+                                        <label class="form-check-label text-muted" style="cursor: pointer;">
+                                            <input type="checkbox" name="order_status[]" value="menunggu konfirmasi" class="form-check-input" {{ is_array(request('order_status')) && in_array('menunggu konfirmasi', request('order_status')) ? 'checked' : '' }}> Menunggu Konfirmasi
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <label class="form-check-label text-muted" style="cursor: pointer;">
+                                            <input type="checkbox" name="order_status[]" value="dikemas" class="form-check-input" {{ is_array(request('order_status')) && in_array('dikemas', request('order_status')) ? 'checked' : '' }}> Dikemas
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <label class="form-check-label text-muted" style="cursor: pointer;">
+                                            <input type="checkbox" name="order_status[]" value="dikirim" class="form-check-input" {{ is_array(request('order_status')) && in_array('dikirim', request('order_status')) ? 'checked' : '' }}> Dikirim
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <label class="form-check-label text-muted" style="cursor: pointer;">
+                                            <input type="checkbox" name="order_status[]" value="selesai" class="form-check-input" {{ is_array(request('order_status')) && in_array('selesai', request('order_status')) ? 'checked' : '' }}> Selesai
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <label class="form-check-label text-muted" style="cursor: pointer;">
+                                            <input type="checkbox" name="order_status[]" value="batal" class="form-check-input" {{ is_array(request('order_status')) && in_array('batal', request('order_status')) ? 'checked' : '' }}> Batal
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-sm btn-gradient-primary w-100" style="height: 34px; font-weight: 600;">Terapkan Filter</button>
                                 </div>
                             </div>
-                            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                            <div class="position-relative w-100 w-sm-auto" style="min-width: 240px; max-width: 320px;">
                                 <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                     class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nomor pesanan / pelanggan..."
-                                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                    style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px;">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
+                            @if($hasActiveFilters)
+                                <a href="{{ route('orders.index') }}" class="admin-btn-reset" title="Reset Filter">
+                                    <i class="mdi mdi-refresh me-1"></i> Reset
+                                </a>
+                            @endif
                         </div>
                         <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center align-self-end align-self-md-center px-3" style="height: 38px;" title="Hapus Terpilih">
                             <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
@@ -168,8 +213,16 @@
                                     <td colspan="8" class="text-center py-5">
                                         <div class="d-flex flex-column align-items-center justify-content-center">
                                             <i class="mdi mdi-cart-outline text-muted mb-2" style="font-size: 64px;"></i>
-                                            <h5 class="text-muted font-weight-bold">Belum Ada Pesanan</h5>
-                                            <p class="text-muted mb-0" style="font-size: 14px;">Oops, pesanan pelanggan belum ada yang masuk nih.</p>
+                                            @if($hasActiveFilters)
+                                                <h5 class="text-dark font-weight-bold mb-1">Tidak Ditemukan Pesanan yang Sesuai</h5>
+                                                <p class="text-muted mb-3" style="font-size: 14px;">Tidak ada pesanan untuk kriteria filter atau pencarian yang sedang aktif.</p>
+                                                <a href="{{ route('orders.index') }}" class="btn btn-sm btn-gradient-primary rounded-pill px-4">
+                                                    <i class="mdi mdi-refresh me-1"></i> Reset Filter & Pencarian
+                                                </a>
+                                            @else
+                                                <h5 class="text-muted font-weight-bold">Belum Ada Pesanan</h5>
+                                                <p class="text-muted mb-0" style="font-size: 14px;">Oops, pesanan pelanggan belum ada yang masuk nih.</p>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -303,74 +356,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const checkAll = document.getElementById('checkAllOrders');
-        const rowCheckboxes = document.querySelectorAll('.order-row-checkbox');
-        const btnBulkDelete = document.getElementById('btnBulkDelete');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-
-        function updateBulkDeleteState() {
-            const checkedCount = document.querySelectorAll('.order-row-checkbox:checked').length;
-            if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
-
-            if (btnBulkDelete) {
-                if (checkedCount > 0) {
-                    btnBulkDelete.classList.remove('d-none');
-                    btnBulkDelete.classList.add('d-inline-flex');
-                } else {
-                    btnBulkDelete.classList.add('d-none');
-                    btnBulkDelete.classList.remove('d-inline-flex');
-                }
-            }
-
-            if (checkAll) {
-                checkAll.checked = rowCheckboxes.length > 0 && checkedCount === rowCheckboxes.length;
-            }
-        }
-
-        if (checkAll) {
-            checkAll.addEventListener('change', function() {
-                rowCheckboxes.forEach(cb => cb.checked = this.checked);
-                updateBulkDeleteState();
-            });
-        }
-
-        rowCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateBulkDeleteState);
-        });
-
-        if (btnBulkDelete && bulkDeleteForm) {
-            btnBulkDelete.addEventListener('click', function(e) {
-                e.preventDefault();
-                const selectedCheckboxes = document.querySelectorAll('.order-row-checkbox:checked');
-                const count = selectedCheckboxes.length;
-                if (count === 0) return;
-
-                Swal.fire({
-                    title: 'Hapus Pesanan Terpilih?',
-                    text: `Apakah Anda yakin ingin menghapus ${count} data pesanan yang dipilih?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#EF4444',
-                    cancelButtonColor: '#9CA3AF',
-                    confirmButtonText: 'Ya, Hapus Terpilih!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const inputsContainer = document.getElementById('bulkDeleteInputs');
-                        inputsContainer.innerHTML = '';
-                        selectedCheckboxes.forEach(cb => {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = 'ids[]';
-                            input.value = cb.value;
-                            inputsContainer.appendChild(input);
-                        });
-                        bulkDeleteForm.submit();
-                    }
-                });
-            });
-        }
 
         // Proteksi sinkronisasi status ketika modal edit pesanan dibuka
         document.addEventListener('show.bs.modal', function(event) {
@@ -504,70 +489,6 @@
     }
 </script>
 
-<style>
-.badge-pulse-amber {
-    background-color: #fef3c7 !important;
-    color: #b45309 !important;
-    border: 1px solid #fde68a !important;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    position: relative;
-    padding: 6px 10px;
-    border-radius: 20px;
-}
-.badge-pulse-amber::before {
-    content: '';
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-right: 6px;
-    border-radius: 50%;
-    background-color: #f59e0b;
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-    animation: pulse-amber-dot 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
-}
-@keyframes pulse-amber-dot {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-    }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
-    }
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-    }
-}
-.btn-quick-confirm {
-    background: linear-gradient(135deg, #00b207 0%, #008f05 100%);
-    color: #ffffff !important;
-    font-weight: 600;
-    font-size: 12px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 178, 7, 0.25);
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-}
-.btn-quick-confirm:hover {
-    background: linear-gradient(135deg, #009606 0%, #007a04 100%);
-    box-shadow: 0 4px 8px rgba(0, 178, 7, 0.35);
-    transform: translateY(-1px);
-}
-.btn-quick-confirm:active {
-    transform: translateY(0);
-}
-.btn-quick-confirm:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-</style>
+
 
 @endsection

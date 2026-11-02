@@ -109,6 +109,13 @@
                             <button type="button" class="btn btn-sm btn-outline-primary reset-instant-search-btn" style="border-radius: 6px;">
                                 <i class="mdi mdi-refresh me-1"></i> Reset Pencarian
                             </button>
+                        @elseif(is_array(request('jenis_penjualan')) ? count(request('jenis_penjualan')) > 0 : request('jenis_penjualan'))
+                            <i class="mdi mdi-file-search-outline text-muted mb-2" style="font-size: 54px; opacity: 0.6;"></i>
+                            <h5 class="text-dark font-weight-bold mb-1">Tidak ada data yang cocok</h5>
+                            <p class="text-muted mb-3" style="font-size: 13.5px;">Tidak ditemukan data penjualan untuk kriteria filter yang aktif.</p>
+                            <a href="{{ route('all-sales.index') }}" class="btn btn-sm btn-gradient-primary rounded-pill px-4">
+                                <i class="mdi mdi-refresh me-1"></i> Reset Filter & Pencarian
+                            </a>
                         @else
                             <i class="mdi mdi-cart-outline text-muted mb-2" style="font-size: 64px;"></i>
                             <h5 class="text-muted font-weight-bold">Belum Ada Data Penjualan</h5>

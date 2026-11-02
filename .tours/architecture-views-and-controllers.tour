@@ -1,0 +1,67 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Architecture Walkthrough: Views & Controllers",
+  "description": "Walkthrough arsitektur layer HTTP Controller dan UI Blade Views di ZyhCorner, menelusuri bagaimana logika backend PHP berinteraksi dengan rendering template Blade, CSS interaktif, dan skrip JavaScript.",
+  "steps": [
+    {
+      "file": "app/Http/Controllers/Controller.php",
+      "line": 1,
+      "title": "1. Base Controller Foundation",
+      "description": "### Situation\nTitik awal hirarki seluruh HTTP controller pada aplikasi Laravel ZyhCorner.\n\n### Mechanism\nMeng-extend base framework Controller dan menyediakan fondasi turunan untuk controller Admin, Kasir, dan Pelanggan.\n\n### Implication\nSemua controller turunan mengonsumsi dependency injection, service container, dan middleware dari base layer ini.\n\n### Gotcha\nKarena file ini tipis (8 baris), sebagian besar logic domain didelegasikan ke sub-controller modular di sub-folder Admin dan Pelanggan."
+    },
+    {
+      "file": "app/Http/Controllers/Pelanggan/PelangganController.php",
+      "line": 35,
+      "title": "2. Customer Catalog Controller",
+      "description": "### Situation\nController utama yang melayani storefront pelanggan: beranda (`home`), katalog produk (`shop`), dan halaman detail produk (`detail`).\n\n### Mechanism\nMenangani agregasi produk unggulan, banner multi-posisi, kolom kurasi 'Zyh Signatures', sinkronisasi otomatis status kadaluarsa produk, dan kalkulasi diskon aktif.\n\n### Implication\nMenyuplai seluruh data payload ke view `home.blade.php`, `shop.blade.php`, dan `detail.blade.php`.\n\n### Gotcha\nPerhatikan pemisahan stok out-of-stock dan in-stock agar produk yang masih ready selalu diprioritaskan di daftar teratas."
+    },
+    {
+      "file": "resources/views/Pelanggan/home.blade.php",
+      "line": 1,
+      "title": "3. Home View (CSS-Dominated Styling)",
+      "description": "### Situation\nHalaman beranda toko pelanggan dengan 1.771 baris kode.\n\n### Mechanism\nDidominasi oleh CSS terintegrasi (~1.060 baris / 60%) yang mengatur layout grid 4-kolom responsif, banner hero, countdown flash sale, dan card produk signature.\n\n### Implication\nMenjamin performa render landing page yang cepat tanpa dependensi stylesheet eksternal tambahan yang besar.\n\n### Gotcha\nModifikasi tata letak banner atau card kolom beranda dilakukan langsung di blok `<style>` view ini."
+    },
+    {
+      "file": "app/Http/Controllers/Pelanggan/CartCheckoutController.php",
+      "line": 30,
+      "title": "4. Checkout & Cart Business Logic",
+      "description": "### Situation\nController yang mengatur alur keranjang belanja dan inisialisasi checkout pelanggan.\n\n### Mechanism\nMemvalidasi ketersediaan stok fisik sebelum pesanan dibuat, memproses catatan custom teks kue, mengunci harga diskon, serta berinteraksi dengan API kurir Biteship untuk ongkos kirim dinamis.\n\n### Implication\nMencegah race condition pengurangan stok ganda saat pelanggan checkout bersamaan.\n\n### Gotcha\nBila kuantitas melebihi stok yang tersedia, controller melempar validasi error sebelum pesanan disimpan ke database."
+    },
+    {
+      "file": "resources/views/Pelanggan/checkout.blade.php",
+      "line": 50,
+      "title": "5. Checkout View (JS-Dominated Interactivity)",
+      "description": "### Situation\nHalaman transaksi pembayaran dan alamat pengiriman dengan 1.165 baris kode.\n\n### Mechanism\nDidominasi oleh JavaScript (~612 baris / 52.5%) yang mengendalikan interaksi peta Leaflet untuk pin point GPS, autocomplete alamat Biteship, kalkulasi ongkos kirim real-time, dan switch metode pembayaran (COD vs Transfer Bank vs Midtrans).\n\n### Implication\nInteraksi checkout berjalan secara asinkron tanpa reload halaman penuh.\n\n### Gotcha\nPastikan event listener koordinat lat/lng dan kalkulasi total belanja sinkron dengan hidden inputs sebelum form di-submit."
+    },
+    {
+      "file": "app/Http/Controllers/Pelanggan/PembayaranController.php",
+      "line": 25,
+      "title": "6. Payment Processing Gateway",
+      "description": "### Situation\nController pemrosesan gateway pembayaran Midtrans Snap dan konfirmasi transfer bank manual.\n\n### Mechanism\nMenerima webhook notifikasi pembayaran instan dari Midtrans, memverifikasi cryptographic SHA-512 signature hash, dan mengupdate status pesanan menjadi 'Menunggu Konfirmasi' atau 'Lunas'.\n\n### Implication\nPembayaran online otomatis terverifikasi dan stok barang dipotong secara presisi.\n\n### Gotcha\nPermintaan webhook dengan signature key yang tidak cocok otomatis ditolak dengan HTTP status 403 Forbidden."
+    },
+    {
+      "file": "resources/views/Pelanggan/order_detail.blade.php",
+      "line": 1,
+      "title": "7. Order Detail (High-Complexity CSS & Tracking JS)",
+      "description": "### Situation\nFile view terbesar di dalam proyek dengan 3.400 baris kode.\n\n### Mechanism\nMemadukan 1.615 baris CSS (47.5%) dan 621 baris JS (18.3%) untuk merender stepper status pengiriman paket, modal bukti transfer bank, pelacakan live waybill Biteship, dan modal interaktif detail alamat.\n\n### Implication\nMenjadi pusat layanan pasca-pembelian bagi pelanggan, termasuk fitur pengajuan retur pesanan.\n\n### Gotcha\nDesain tombol 'Bayar Sekarang' dan 'Lacak Pesanan' telah diseragamkan dengan styling pill border-radius 50px."
+    },
+    {
+      "file": "app/Http/Controllers/Admin/PesananController.php",
+      "line": 40,
+      "title": "8. Admin Orders & POS Engine",
+      "description": "### Situation\nController terbesar di aplikasi dengan 1.014 baris kode PHP murni.\n\n### Mechanism\nMengelola seluruh lifecycle pesanan, invoice PDF, verifikasi pembayaran bank transfer, update status resi pengiriman, serta endpoint live AJAX pencarian transaksi pada tabel penjualan.\n\n### Implication\nMenjadi tulang punggung operasional toko fisik dan online bagi peran Admin dan Kasir.\n\n### Gotcha\nFungsi quick-confirm diblokir untuk pesanan transfer bank yang belum mengunggah bukti transfer yang valid."
+    },
+    {
+      "file": "resources/views/Admin/kelola_penjualan/pos.blade.php",
+      "line": 20,
+      "title": "9. Point of Sale (POS) Cashier UI",
+      "description": "### Situation\nAntarmuka kasir toko offline (`/admin/pos`) dengan 566 baris kode.\n\n### Mechanism\nDidominasi oleh JavaScript (~223 baris / 39.4%) untuk scanning produk, penambahan item keranjang instan tanpa reload, modal restock cepat, dan perhitungan kembalian tunai.\n\n### Implication\nKasir dapat memproses transaksi offline dengan kecepatan tinggi dan memicu pemotongan stok otomatis di database.\n\n### Gotcha\nSemua perubahan kuantitas dan harga diskon dikalkulasi di sisi browser sebelum dikirimkan ke endpoint POS checkout."
+    },
+    {
+      "file": "app/Http/Controllers/AuthController.php",
+      "line": 35,
+      "title": "10. Authentication & Security Engine",
+      "description": "### Situation\nController otentikasi sentral (519 baris kode PHP).\n\n### Mechanism\nMenangani login multi-role (Admin, Kasir, Pelanggan), registrasi berbasis verifikasi 6-digit OTP email, Google OAuth 2.0 social login, serta proteksi blokir akun pengguna bermasalah.\n\n### Implication\nMemastikan setiap request dilindungi oleh role middleware dan session state yang terisolasi dengan aman.\n\n### Gotcha\nPengguna baru yang mendaftar lewat Google otomatis diarahkan ke verifikasi nomor handphone sebelum dapat bertransaksi."
+    }
+  ]
+}

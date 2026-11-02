@@ -103,6 +103,9 @@
             </ul>
 
             <!-- Toolbar & Search Form -->
+            @php
+                $hasActiveFilters = (request('status') && request('status') !== 'all') || request('search');
+            @endphp
             <form method="GET" action="{{ route('messages.index') }}" class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
                 @if(request('status'))
                     <input type="hidden" name="status" value="{{ request('status') }}">
@@ -112,11 +115,18 @@
                         <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                     </button>
                 </div>
-                <div class="position-relative w-100 w-md-auto" style="min-width: 280px;">
-                    <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
-                        class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama, email, subjek, pesan..."
-                        style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2;">
-                    <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;"></i>
+                <div class="d-flex align-items-center gap-2 w-100 w-md-auto flex-wrap justify-content-end">
+                    <div class="position-relative w-100 w-md-auto" style="min-width: 280px;">
+                        <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
+                            class="form-control form-control-sm ps-5 pe-3" placeholder="Cari nama, email, subjek, pesan..."
+                            style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px;">
+                        <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;"></i>
+                    </div>
+                    @if($hasActiveFilters)
+                        <a href="{{ route('messages.index') }}" class="admin-btn-reset" title="Reset Filter">
+                            <i class="mdi mdi-refresh me-1"></i> Reset
+                        </a>
+                    @endif
                 </div>
             </form>
 
@@ -270,8 +280,17 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center py-5 text-muted">
-                                    <i class="mdi mdi-email-outline d-block mb-2" style="font-size: 36px; opacity: 0.5;"></i>
-                                    Tidak ada pesan kontak yang ditemukan.
+                                    @if($hasActiveFilters)
+                                        <i class="mdi mdi-email-search-outline d-block mb-2" style="font-size: 44px; opacity: 0.6;"></i>
+                                        <h6 class="text-dark font-weight-bold mb-1">Tidak Ditemukan Pesan yang Sesuai</h6>
+                                        <p class="text-muted mb-3" style="font-size: 13px;">Tidak ada pesan untuk kriteria status atau pencarian yang aktif.</p>
+                                        <a href="{{ route('messages.index') }}" class="btn btn-sm btn-gradient-primary rounded-pill px-4">
+                                            <i class="mdi mdi-refresh me-1"></i> Reset Pencarian
+                                        </a>
+                                    @else
+                                        <i class="mdi mdi-email-outline d-block mb-2" style="font-size: 36px; opacity: 0.5;"></i>
+                                        Tidak ada pesan kontak yang ditemukan.
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
@@ -286,7 +305,7 @@
                         Menampilkan {{ $messages->firstItem() }} - {{ $messages->lastItem() }} dari {{ $messages->total() }} pesan
                     </small>
                     <div>
-                        {{ $messages->links('pagination::bootstrap-5') }}
+                        {{ $messages->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             @endif
@@ -380,73 +399,6 @@
 
 @section('scripts')
 <script>
-    // Handle select all checkboxes
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    const messageCheckboxes = document.querySelectorAll('.message-checkbox');
-    const btnBulkDelete = document.getElementById('btnBulkDelete');
-    const selectedCountSpan = document.getElementById('selectedCount');
-
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            messageCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
-            updateBulkDeleteState();
-        });
-    }
-
-    function updateBulkDeleteState() {
-        const checked = document.querySelectorAll('.message-checkbox:checked');
-        const count = checked.length;
-        if (count > 0) {
-            btnBulkDelete.classList.remove('d-none');
-            btnBulkDelete.classList.add('d-inline-flex');
-            selectedCountSpan.textContent = count;
-        } else {
-            btnBulkDelete.classList.add('d-none');
-            btnBulkDelete.classList.remove('d-inline-flex');
-            selectedCountSpan.textContent = 0;
-            if (selectAllCheckbox) selectAllCheckbox.checked = false;
-        }
-    }
-
-    function confirmBulkDelete() {
-        const checked = document.querySelectorAll('.message-checkbox:checked');
-        if (checked.length === 0) return;
-
-        const ids = Array.from(checked).map(cb => cb.value);
-
-        Swal.fire({
-            title: 'Hapus Pesan Terpilih?',
-            text: `Apakah Anda yakin ingin menghapus ${ids.length} pesan terpilih? Tindakan ini tidak dapat dibatalkan.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#fe7096',
-            cancelButtonColor: '#9c9fa6',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('bulkDeleteIds').value = ids.join(',');
-                document.getElementById('bulkDeleteForm').submit();
-            }
-        });
-    }
-
-    function confirmDelete(id) {
-        Swal.fire({
-            title: 'Hapus Pesan Ini?',
-            text: 'Pesan kontak ini akan dihapus secara permanen dari database.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#fe7096',
-            cancelButtonColor: '#9c9fa6',
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('deleteForm-' + id).submit();
-            }
-        });
-    }
 
     function openMessageDetail(id, nama, email, subjek, pesan, status, time) {
         document.getElementById('modalSenderName').textContent = nama;

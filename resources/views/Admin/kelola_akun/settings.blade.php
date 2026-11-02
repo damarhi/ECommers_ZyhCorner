@@ -22,8 +22,8 @@
                                 <img src="{{ asset('storage/' . $admin->foto) }}" alt="{{ $admin->nama }}"
                                     class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #4F46E5;">
                             @else
-                                <div class="rounded-circle bg-gradient-primary text-white d-flex align-items-center justify-content-center shadow-sm"
-                                    style="width: 100px; height: 100px; font-size: 38px; font-weight: 700;">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 100px; height: 100px; font-size: 38px; font-weight: 700; background: #1E2753;">
                                     {{ strtoupper(substr($admin->nama, 0, 1)) }}
                                 </div>
                             @endif
@@ -31,7 +31,7 @@
 
                         <h5 class="font-weight-bold text-dark mb-1" style="font-size: 18px;">{{ $admin->nama }}</h5>
                         <p class="text-muted mb-2" style="font-size: 13px;">{{ $admin->email }}</p>
-                        <span class="badge badge-gradient-primary px-3 py-2" style="border-radius: 20px; font-size: 12px;">
+                        <span class="badge px-3 py-2 text-white shadow-sm" style="background: #4F46E5; border-radius: 20px; font-size: 12px; font-weight: 600;">
                             <i class="mdi mdi-shield-check me-1"></i> Administrator
                         </span>
 

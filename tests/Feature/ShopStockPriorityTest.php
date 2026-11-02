@@ -114,4 +114,58 @@ class ShopStockPriorityTest extends TestCase
             'category' => 'Dessert',
         ]);
     }
+
+    public function test_shop_filter_by_custom_price_range(): void
+    {
+        $kategori = Kategori::create([
+            'nama_kategori' => 'Bakery Showcase',
+            'gambar_kategori' => 'dummy.png',
+        ]);
+
+        Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'showcase',
+            'nama_produk' => 'Roti Manis Murah',
+            'harga' => 15000,
+            'status_produk' => 'tersedia',
+        ]);
+
+        Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'showcase',
+            'nama_produk' => 'Cake Strawberry Sedang',
+            'harga' => 75000,
+            'status_produk' => 'tersedia',
+        ]);
+
+        Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'showcase',
+            'nama_produk' => 'Hampers Premium Spesial',
+            'harga' => 250000,
+            'status_produk' => 'tersedia',
+        ]);
+
+        // Filter range 50.000 - 100.000
+        $response = $this->get(route('shop', [
+            'min_price' => '50000',
+            'max_price' => '100000',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Cake Strawberry Sedang');
+        $response->assertDontSee('Roti Manis Murah');
+        $response->assertDontSee('Hampers Premium Spesial');
+        $response->assertSee('Rp 50.000 - Rp 100.000');
+
+        // Filter minimum only (>= 200.000)
+        $responseMinOnly = $this->get(route('shop', [
+            'min_price' => '200000',
+        ]));
+
+        $responseMinOnly->assertStatus(200);
+        $responseMinOnly->assertSee('Hampers Premium Spesial');
+        $responseMinOnly->assertDontSee('Cake Strawberry Sedang');
+        $responseMinOnly->assertDontSee('Roti Manis Murah');
+    }
 }

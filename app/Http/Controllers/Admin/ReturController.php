@@ -51,7 +51,7 @@ class ReturController extends Controller
             $query->where('status', $request->filter);
         }
 
-        $returs = $query->latest()->paginate(10);
+        $returs = $query->latest()->paginate(10)->withQueryString();
 
         // Status counts for tab navigation
         $statusCounts = [

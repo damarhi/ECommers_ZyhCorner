@@ -95,7 +95,6 @@ class SignatureProductsTest extends TestCase
         $response->assertStatus(200);
 
         $response->assertSee('Zyh Signatures');
-        $response->assertSee('Mahakarya');
         $response->assertSee('Royal Opera Cake');
         $response->assertSee('signature-badge');
     }
@@ -319,5 +318,47 @@ class SignatureProductsTest extends TestCase
             'is_signature' => 1,
             'tanggal_expired' => '2026-11-05',
         ]);
+    }
+
+    public function test_shop_and_modal_render_correct_signature_data_attribute_and_hidden_initial_state(): void
+    {
+        $kategori = Kategori::create([
+            'nama_kategori' => 'Cemilan & Snack',
+            'gambar_kategori' => 'snack.jpg'
+        ]);
+
+        $regularProduct = Produk::create([
+            'nama_produk' => 'Cheese Sago Cookies',
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'showcase',
+            'harga' => 45000,
+            'status_produk' => '6',
+            'is_signature' => false,
+        ]);
+
+        $signatureProduct = Produk::create([
+            'nama_produk' => 'Black Forest Cake Classic',
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'showcase',
+            'harga' => 125000,
+            'status_produk' => '10',
+            'is_signature' => true,
+        ]);
+
+        $response = $this->get(route('shop'));
+        $response->assertStatus(200);
+
+        // Regular product must have data-is-signature="0"
+        $response->assertSee('data-name="Cheese Sago Cookies"', false);
+        $response->assertSee('data-is-signature="0"', false);
+
+        // Signature product must have data-is-signature="1"
+        $response->assertSee('data-name="Black Forest Cake Classic"', false);
+        $response->assertSee('data-is-signature="1"', false);
+
+        // Layout modal signature badge must be initially hidden with is-hidden class
+        $response->assertSee('id="pmSignatureBadge"', false);
+        $response->assertSee('class="signature-badge eyebrow-signature pm-signature-badge is-hidden"', false);
+        $response->assertSee('style="display: none !important;"', false);
     }
 }

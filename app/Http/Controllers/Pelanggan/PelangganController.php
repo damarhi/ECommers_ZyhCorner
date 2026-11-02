@@ -153,8 +153,21 @@ class PelangganController extends Controller
             $query->where('id_kategori', $request->input('category'));
         }
 
-        // Filter by Price Range
-        if ($request->filled('price')) {
+        // Filter by Price Range (Custom Min/Max & Preset)
+        if ($request->filled('min_price') || $request->filled('max_price')) {
+            $rawMin = $request->input('min_price');
+            $rawMax = $request->input('max_price');
+            $minPrice = $rawMin !== null && $rawMin !== '' ? intval(preg_replace('/[^0-9]/', '', (string)$rawMin)) : null;
+            $maxPrice = $rawMax !== null && $rawMax !== '' ? intval(preg_replace('/[^0-9]/', '', (string)$rawMax)) : null;
+
+            if ($minPrice !== null && $maxPrice !== null && $maxPrice >= $minPrice) {
+                $query->whereBetween('harga', [$minPrice, $maxPrice]);
+            } elseif ($minPrice !== null && $minPrice > 0) {
+                $query->where('harga', '>=', $minPrice);
+            } elseif ($maxPrice !== null && $maxPrice > 0) {
+                $query->where('harga', '<=', $maxPrice);
+            }
+        } elseif ($request->filled('price')) {
             $priceRange = explode('-', $request->input('price'));
             if (count($priceRange) === 2) {
                 $minPrice = intval($priceRange[0]) * 1000;
@@ -218,8 +231,21 @@ class PelangganController extends Controller
             $query->where('id_kategori', $request->input('category'));
         }
 
-        // Filter by Price Range
-        if ($request->filled('price')) {
+        // Filter by Price Range (Custom Min/Max & Preset)
+        if ($request->filled('min_price') || $request->filled('max_price')) {
+            $rawMin = $request->input('min_price');
+            $rawMax = $request->input('max_price');
+            $minPrice = $rawMin !== null && $rawMin !== '' ? intval(preg_replace('/[^0-9]/', '', (string)$rawMin)) : null;
+            $maxPrice = $rawMax !== null && $rawMax !== '' ? intval(preg_replace('/[^0-9]/', '', (string)$rawMax)) : null;
+
+            if ($minPrice !== null && $maxPrice !== null && $maxPrice >= $minPrice) {
+                $query->whereBetween('harga', [$minPrice, $maxPrice]);
+            } elseif ($minPrice !== null && $minPrice > 0) {
+                $query->where('harga', '>=', $minPrice);
+            } elseif ($maxPrice !== null && $maxPrice > 0) {
+                $query->where('harga', '<=', $maxPrice);
+            }
+        } elseif ($request->filled('price')) {
             $priceRange = explode('-', $request->input('price'));
             if (count($priceRange) === 2) {
                 $minPrice = intval($priceRange[0]) * 1000;

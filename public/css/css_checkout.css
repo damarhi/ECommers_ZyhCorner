@@ -1,0 +1,70 @@
+.btn-refresh-shipping {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #00b207 !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #00b207 !important;
+        border-radius: 8px !important;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        line-height: 1.2;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        text-decoration: none;
+    }
+    .btn-refresh-shipping:hover:not(:disabled) {
+        background-color: #00b207 !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 10px rgba(0, 178, 7, 0.22);
+        transform: translateY(-1px);
+    }
+    .btn-refresh-shipping:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0, 178, 7, 0.15);
+    }
+    .btn-refresh-shipping:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background-color: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #64748b !important;
+        box-shadow: none;
+        transform: none;
+    }
+    .btn-refresh-shipping:focus-visible {
+        outline: 2px solid #00b207;
+        outline-offset: 2px;
+    }
+    .shipping-card-content-simple .shipping-cost-tag {
+        margin-left: auto;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        background-color: #f1f5f9;
+        padding: 3px 9px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    .shipping-card-option.active .shipping-card-content-simple .shipping-cost-tag {
+        color: #00b207;
+        background-color: #dcfce7;
+        border-color: #bbf7d0;
+    }
+    .payment-option-item.is-locked {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        background-color: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+    .payment-option-item.is-locked * {
+        cursor: not-allowed !important;
+    }
+    .payment-option-item.is-locked:hover {
+        border-color: #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        box-shadow: none !important;
+    }

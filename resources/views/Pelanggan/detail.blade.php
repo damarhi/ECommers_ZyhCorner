@@ -101,7 +101,7 @@
                 <div class="pi-eyebrow-row">
                     <div class="pi-category">{{ $product->kategori->nama_kategori ?? 'Produk' }}</div>
                     @if ($product->is_signature)
-                        <span class="signature-badge detail-signature-badge">
+                        <span class="signature-badge eyebrow-signature detail-signature-badge">
                             <i class="fa-solid fa-crown"></i> Zyh Signature
                         </span>
                     @endif
@@ -176,6 +176,9 @@
                         <button class="btn-buy" onclick="buyNow()">
                             <i class="fa-solid fa-bag-shopping"></i> Beli Sekarang
                         </button>
+                        <button type="button" class="btn-cart-detail" onclick="addToCartFromDetail()" title="Tambah ke Keranjang" aria-label="Tambah ke keranjang">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                        </button>
                         <div id="qtyStockWarning" class="qty-stock-warning" style="display: none;">
                             <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok tercapai (tersisa {{ $product->stok }} unit)
                         </div>
@@ -187,6 +190,9 @@
                         </div>
                         <button class="btn-buy disabled" disabled style="background-color: #e6e6e6 !important; color: #999999 !important; cursor: not-allowed;">
                             <i class="fa-solid fa-ban"></i> Stok Habis
+                        </button>
+                        <button type="button" class="btn-cart-detail disabled" disabled title="Stok Habis" aria-label="Stok habis">
+                            <i class="fa-solid fa-cart-shopping"></i>
                         </button>
                     @endif
                 </div>
@@ -267,6 +273,8 @@
                             <div class="product-image">
                                 @if ($rp->has_diskon)
                                     <div class="sale-badge">{{ $rp->diskon_badge }}</div>
+                                @elseif ($rp->stok == 0)
+                                    <div class="sale-badge out-of-stock">Habis</div>
                                 @endif
 
                                 <div class="product-actions">
@@ -296,24 +304,24 @@
                                 </a>
                             </div>
                             <div class="product-info">
-                                @if ($rp->is_signature)
+                                @if ($rp->is_signature || $rp->stok == 0)
                                     <div class="product-meta-eyebrow mb-1">
-                                        <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                        @if ($rp->is_signature)
+                                            <span class="signature-badge eyebrow-signature"><i class="fa-solid fa-crown"></i> Signature</span>
+                                        @endif
+                                        @if ($rp->stok == 0)
+                                            <span class="stock-status-inline">Habis</span>
+                                        @endif
                                     </div>
                                 @endif
                                 <a href="{{ route('product.detail', $rp->id_produk) }}{{ request()->query('custom') == 1 ? '?custom=1' : '' }}"
                                     class="product-name" onclick="event.stopPropagation();">{{ $rp->nama_produk }}</a>
-                                <div class="product-price d-flex align-items-center justify-content-between">
-                                    <div>
-                                        @if ($rp->has_diskon)
-                                            Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}
-                                            <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
-                                        @else
-                                            Rp. {{ number_format($rp->harga, 0, ',', '.') }}
-                                        @endif
-                                    </div>
-                                    @if ($rp->stok == 0)
-                                        <span class="stock-status-inline">Habis</span>
+                                <div class="product-price">
+                                    @if ($rp->has_diskon)
+                                        Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}
+                                        <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
+                                    @else
+                                        Rp. {{ number_format($rp->harga, 0, ',', '.') }}
                                     @endif
                                 </div>
 

@@ -43,7 +43,7 @@ class PosController extends Controller
             ELSE 0 
         END DESC")->latest();
 
-        $products = $query->paginate(20);
+        $products = $query->paginate(20)->withQueryString();
         $kategoris = Kategori::all();
         return view('Admin.kelola_penjualan.pos', compact('products', 'kategoris'));
     }

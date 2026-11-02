@@ -338,20 +338,33 @@
                     <div class="pm-header-group">
                         <div class="pm-eyebrow-row">
                             <span class="pm-eyebrow" id="pmEyebrow">Kategori Produk</span>
-                            <span class="signature-badge pm-signature-badge" id="pmSignatureBadge" style="display: none;">
-                                <i class="fa-solid fa-crown"></i> Signature
+                            <span class="signature-badge eyebrow-signature pm-signature-badge is-hidden" id="pmSignatureBadge" style="display: none !important;">
+                                <i class="fa-solid fa-crown"></i> Zyh Signature
                             </span>
                         </div>
                         <h2 class="pm-title" id="pmName">Product Name</h2>
-                        <div class="pm-meta-row">
-                            <span class="pm-stock-pill" id="pmStock">
-                                <span class="pm-status-dot"></span>
-                                <span class="pm-stock-text">Tersedia</span>
-                            </span>
-                            <span class="pm-meta-separator">•</span>
-                            <span class="pm-sku-text">SKU: <strong id="pmSku">ZYH-0001</strong></span>
-                            <span class="pm-meta-separator" id="pmExpiredSep" style="display: none;">•</span>
-                            <span class="pm-expired-text" id="pmExpired" style="display: none;">Expired: <strong id="pmExpiredVal">-</strong></span>
+                        <div class="pm-meta-vertical">
+                            <div class="pm-meta-item">
+                                <span class="pm-meta-label">Stok</span>
+                                <span class="pm-meta-colon">:</span>
+                                <span class="pm-meta-val">
+                                    <span class="pm-stock-pill" id="pmStock">
+                                        <span class="pm-status-dot"></span>
+                                        <span class="pm-stock-text">Tersedia</span>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="pm-meta-item">
+                                <span class="pm-meta-label">Kode Produk</span>
+                                <span class="pm-meta-colon">:</span>
+                                <span class="pm-meta-val pm-sku-text"><strong id="pmSku">ZYH-0001</strong></span>
+                            </div>
+                            <div class="pm-meta-item" id="pmExpired" style="display: none;">
+                                <span class="pm-meta-label">Expired</span>
+                                <span class="pm-meta-colon">:</span>
+                                <span class="pm-meta-val pm-expired-text"><strong id="pmExpiredVal">-</strong></span>
+                            </div>
+                            <span id="pmExpiredSep" style="display: none;"></span>
                         </div>
                     </div>
 
@@ -361,7 +374,6 @@
                         <span class="pm-old-price" id="pmOldPrice" style="display: none;"></span>
                         <span class="pm-discount-badge" id="pmDiscountBadge" style="display: none;"></span>
                     </div>
-
                     <!-- Description -->
                     <div class="pm-desc" id="pmDesc"></div>
 

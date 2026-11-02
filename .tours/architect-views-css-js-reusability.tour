@@ -1,0 +1,90 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Views CSS and JavaScript Reusability Tour",
+  "description": "Architectural walkthrough classifying embedded CSS and JavaScript across all 51 Blade views into reusable components vs view-specific bespoke logic.",
+  "steps": [
+    {
+      "directory": "resources/views",
+      "title": "Orientation: Views Asset Landscape",
+      "description": "### Situation\nYou are at the root of `resources/views`, containing all 51 Blade view files across Admin, Pelanggan, Auth, Layout, emails, and error templates.\n\n### Mechanism\nThe application contains ~3,766 lines of embedded `<style>` CSS and ~4,120 lines of embedded `<script>` JavaScript directly inside individual Blade views rather than external bundles.\n\n### Implication\nMultiple views share near-identical logic (bulk deletion, delete confirmations, OTP timers, Biteship tracking modals, payment proof upload modals) that create maintenance liabilities when modified.\n\n### Gotcha\nEven though master layouts `layout_pAdmin` and `layout_pelanggan` load global CSS/JS, views frequently duplicate boilerplate scripts locally instead of using shared components."
+    },
+    {
+      "file": "resources/views/Admin/kelola_akun/cassiers.blade.php",
+      "line": 259,
+      "title": "Reusable JS: Bulk Delete Pattern (Admin Cassiers)",
+      "description": "### Situation\nBulk deletion event handlers and checkbox synchronization in the Cashiers management page.\n\n### Mechanism\nListens to `.cassier-row-checkbox`, updates `#selectedCount`, toggles `#btnBulkDelete` visibility, and triggers a SweetAlert2 confirmation dialog before injecting hidden `ids[]` inputs into `#bulkDeleteForm`.\n\n### Implication\nThis exact ~65-line script is duplicated across 11 different admin views (`cassiers`, `customers`, `products`, `categories`, `orders`, `returs`, `discounts`, `expired_products`, `custom_products`, `banners`, `contact_messages`).\n\n### Gotcha\nAny change to the delete confirmation modal style or behavior requires manual, error-prone updates across all 11 files unless extracted to `public/js/admin-bulk-actions.js`."
+    },
+    {
+      "file": "resources/views/Admin/kelola_produk/products.blade.php",
+      "line": 240,
+      "title": "Reusable JS: Bulk Delete Products (Catalog)",
+      "description": "### Situation\nProducts catalog bulk delete implementation matching the cashier view.\n\n### Mechanism\nRepeats the exact same DOMContentLoaded event listener, `checkAll` checkbox behavior, and SweetAlert2 confirmation dialog structure.\n\n### Implication\nConfirms that bulk entity operations follow a single uniform contract across the entire administrative panel.\n\n### Gotcha\nA declarative HTML data-attribute approach (`data-bulk-table`, `data-bulk-checkbox`, `data-bulk-submit`) can eliminate ~700 lines of repetitive JavaScript across all admin views."
+    },
+    {
+      "file": "resources/views/Auth/google_verify.blade.php",
+      "line": 7,
+      "title": "Reusable CSS: OTP Card & Input Styling",
+      "description": "### Situation\nEmbedded `<style>` block defining the visual design of the OTP verification interface.\n\n### Mechanism\nDeclares styles for `.otp-verify-card`, `.otp-code-input`, `.otp-submit-btn`, `.resend-otp-btn`, and timer badges.\n\n### Implication\nThis 92-line CSS block is 100% identical to the CSS in `resources/views/Auth/register_verify.blade.php`.\n\n### Gotcha\nHaving identical CSS duplicated across two auth views introduces divergence risk whenever auth styling is adjusted. Both should link a shared `public/css/auth.css`."
+    },
+    {
+      "file": "resources/views/Auth/google_verify.blade.php",
+      "line": 135,
+      "title": "Reusable JS: 60-Second OTP Countdown Timer",
+      "description": "### Situation\nJavaScript countdown timer and digit filtering on the OTP verification form.\n\n### Mechanism\nImplements a 60-second countdown backed by `localStorage.getItem('otp_timer_end')` to persist across page refreshes, automatically toggling the resend button state and enforcing numeric-only input.\n\n### Implication\nIdentical logic exists at line 135 of `resources/views/Auth/register_verify.blade.php`.\n\n### Gotcha\nFixing a timer or input sanitization bug in Google Auth OTP leaves Register OTP vulnerable unless the logic is extracted into a shared `public/js/auth-otp.js`."
+    },
+    {
+      "file": "resources/views/Admin/kelola_penjualan/orders.blade.php",
+      "line": 507,
+      "title": "Reusable CSS: Order Status Badges & Pills",
+      "description": "### Situation\nCustom badge styles for order statuses in the admin orders view.\n\n### Mechanism\nDefines background colors and text styles for `.badge-menunggu-konfirmasi`, `.badge-dikemas`, `.badge-dikirim`, and `.badge-selesai`.\n\n### Implication\nThese exact status pills are repeated across `returs.blade.php`, `sales_report.blade.php`, and `all_sales.blade.php`.\n\n### Gotcha\nSince `layout_pAdmin.blade.php` already imports `public/css/admin.css`, moving these classes to `admin.css` provides instant global consistency with zero extra HTTP requests."
+    },
+    {
+      "file": "resources/views/Pelanggan/order_detail.blade.php",
+      "line": 550,
+      "title": "Reusable CSS: Biteship Tracking Stepper & Modal",
+      "description": "### Situation\nDetailed CSS styling for the Biteship shipping tracking timeline modal.\n\n### Mechanism\nStyles `.biteship-timeline`, checkpoint circles, dashed progression lines, pulse animations for active status, and courier branding.\n\n### Implication\nThis 290-line modal stylesheet is partially duplicated in `order_history.blade.php` and `dashboard.blade.php`.\n\n### Gotcha\nMoving this styling to `public/css/pelanggan.css` unifies tracking presentation across all customer order touchpoints."
+    },
+    {
+      "file": "resources/views/Pelanggan/order_detail.blade.php",
+      "line": 2737,
+      "title": "Reusable JS: Biteship Tracking & Clipboard Resi",
+      "description": "### Situation\nClient-side script handling Biteship tracking modal rendering and waybill copy-to-clipboard.\n\n### Mechanism\nFetches tracking timeline checkpoints, parses timestamps, formats courier statuses, and executes clipboard copying with a toast notification.\n\n### Implication\nNearly identical functions exist in `resources/views/Pelanggan/order_history.blade.php` at line 768 (`openOrderHistoryTracking`).\n\n### Gotcha\nA shared Blade component `<x-biteship-tracking-modal />` and `public/js/biteship-tracker.js` would eliminate hundreds of lines of duplicated frontend code."
+    },
+    {
+      "file": "resources/views/Pelanggan/order_detail.blade.php",
+      "line": 2825,
+      "title": "Reusable JS: Bank Payment Proof Upload Modal",
+      "description": "### Situation\nInteractive upload modal for bank transfer payment receipts.\n\n### Mechanism\nHandles drag-and-drop file selection, client-side MIME-type and size validation (max 5MB), `FileReader` image preview, bank account copy button, and multipart form submission.\n\n### Implication\nDuplicated across `order_detail.blade.php`, `order_history.blade.php`, and `order_success.blade.php`.\n\n### Gotcha\nThis is a prime candidate for a dedicated Blade component `<x-payment-proof-modal />` with an isolated script asset."
+    },
+    {
+      "file": "resources/views/emails/pesan_kontak_baru_admin.blade.php",
+      "line": 7,
+      "title": "Reusable CSS: System Email Notification Layout",
+      "description": "### Situation\nInline CSS stylesheet for transactional email notifications.\n\n### Mechanism\nFormats `.email-card`, `.header`, `.body-content`, `.info-table`, `.btn-action`, and branding elements for email client compatibility.\n\n### Implication\nAll 4 notification email templates (`pesanan_baru_kasir`, `pesan_kontak_baru_admin`, `produk_kadaluarsa_kasir`, `retur_produk_kasir`) duplicate these exact table and card styles.\n\n### Gotcha\nCreating a master Blade layout `resources/views/emails/layout.blade.php` will centralize email branding and ensure visual consistency across all transactional emails."
+    },
+    {
+      "file": "resources/views/Pelanggan/home.blade.php",
+      "line": 20,
+      "title": "Non-Reusable / Bespoke CSS: Storefront Hero Showcase",
+      "description": "### Situation\n1,074 lines of custom CSS dedicated exclusively to the storefront home page.\n\n### Mechanism\nConfigures a 58% full-bleed hero banner melt, frosted glass slider arrows, dual-tone radial spotlights, four-column product grids, and scroll-reveal keyframes.\n\n### Implication\nThis is highly customized visual branding built specifically for the homepage layout.\n\n### Gotcha\nDo not attempt to generalize or force this bespoke styling into global CSS. It should remain scoped specifically to `home.blade.php` (or a dedicated `home.css`)."
+    },
+    {
+      "file": "resources/views/Pelanggan/checkout.blade.php",
+      "line": 179,
+      "title": "Non-Reusable / Bespoke JS: Checkout Shipping Pipeline",
+      "description": "### Situation\n678 lines of checkout-specific JavaScript managing customer orders and shipping.\n\n### Mechanism\nOrchestrates the multi-tier Biteship address cascade (Province -> City -> District -> Subdistrict), dynamic shipping fee recalculation, GPS map coordinate selection, and custom cake text fields.\n\n### Implication\nTightly coupled to checkout form fields, real-time rate queries, and Midtrans checkout payload construction.\n\n### Gotcha\nThis logic is page-specific and should not be merged into general address book handlers."
+    },
+    {
+      "file": "resources/views/Admin/kelola_penjualan/pos.blade.php",
+      "line": 25,
+      "title": "Non-Reusable / Bespoke JS: POS Offline Cart Engine",
+      "description": "### Situation\nPoint of Sale (POS) register interface and offline transaction scripting.\n\n### Mechanism\nMaintains a local in-memory `window.cart` state, listens for hardware barcode scanner inputs, manages offcanvas cart drawers, and calculates cash change in real-time.\n\n### Implication\nStrictly tailored to physical cashier checkout operations; completely decoupled from online customer shopping carts.\n\n### Gotcha\nPOS operations have distinct transaction lifecycle constraints (instant stock reduction, offline cash receipt printing) that do not apply to regular e-commerce views."
+    },
+    {
+      "file": "resources/views/errors/403.blade.php",
+      "line": 14,
+      "title": "Non-Reusable / Bespoke CSS: 403 Forbidden Screen",
+      "description": "### Situation\nStandalone CSS rules styling the custom HTTP 403 Access Denied error screen.\n\n### Mechanism\nUses CSS keyframes (`@keyframes float`, `@keyframes pulse`), SVG lock illustrations, and absolute viewport centering.\n\n### Implication\nError pages must be completely self-contained with zero external asset dependencies to guarantee they render even during system or network failures.\n\n### Gotcha\nKeep error page CSS inline or fully isolated to preserve standalone resilience."
+    }
+  ]
+}

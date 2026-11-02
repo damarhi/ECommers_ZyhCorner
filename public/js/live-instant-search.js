@@ -23,10 +23,12 @@
     }
 
     function initInstantSearch() {
+        // Proteksi agar klik checkbox/label di dropdown tidak menutup menu secara tidak sengaja
+        initDropdownSafeguards();
+
         // Cari semua search input di halaman
         var searchInputs = document.querySelectorAll('input[name="search"], input[data-instant-search="true"], .instant-search-input');
         if (!searchInputs || searchInputs.length === 0) return;
-
         searchInputs.forEach(function(input) {
             if (input.dataset.instantSearchInitialized) return;
             input.dataset.instantSearchInitialized = 'true';
@@ -79,11 +81,34 @@
                 bindAjaxContainer(ajaxContainer, form, input);
             }
 
-            // Cegah reload form saat pengguna menekan tombol Enter jika pencarian ditangani oleh JavaScript
+            // Penanganan pengiriman form filter & pencarian
             if (form) {
                 form.addEventListener('submit', function(e) {
                     var container = getAjaxContainer(input);
-                    if (container || hasLocalFilterableContent()) {
+                    var submitter = e.submitter;
+                    var isSubmitButton = submitter && (
+                        submitter.matches('button[type="submit"], input[type="submit"]') ||
+                        submitter.classList.contains('btn')
+                    );
+
+                    // 1. Jika form memiliki container AJAX (misalnya: all-sales):
+                    if (container) {
+                        e.preventDefault();
+                        if (debounceTimer) clearTimeout(debounceTimer);
+                        triggerAjaxSearch(input, form, container, input.value.trim());
+                        closeActiveDropdown(form);
+                        return;
+                    }
+
+                    // 2. Jika tombol "Terapkan Filter" ditekan pada form reguler server-side:
+                    // Izinkan pengiriman form secara native (jangan panggil e.preventDefault)
+                    if (isSubmitButton) {
+                        closeActiveDropdown(form);
+                        return;
+                    }
+
+                    // 3. Jika pengguna menekan Enter pada input pencarian dan halaman memiliki data lokal yang dapat disaring:
+                    if (hasLocalFilterableContent()) {
                         e.preventDefault();
                         if (debounceTimer) clearTimeout(debounceTimer);
                         triggerFilter(input, input.value.trim());
@@ -120,7 +145,7 @@
     }
 
     function hasLocalFilterableContent() {
-        return document.querySelector('#product-grid, .pos-product-item, .shop-product-col, .banner-col-item, .table tbody tr') !== null;
+        return document.querySelector('#product-grid, .pos-product-item, .shop-product-col, .banner-col-item, [data-search], .table tbody tr') !== null;
     }
 
     function triggerFilter(input, query) {
@@ -150,7 +175,14 @@
             return;
         }
 
-        // 3. Filter Grid Katalog Toko Pelanggan (/shop & /custom-products)
+        // 2b. Filter Grid Kategori & Kasir Admin
+        var dataSearchCards = document.querySelectorAll('.col-md-4[data-search]');
+        if (dataSearchCards && dataSearchCards.length > 0) {
+            var cardContainer = dataSearchCards[0].parentElement;
+            filterGridItems(dataSearchCards, q, cardContainer, 'Tidak ada data yang cocok dengan kata kunci');
+            syncUrlParam('search', query);
+            return;
+        }
         var shopItems = document.querySelectorAll('.shop-product-col, .product-grid .product-card');
         if (shopItems && shopItems.length > 0) {
             var shopContainer = document.querySelector('.product-grid');
@@ -194,9 +226,16 @@
         var targetUrl = new URL(form ? form.action : window.location.href, window.location.origin);
         if (form) {
             var formData = new FormData(form);
+            var handledKeys = new Set();
+            for (var key of formData.keys()) {
+                if (key !== 'page' && key !== 'search' && !handledKeys.has(key)) {
+                    targetUrl.searchParams.delete(key);
+                    handledKeys.add(key);
+                }
+            }
             for (var pair of formData.entries()) {
                 if (pair[0] !== 'page' && pair[0] !== 'search') {
-                    targetUrl.searchParams.set(pair[0], pair[1]);
+                    targetUrl.searchParams.append(pair[0], pair[1]);
                 }
             }
         }
@@ -453,6 +492,30 @@
         };
         return String(string).replace(/[&<>"']/g, function (s) {
             return entityMap[s];
+        });
+    }
+
+    function closeActiveDropdown(container) {
+        var dropdownToggle = (container || document).querySelector('[data-bs-toggle="dropdown"][aria-expanded="true"]');
+        if (dropdownToggle && window.bootstrap && typeof window.bootstrap.Dropdown !== 'undefined') {
+            var instance = window.bootstrap.Dropdown.getInstance(dropdownToggle);
+            if (instance) {
+                instance.hide();
+            }
+        }
+    }
+
+    function initDropdownSafeguards() {
+        document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+            if (menu.dataset.autocloseBound) return;
+            menu.dataset.autocloseBound = 'true';
+            menu.addEventListener('click', function(e) {
+                // Cegah penutupan otomatis Bootstrap saat pengguna memilih checkbox atau mengklik label di dalam dropdown
+                var isAction = e.target.closest('button[type="submit"], a.dropdown-item, a.btn, .btn-close');
+                if (!isAction) {
+                    e.stopPropagation();
+                }
+            });
         });
     }
 

@@ -70,11 +70,19 @@
             <div class="card border-0 shadow-sm" style="border-radius: 8px;">
                 <div class="card-body p-4">
                     <!-- Toolbar -->
+                    @php
+                        $activeFilterCount = is_array(request('jenis_penjualan')) ? count(request('jenis_penjualan')) : (request('jenis_penjualan') ? 1 : 0);
+                        $hasActiveFilters = $activeFilterCount > 0 || request('search');
+                    @endphp
                     <form method="GET" action="{{ route('all-sales.index') }}" id="all-sales-filter-form" data-ajax-container="#all-sales-table-container" class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100 w-md-auto">
+                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 w-100 w-md-auto flex-wrap">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle d-inline-flex align-items-center justify-content-between w-100" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height: 32px; padding: 0 15px; min-width: 120px;">
-                                    <span class="d-flex align-items-center"><i class="mdi mdi-filter-variant me-2"></i> Filter</span>
+                                <button class="btn btn-sm admin-filter-btn {{ $activeFilterCount > 0 ? 'active' : '' }} dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false" style="min-width: 130px;">
+                                    <span class="d-inline-flex align-items-center"><i class="mdi mdi-filter-variant me-1.5"></i> Filter
+                                        @if($activeFilterCount > 0)
+                                            <span class="admin-filter-badge ms-1.5">{{ $activeFilterCount }}</span>
+                                        @endif
+                                    </span>
                                 </button>
                                 <div class="dropdown-menu p-3 shadow" aria-labelledby="filterDropdown" style="width: 220px; border-radius: 8px; margin-top: 5px;">
                                     <h6 class="dropdown-header px-0 mb-2 text-primary" style="font-size: 13px; font-weight: 600;">Jenis Penjualan</h6>
@@ -88,16 +96,21 @@
                                             <input type="checkbox" name="jenis_penjualan[]" value="Offline" class="form-check-input" {{ is_array(request('jenis_penjualan')) && in_array('Offline', request('jenis_penjualan')) ? 'checked' : '' }}> Offline
                                         </label>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
+                                    <button type="submit" class="btn btn-sm btn-gradient-primary w-100" style="height: 34px; font-weight: 600;">Terapkan Filter</button>
                                 </div>
                             </div>
-                            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                            <div class="position-relative w-100 w-sm-auto" style="min-width: 240px; max-width: 320px;">
                                 <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                     class="form-control form-control-sm ps-5 pe-3" placeholder="Cari pesanan, pelanggan, atau produk..."
-                                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;"
+                                    style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px;"
                                     data-server-search="true">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
+                            @if($hasActiveFilters)
+                                <a href="{{ route('all-sales.index') }}" class="admin-btn-reset" title="Reset Filter">
+                                    <i class="mdi mdi-refresh me-1"></i> Reset
+                                </a>
+                            @endif
                         </div>
                     </form>
 

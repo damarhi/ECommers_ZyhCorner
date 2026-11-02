@@ -2,6 +2,10 @@
 
 @section('title', 'FAQ - Zyh Corner')
 
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('css/css_faq.css') }}?v={{ file_exists(public_path('css/css_faq.css')) ? filemtime(public_path('css/css_faq.css')) : time() }}">
+@endsection
+
 @section('breadcrumb')
     <span style="color: #00b207; font-weight: 600;">FAQ</span>
 @endsection
@@ -115,149 +119,9 @@
 @endsection
 
 @section('styles')
-<style>
-    .faq-tab {
-        padding: 8px 18px;
-        border-radius: 8px;
-        border: 1.5px solid #e5e7eb;
-        background: #fff;
-        color: #6b7280;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .faq-tab:hover { border-color: #86efac; color: #15803d; }
-    .faq-tab.active {
-        background: #00b207;
-        color: #fff;
-        border-color: #00b207;
-    }
 
-    .faq-card {
-        background: #fff;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 14px;
-        margin-bottom: 10px;
-        overflow: hidden;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .faq-card:hover { border-color: #86efac; }
-    .faq-card.open { border-color: #00b207; box-shadow: 0 4px 16px rgba(0,178,7,0.08); }
-
-    .faq-q {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 20px;
-        cursor: pointer;
-        gap: 12px;
-    }
-    .faq-title {
-        font-weight: 600;
-        font-size: 15px;
-        color: #1e293b;
-        line-height: 1.5;
-        flex: 1;
-    }
-    .faq-card.open .faq-title { color: #00b207; }
-
-    .faq-icon {
-        width: 32px; height: 32px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        background: #f0fdf4;
-        color: #00b207;
-        font-size: 13px;
-        flex-shrink: 0;
-        transition: all 0.3s ease;
-    }
-    .faq-card.open .faq-icon {
-        background: #00b207;
-        color: #fff;
-        transform: rotate(180deg);
-    }
-
-    .faq-a {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.35s ease;
-    }
-    .faq-a-inner {
-        padding: 0 20px 18px;
-        font-size: 14px;
-        line-height: 1.7;
-        color: #475569;
-        border-top: 1px solid #f1f5f9;
-        padding-top: 14px;
-        margin: 0 20px;
-        padding-left: 0; padding-right: 0;
-    }
-</style>
 @endsection
 
-<script>
-function toggleFaq(i) {
-    var cards = document.querySelectorAll('.faq-card');
-    cards.forEach(function(c, idx) {
-        var a = document.getElementById('faqAnswer' + idx);
-        if (idx === i && !c.classList.contains('open')) {
-            c.classList.add('open');
-            a.style.maxHeight = a.scrollHeight + 'px';
-        } else {
-            c.classList.remove('open');
-            if (a) a.style.maxHeight = '0';
-        }
-    });
-}
-
-function filterCategory(cat, el) {
-    document.querySelectorAll('.faq-tab').forEach(function(t) { t.classList.remove('active'); });
-    el.classList.add('active');
-    // close all
-    document.querySelectorAll('.faq-card').forEach(function(c, idx) {
-        c.classList.remove('open');
-        var a = document.getElementById('faqAnswer' + idx);
-        if (a) a.style.maxHeight = '0';
-    });
-    var vis = 0;
-    document.querySelectorAll('.faq-card').forEach(function(c) {
-        if (cat === 'All' || c.dataset.category === cat) { c.style.display = ''; vis++; }
-        else { c.style.display = 'none'; }
-    });
-    document.getElementById('noResultsMsg').style.display = vis ? 'none' : 'block';
-}
-
-function filterFaqs() {
-    var q = document.getElementById('faqSearchInput').value.toLowerCase().trim();
-    var vis = 0;
-    document.querySelectorAll('.faq-card').forEach(function(c) {
-        var t = c.querySelector('.faq-title').innerText.toLowerCase();
-        var a = c.querySelector('.faq-a-inner').innerText.toLowerCase();
-        if (t.indexOf(q) > -1 || a.indexOf(q) > -1) { c.style.display = ''; vis++; }
-        else { c.style.display = 'none'; }
-    });
-    document.getElementById('noResultsMsg').style.display = vis ? 'none' : 'block';
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof gsap !== 'undefined') {
-        gsap.from('#faqSearchInput, .faq-tab', {
-            y: -20,
-            opacity: 0,
-            duration: 0.65,
-            stagger: 0.08,
-            ease: 'power3.out'
-        });
-
-        gsap.from('.faq-card', {
-            y: 35,
-            opacity: 0,
-            duration: 0.75,
-            stagger: 0.07,
-            ease: 'power3.out',
-            delay: 0.15
-        });
-    }
-});
-</script>
+@section('scripts')
+<script src="{{ asset('js/js_faq.js') }}?v={{ file_exists(public_path('js/js_faq.js')) ? filemtime(public_path('js/js_faq.js')) : time() }}"></script>
+@endsection

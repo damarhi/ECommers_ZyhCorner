@@ -23,39 +23,8 @@
     <div class="dashboard-wrapper">
         <div class="row">
 
-            <!-- Left Side: Navigation Sidebar -->
-            <div class="col-lg-3 col-md-4 mb-4">
-                <div class="sidebar-navigation">
-                    <div class="sidebar-title">Navigation</div>
-                    <ul class="nav-menu-list">
-                        <li class="nav-menu-item">
-                            <a href="{{ route('dashboard') }}">
-                                <i class="fa-solid fa-table-cells-large"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-menu-item active">
-                            <a href="{{ route('order.history') }}">
-                                <i class="fa-solid fa-clock-rotate-left"></i> Order History
-                            </a>
-                        </li>
-                        <li class="nav-menu-item">
-                            <a href="{{ route('userChart') }}">
-                                <i class="fa-solid fa-bag-shopping"></i> Shopping Cart
-                            </a>
-                        </li>
-                        <li class="nav-menu-item">
-                            <a href="{{ route('settings') }}">
-                                <i class="fa-solid fa-gear"></i> Settings
-                            </a>
-                        </li>
-                        <li class="nav-menu-item">
-                            <a href="#" onclick="event.preventDefault(); confirmLogout();">
-                                <i class="fa-solid fa-right-from-bracket"></i> Log-out
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+            <!-- Left Side: Navigation Sidebar Component -->
+            <x-customer-sidebar active="order_history" />
 
             <!-- Right Side: Return Detail Panel -->
             <div class="col-lg-9 col-md-8">

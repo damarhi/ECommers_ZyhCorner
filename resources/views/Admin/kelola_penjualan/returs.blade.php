@@ -63,12 +63,20 @@
                     </ul>
 
                     <!-- Toolbar -->
+                    @php
+                        $activeFilterCount = is_array(request('status')) ? count(request('status')) : (request('status') ? 1 : 0);
+                        $hasActiveFilters = $activeFilterCount > 0 || (request('filter') && request('filter') !== 'All') || request('search');
+                    @endphp
                     <form method="GET" action="{{ route('returs.index') }}" class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
                         <input type="hidden" name="filter" value="{{ request('filter') }}">
-                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 w-100 w-md-auto">
+                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 w-100 w-md-auto flex-wrap">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle d-inline-flex align-items-center justify-content-between w-100" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height: 32px; padding: 0 15px; min-width: 120px;">
-                                    <span class="d-flex align-items-center"><i class="mdi mdi-filter-variant me-2"></i> Filter</span>
+                                <button class="btn btn-sm admin-filter-btn {{ $activeFilterCount > 0 ? 'active' : '' }} dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false" style="min-width: 130px;">
+                                    <span class="d-inline-flex align-items-center"><i class="mdi mdi-filter-variant me-1.5"></i> Filter
+                                        @if($activeFilterCount > 0)
+                                            <span class="admin-filter-badge ms-1.5">{{ $activeFilterCount }}</span>
+                                        @endif
+                                    </span>
                                 </button>
                                 <div class="dropdown-menu p-3 shadow" aria-labelledby="filterDropdown" style="width: 220px; border-radius: 8px; margin-top: 5px;">
                                     <h6 class="dropdown-header px-0 mb-2 text-primary" style="font-size: 13px; font-weight: 600;">Status Retur</h6>
@@ -97,15 +105,20 @@
                                             <input type="checkbox" name="status[]" value="Done" class="form-check-input" {{ is_array(request('status')) && in_array('Done', request('status')) ? 'checked' : '' }}> Selesai
                                         </label>
                                     </div>
-                                    <button type="submit" class="btn btn-sm btn-gradient-primary w-100">Terapkan Filter</button>
+                                    <button type="submit" class="btn btn-sm btn-gradient-primary w-100" style="height: 34px; font-weight: 600;">Terapkan Filter</button>
                                 </div>
                             </div>
-                            <div class="position-relative w-100 w-sm-auto" style="max-width: 280px;">
+                            <div class="position-relative w-100 w-sm-auto" style="min-width: 240px; max-width: 320px;">
                                 <input type="text" name="search" value="{{ request('search') }}" autocomplete="off"
                                     class="form-control form-control-sm ps-5 pe-3" placeholder="Cari retur produk..."
-                                    style="height: 38px; border-radius: 8px; border: 1px solid #ebedf2; background: #ffffff; font-size: 13px;">
+                                    style="height: 38px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px;">
                                 <i class="mdi mdi-magnify position-absolute text-muted" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none;"></i>
                             </div>
+                            @if($hasActiveFilters)
+                                <a href="{{ route('returs.index') }}" class="admin-btn-reset" title="Reset Filter">
+                                    <i class="mdi mdi-refresh me-1"></i> Reset
+                                </a>
+                            @endif
                             <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center px-3 ms-auto" style="height: 38px;" title="Hapus Terpilih">
                                 <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                             </button>
@@ -201,8 +214,16 @@
                                     <td colspan="8" class="text-center py-5">
                                         <div class="d-flex flex-column align-items-center justify-content-center">
                                             <i class="mdi mdi-keyboard-return text-muted mb-2" style="font-size: 64px;"></i>
-                                            <h5 class="text-muted font-weight-bold">Belum Ada Retur</h5>
-                                            <p class="text-muted mb-0" style="font-size: 14px;">Belum ada pengembalian produk saat ini.</p>
+                                            @if($hasActiveFilters)
+                                                <h5 class="text-dark font-weight-bold mb-1">Tidak Ditemukan Data Retur yang Sesuai</h5>
+                                                <p class="text-muted mb-3" style="font-size: 14px;">Tidak ada data retur untuk kriteria filter atau pencarian yang aktif.</p>
+                                                <a href="{{ route('returs.index') }}" class="btn btn-sm btn-gradient-primary rounded-pill px-4">
+                                                    <i class="mdi mdi-refresh me-1"></i> Reset Filter & Pencarian
+                                                </a>
+                                            @else
+                                                <h5 class="text-muted font-weight-bold">Belum Ada Retur</h5>
+                                                <p class="text-muted mb-0" style="font-size: 14px;">Belum ada pengembalian produk saat ini.</p>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -627,74 +648,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const checkAll = document.getElementById('checkAllReturs');
-        const rowCheckboxes = document.querySelectorAll('.retur-row-checkbox');
-        const btnBulkDelete = document.getElementById('btnBulkDelete');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-
-        function updateBulkDeleteState() {
-            const checkedCount = document.querySelectorAll('.retur-row-checkbox:checked').length;
-            if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
-
-            if (btnBulkDelete) {
-                if (checkedCount > 0) {
-                    btnBulkDelete.classList.remove('d-none');
-                    btnBulkDelete.classList.add('d-inline-flex');
-                } else {
-                    btnBulkDelete.classList.add('d-none');
-                    btnBulkDelete.classList.remove('d-inline-flex');
-                }
-            }
-
-            if (checkAll) {
-                checkAll.checked = rowCheckboxes.length > 0 && checkedCount === rowCheckboxes.length;
-            }
-        }
-
-        if (checkAll) {
-            checkAll.addEventListener('change', function() {
-                rowCheckboxes.forEach(cb => cb.checked = this.checked);
-                updateBulkDeleteState();
-            });
-        }
-
-        rowCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateBulkDeleteState);
-        });
-
-        if (btnBulkDelete && bulkDeleteForm) {
-            btnBulkDelete.addEventListener('click', function(e) {
-                e.preventDefault();
-                const selectedCheckboxes = document.querySelectorAll('.retur-row-checkbox:checked');
-                const count = selectedCheckboxes.length;
-                if (count === 0) return;
-
-                Swal.fire({
-                    title: 'Hapus Retur Terpilih?',
-                    text: `Apakah Anda yakin ingin menghapus ${count} data retur yang dipilih?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#EF4444',
-                    cancelButtonColor: '#9CA3AF',
-                    confirmButtonText: 'Ya, Hapus Terpilih!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const inputsContainer = document.getElementById('bulkDeleteInputs');
-                        inputsContainer.innerHTML = '';
-                        selectedCheckboxes.forEach(cb => {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = 'ids[]';
-                            input.value = cb.value;
-                            inputsContainer.appendChild(input);
-                        });
-                        bulkDeleteForm.submit();
-                    }
-                });
-            });
-        }
 
         // Searchable Combobox logic for quickOrderSelect
         const searchInput = document.getElementById('quickOrderSearchInput');

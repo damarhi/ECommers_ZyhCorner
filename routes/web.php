@@ -15,12 +15,15 @@ use App\Http\Controllers\Pelanggan\CustomerAddressController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\BuktiBayarController;
 use App\Http\Controllers\Admin\CassierController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DiskonController;
+use App\Http\Controllers\Admin\EksporController;
 use App\Http\Controllers\Admin\ExpiredProductController;
 use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\Admin\PosController;
 use App\Http\Controllers\Admin\ProdukController;
@@ -100,8 +103,8 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
     Route::post('admin/expired-products/bulk-delete', [ExpiredProductController::class, 'bulkDelete'])->name('products.expired.bulk-delete');
 
     // Export Routes
-    Route::get('admin/all-sales/export', [PesananController::class, 'exportAllSales'])->name('export.all-sales');
-    Route::get('admin/orders/export', [PesananController::class, 'exportOrders'])->name('export.orders');
+    Route::get('admin/all-sales/export', [EksporController::class, 'exportAllSales'])->name('export.all-sales');
+    Route::get('admin/orders/export', [EksporController::class, 'exportOrders'])->name('export.orders');
     Route::get('admin/products/export', [ProdukController::class, 'exportProducts'])->name('export.products');
     Route::get('admin/customers/export', [CustomerController::class, 'exportCustomers'])->name('export.customers');
     Route::get('admin/returs/export', [ReturController::class, 'exportReturs'])->name('export.returs');
@@ -129,14 +132,14 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
 
     Route::post('admin/orders/bulk-delete', [PesananController::class, 'bulkDelete'])->name('orders.bulk-delete');
     Route::resource('admin/orders', PesananController::class)->names('orders');
-    Route::get('admin/all-sales', [PesananController::class, 'allSales'])->name('all-sales.index');
-    Route::get('admin/all-sales/report', [PesananController::class, 'salesReport'])->name('all-sales.report');
+    Route::get('admin/all-sales', [LaporanController::class, 'allSales'])->name('all-sales.index');
+    Route::get('admin/all-sales/report', [LaporanController::class, 'salesReport'])->name('all-sales.report');
     Route::get('admin/orders/{id}/invoice', [PesananController::class, 'printInvoice'])->name('orders.invoice');
     Route::post('admin/orders/{id}/quick-confirm', [PesananController::class, 'quickConfirm'])->name('orders.quickConfirm');
-    Route::post('admin/orders/{id}/confirm-proof', [PesananController::class, 'confirmProof'])->name('orders.confirm-proof');
-    Route::post('admin/orders/{id}/reject-proof', [PesananController::class, 'rejectProof'])->name('orders.reject-proof');
-    Route::post('admin/orders/{id}/confirmProof', [PesananController::class, 'confirmProof'])->name('orders.confirmProof');
-    Route::post('admin/orders/{id}/rejectProof', [PesananController::class, 'rejectProof'])->name('orders.rejectProof');
+    Route::post('admin/orders/{id}/confirm-proof', [BuktiBayarController::class, 'confirmProof'])->name('orders.confirm-proof');
+    Route::post('admin/orders/{id}/reject-proof', [BuktiBayarController::class, 'rejectProof'])->name('orders.reject-proof');
+    Route::post('admin/orders/{id}/confirmProof', [BuktiBayarController::class, 'confirmProof'])->name('orders.confirmProof');
+    Route::post('admin/orders/{id}/rejectProof', [BuktiBayarController::class, 'rejectProof'])->name('orders.rejectProof');
     Route::resource('admin/banners', BannerController::class)->names('banners');
     Route::post('admin/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');
     Route::post('admin/banners/{banner}/toggle', [BannerController::class, 'toggleStatus'])->name('banners.toggle');

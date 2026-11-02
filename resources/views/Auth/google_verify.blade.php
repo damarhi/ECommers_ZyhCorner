@@ -3,98 +3,7 @@
 @section('title', 'Verifikasi Akun Google - Zyh Corner')
 
 @section('styles')
-<style>
-    .otp-verify-card {
-        max-width: 450px;
-        margin: 40px auto;
-        padding: 40px 30px;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid #f0f0f0;
-    }
-    
-    .otp-verify-title {
-        text-align: center;
-        margin-bottom: 15px;
-        font-size: 24px;
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-    
-    .otp-verify-subtitle {
-        text-align: center;
-        color: #666;
-        font-size: 14px;
-        line-height: 1.5;
-        margin-bottom: 25px;
-    }
-    
-    .otp-verify-email {
-        font-weight: 600;
-        color: #00b207;
-    }
-    
-    .otp-code-input {
-        text-align: center;
-        font-size: 28px;
-        letter-spacing: 12px;
-        font-weight: 700;
-        padding: 12px;
-        border: 2px solid #e6e6e6;
-        border-radius: 8px;
-        width: 100%;
-        margin-bottom: 20px;
-        outline: none;
-        transition: border-color 0.3s;
-    }
-    
-    .otp-code-input:focus {
-        border-color: #00b207;
-    }
-    
-    .otp-submit-btn {
-        width: 100%;
-        background-color: #00b207;
-        color: white;
-        border: none;
-        padding: 14px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-    
-    .otp-submit-btn:hover {
-        background-color: #009906;
-    }
-    
-    .otp-resend-container {
-        text-align: center;
-        margin-top: 25px;
-        font-size: 14px;
-        color: #666;
-    }
-    
-    .otp-resend-link {
-        color: #00b207;
-        text-decoration: none;
-        font-weight: 600;
-        cursor: pointer;
-        transition: color 0.3s;
-    }
-    
-    .otp-resend-link:hover {
-        color: #009906;
-    }
-    
-    .otp-resend-link.disabled {
-        color: #999;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/auth-otp.css') }}?v={{ file_exists(public_path('css/auth-otp.css')) ? filemtime(public_path('css/auth-otp.css')) : time() }}">
 @endsection
 
 @section('content')
@@ -130,85 +39,14 @@
     </div>
 </section>
 
+@endsection
+
+@section('scripts')
 <script>
-    let secondsLeft = 60;
-    let countdownInterval;
-
-    function startTimer() {
-        const resendText = document.getElementById('resend-text');
-        const resendLink = document.getElementById('resend-link');
-        const countdownSec = document.getElementById('countdown-sec');
-        
-        secondsLeft = 60;
-        resendText.style.display = 'inline';
-        resendLink.style.display = 'none';
-        resendLink.classList.add('disabled');
-        countdownSec.textContent = secondsLeft;
-
-        clearInterval(countdownInterval);
-        countdownInterval = setInterval(() => {
-            secondsLeft--;
-            countdownSec.textContent = secondsLeft;
-
-            if (secondsLeft <= 0) {
-                clearInterval(countdownInterval);
-                resendText.style.display = 'none';
-                resendLink.style.display = 'inline';
-                resendLink.classList.remove('disabled');
-            }
-        }, 1000);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        startTimer();
-    });
-
-    function resendOtpCode() {
-        const resendLink = document.getElementById('resend-link');
-        if (resendLink.classList.contains('disabled')) return;
-
-        resendLink.classList.add('disabled');
-        resendLink.textContent = 'Mengirim...';
-
-        fetch("{{ route('login.google.verify.resend') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    title: 'Berhasil!',
-                    text: data.message,
-                    icon: 'success',
-                    confirmButtonColor: '#00b207'
-                });
-                resendLink.textContent = 'Kirim Ulang Kode';
-                startTimer();
-            } else {
-                resendLink.classList.remove('disabled');
-                resendLink.textContent = 'Kirim Ulang Kode';
-                Swal.fire({
-                    title: 'Gagal',
-                    text: data.message || 'Gagal mengirim kode verifikasi.',
-                    icon: 'error',
-                    confirmButtonColor: '#00b207'
-                });
-            }
-        })
-        .catch(error => {
-            resendLink.classList.remove('disabled');
-            resendLink.textContent = 'Kirim Ulang Kode';
-            Swal.fire({
-                title: 'Kesalahan',
-                text: 'Terjadi kesalahan sistem. Silakan coba lagi nanti.',
-                icon: 'error',
-                confirmButtonColor: '#00b207'
-            });
-        });
-    }
+    window.authOtpConfig = {
+        resendRoute: "{{ route('login.google.verify.resend') }}",
+        csrfToken: "{{ csrf_token() }}"
+    };
 </script>
+<script src="{{ asset('js/auth-otp.js') }}?v={{ file_exists(public_path('js/auth-otp.js')) ? filemtime(public_path('js/auth-otp.js')) : time() }}"></script>
 @endsection

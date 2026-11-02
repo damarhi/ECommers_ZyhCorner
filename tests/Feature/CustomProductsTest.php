@@ -68,4 +68,50 @@ class CustomProductsTest extends TestCase
         $response->assertSee('Pesan via WhatsApp');
         $response->assertDontSee('Beli Sekarang');
     }
+
+    public function test_custom_products_filter_by_custom_price_range(): void
+    {
+        $kategori = Kategori::create([
+            'nama_kategori' => 'Kue Kustom',
+            'gambar_kategori' => 'dummy.png',
+        ]);
+
+        Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'kustom',
+            'nama_produk' => 'Kue Kustom Ekonomis',
+            'harga' => 50000,
+            'status_produk' => 'tersedia',
+            'deskripsi' => 'Kue kustom mini.',
+        ]);
+
+        Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'kustom',
+            'nama_produk' => 'Kue Kustom Menengah',
+            'harga' => 150000,
+            'status_produk' => 'tersedia',
+            'deskripsi' => 'Kue kustom medium.',
+        ]);
+
+        Produk::create([
+            'id_kategori' => $kategori->id_kategori,
+            'jenis_produk' => 'kustom',
+            'nama_produk' => 'Kue Kustom Mewah',
+            'harga' => 300000,
+            'status_produk' => 'tersedia',
+            'deskripsi' => 'Kue kustom bertingkat.',
+        ]);
+
+        $response = $this->get(route('custom-products', [
+            'min_price' => '100.000',
+            'max_price' => '200.000',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Kue Kustom Menengah');
+        $response->assertDontSee('Kue Kustom Ekonomis');
+        $response->assertDontSee('Kue Kustom Mewah');
+        $response->assertSee('Rp 100.000 - Rp 200.000');
+    }
 }
