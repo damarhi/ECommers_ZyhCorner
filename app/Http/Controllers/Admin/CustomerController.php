@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -46,7 +47,26 @@ class CustomerController extends Controller
             'status' => 'required|string|in:Active,Blocked'
         ]);
 
+        $userId = null;
+        if ($request->filled('contact')) {
+            $rawPhone = ltrim($request->contact, '0');
+            $rawPhone = preg_replace('/^\+?62/', '', $rawPhone);
+            $matchedUser = User::where('no_hp', $rawPhone)
+                ->orWhere('no_hp', '8' . ltrim($rawPhone, '8'))
+                ->first();
+            if ($matchedUser) {
+                $userId = $matchedUser->user_id;
+            }
+        }
+        if (!$userId && $request->filled('name')) {
+            $matchedUser = User::where('nama', $request->name)->first();
+            if ($matchedUser) {
+                $userId = $matchedUser->user_id;
+            }
+        }
+
         Customer::create([
+            'user_id' => $userId,
             'name' => $request->name,
             'location' => $request->location,
             'orders_count' => $request->orders_count ?? 0,
@@ -71,7 +91,28 @@ class CustomerController extends Controller
             'status' => 'required|string|in:Active,Blocked'
         ]);
 
+        $userId = $customer->user_id;
+        if (!$userId) {
+            if ($request->filled('contact')) {
+                $rawPhone = ltrim($request->contact, '0');
+                $rawPhone = preg_replace('/^\+?62/', '', $rawPhone);
+                $matchedUser = User::where('no_hp', $rawPhone)
+                    ->orWhere('no_hp', '8' . ltrim($rawPhone, '8'))
+                    ->first();
+                if ($matchedUser) {
+                    $userId = $matchedUser->user_id;
+                }
+            }
+            if (!$userId && $request->filled('name')) {
+                $matchedUser = User::where('nama', $request->name)->first();
+                if ($matchedUser) {
+                    $userId = $matchedUser->user_id;
+                }
+            }
+        }
+
         $customer->update([
+            'user_id' => $userId,
             'name' => $request->name,
             'location' => $request->location,
             'orders_count' => $request->orders_count ?? 0,

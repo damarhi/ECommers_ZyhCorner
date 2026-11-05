@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Customer;
+use App\Models\User;
 
 class CustomerSeeder extends Seeder
 {
@@ -138,6 +139,20 @@ class CustomerSeeder extends Seeder
         ];
 
         foreach ($customers as $customer) {
+            $user = null;
+            if (!empty($customer['contact'])) {
+                $rawPhone = ltrim($customer['contact'], '0');
+                $rawPhone = preg_replace('/^\+?62/', '', $rawPhone);
+                $user = User::where('no_hp', $rawPhone)
+                    ->orWhere('no_hp', '8' . ltrim($rawPhone, '8'))
+                    ->first();
+            }
+            if (!$user && !empty($customer['name'])) {
+                $user = User::where('nama', $customer['name'])->first();
+            }
+            if ($user) {
+                $customer['user_id'] = $user->user_id;
+            }
             Customer::create($customer);
         }
     }
