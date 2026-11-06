@@ -1,0 +1,63 @@
+{
+  "contract": "Customer Account Settings page (/settings, resources/views/Pelanggan/settings.blade.php) mobile layout optimization across all 3 segmented tabs: converted .settings-tabs-wrapper into a 3-column zero-overflow grid on mobile (eliminating 100px horizontal scroll overflow), re-ordered Tab 1 (Profil Akun) so the Avatar identity header sits above form inputs with a full-width 44px CTA button, restructured Tab 2 (Alamat Pengiriman) card topbar into a compact 2-tier layout (reducing topbar height from 148px to 77px), and standardized Tab 3 (Keamanan & Sandi) with full-width 44px CTA button and eliminated the 8px negative row margin shift, while preserving desktop (> 768px / 1440x900) layout 100% unchanged.",
+  "targetViewports": [
+    "375x812",
+    "1440x900"
+  ],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "All 3 segmented tab buttons have 47px height (> 44px touch target standard) with clear active contrast and icons; primary submit buttons (Simpan Perubahan, Perbarui Kata Sandi) have 44px height and full-width 317px touch targets on mobile."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Mobile 375x812 & 340x740: pageOverflow=0px and tabsWrapperScroll.overflow=0px across all 3 tabs. Tab 1 places avatar circle (100x100px) at top=411px above form inputs (top=619px) and full-width submit button (top=889px). Tab 2 reduces address card topbar height from 148px to 77px. Desktop 1440x900: 2-column form + avatar layout and 868px horizontal tabs bar preserved 100% identically."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "Form submission handlers (saveAccountSettings, saveNewPassword) and avatar upload display loading feedback and SweetAlert confirmation."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": ".address-empty-state renders map-location-dot icon, explanatory copy, and Tambah Alamat Sekarang CTA button when customer has no saved address."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Invalid current password, mismatched password confirmation, or invalid image format triggers SweetAlert error alerts without losing form state."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "Addresses with or without GPS coordinates (.badge-address-gps vs .badge-address-nogps) and optional courier notes render cleanly in the 2-tier mobile card topbar."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "Successful profile, address, avatar, or password update displays green SweetAlert confirmation and updates UI state immediately."
+    },
+    "permission": {
+      "status": "pass",
+      "evidence": "Unauthenticated guests attempting to access /settings are redirected to /login via Auth middleware (verified by CustomerSettingsTest)."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "375x812",
+      "artifact": "settings-mobile-profile-375x812.png",
+      "observation": "Mobile Settings Tab 1 (Profil Akun) at 375x812 showing all 3 segmented tabs with zero horizontal overflow, avatar identity section above form inputs, and full-width 44px Simpan Perubahan button."
+    },
+    {
+      "viewport": "375x812",
+      "artifact": "settings-mobile-address-375x812.png",
+      "observation": "Mobile Settings Tab 2 (Alamat Pengiriman) at 375x812 showing full-width Tambah Alamat Baru button and 2-tier address card topbar (77px height vs 148px before)."
+    },
+    {
+      "viewport": "375x812",
+      "artifact": "settings-mobile-password-375x812.png",
+      "observation": "Mobile Settings Tab 3 (Keamanan & Sandi) at 375x812 showing aligned 12px margins, password inputs with eye toggles, guideline box, and full-width 44px Perbarui Kata Sandi button."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "settings-desktop-1440x900.png",
+      "observation": "Desktop Settings page at 1440x900 showing customer sidebar, 3 horizontal segmented tabs (279px each), left col-md-7 form inputs, and right col-md-5 140px avatar circle preserved 100% identically."
+    }
+  ]
+}

@@ -198,12 +198,12 @@
                         <a href="{{ route('product.detail', $product->id_produk) }}"
                             class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
                         <div class="product-price d-flex align-items-center justify-content-between">
-                            <div>
+                            <div class="price-stack">
                                 @if ($product->has_diskon)
-                                    Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
+                                    <span class="price-now">Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}</span>
                                     <span class="old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                 @else
-                                    Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                    <span class="price-now">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                 @endif
                             </div>
                             @if ($product->stok == 0)
@@ -640,12 +640,12 @@
                         <a href="{{ route('product.detail', $product->id_produk) }}"
                             class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
                         <div class="product-price d-flex align-items-center justify-content-between">
-                            <div>
+                            <div class="price-stack">
                                 @if ($product->has_diskon)
-                                    Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}
+                                    <span class="price-now">Rp. {{ number_format($product->harga_diskon, 0, ',', '.') }}</span>
                                     <span class="old">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                 @else
-                                    Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                    <span class="price-now">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                                 @endif
                             </div>
                             @if ($product->stok == 0)

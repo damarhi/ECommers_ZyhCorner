@@ -14,9 +14,9 @@
 
         <div class="row">
             <!-- Left Column: Admin Profile Card Overview -->
-            <div class="col-md-4 grid-margin stretch-card">
-                <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 8px; background: #ffffff;">
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+            <div class="col-md-4 grid-margin align-self-start">
+                <div class="card border-0 shadow-sm text-center" style="border-radius: 12px; background: #ffffff; position: sticky; top: 90px; z-index: 10;">
+                    <div class="card-body p-4 d-flex flex-column align-items-center justify-content-start">
                         <div class="position-relative mb-3">
                             @if($admin->foto)
                                 <img src="{{ asset('storage/' . $admin->foto) }}" alt="{{ $admin->nama }}"
@@ -52,7 +52,7 @@
             </div>
 
             <!-- Right Column: Settings Tabs -->
-            <div class="col-md-8 grid-margin stretch-card">
+            <div class="col-md-8 grid-margin">
                 <div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
                     <div class="card-body p-4">
                         <!-- Navigation Tabs -->

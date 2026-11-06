@@ -1,0 +1,53 @@
+{
+  "contract": "Order Success (/order-success) mobile layout optimization (Paket Lengkap A): reduced nested card padding, full-width stacked Address & Notes rows, 1-line item subtotals & clean stacked item meta on mobile, while keeping Desktop (> 768px) layout 100% unchanged.",
+  "targetViewports": [
+    "375x812",
+    "1440x900"
+  ],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "All payment action buttons, copy account number button, proof upload dropzone, and navigation buttons have clear labels and comfortable touch targets on 375x812."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Mobile 375x812: pageOverflow=0px across all 3 payment variants (COD, Bank Transfer, Online Payment). Desktop 1440x900: 100% identical to baseline."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "pass",
+      "evidence": "#successOrderItemsList shows spinner placeholder while loading items, and #btnSubmitBankProof shows spinner during upload."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": "#successOrderItemsList shows 'No items details cached' fallback when localStorage is empty."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": "Rejected bank transfer proof renders .rejection-alert-box with cashier reason; invalid file size/type triggers SweetAlert warning."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "Orders with or without notes, with COD, Bank Transfer, or Midtrans Online Payment render cleanly."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "Confirmed/paid orders display green verified badge and status message."
+    },
+    "permission": {
+      "status": "pass",
+      "evidence": "Unauthenticated visitors or users accessing another customer's order are redirected safely."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "375x812",
+      "artifact": "order-success-mobile-375x812.png",
+      "observation": "Clean mobile Order Success layout at 375x812 with wider 289px inner card width, 1-line item subtotals, stacked item meta, and full-width Address/Notes boxes."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "order-success-desktop-1440x900.png",
+      "observation": "Desktop 2-column Order Success layout at 1440x900 preserved 100% unchanged."
+    }
+  ]
+}

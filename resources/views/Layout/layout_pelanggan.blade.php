@@ -64,8 +64,7 @@
     <header>
         <div class="container top-header">
             <div class="logo">
-                <button class="mobile-menu-btn" onclick="toggleMobileMenu(true)"
-                    style="background: none; border: none; font-size: 20px; color: #1a1a1a; cursor: pointer; display: none; margin-right: 5px; padding: 5px 0;">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu(true)" aria-label="Buka Menu Navigasi">
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo"
@@ -113,12 +112,15 @@
                             @elseif(Auth::user()->role === 'kasir')
                                 <a href="{{ route('orders.index') }}" class="profile-dropdown-item"><i class="fa-solid fa-cash-register me-1"></i> Kelola Pesanan</a>
                             @else
-                                <a href="{{ route('dashboard') }}" class="profile-dropdown-item">Dashboard</a>
+                                <a href="{{ route('dashboard') }}" class="profile-dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="fa-solid fa-table-cells-large profile-dropdown-icon"></i> Dashboard</a>
+                                <a href="{{ route('order.history') }}" class="profile-dropdown-item profile-dropdown-mobile-only {{ request()->routeIs('order.history', 'order.detail', 'order.return') ? 'active' : '' }}"><i class="fa-solid fa-clock-rotate-left profile-dropdown-icon"></i> Order History</a>
+                                <a href="{{ route('userChart') }}" class="profile-dropdown-item profile-dropdown-mobile-only {{ request()->routeIs('userChart') ? 'active' : '' }}"><i class="fa-solid fa-bag-shopping profile-dropdown-icon"></i> Shopping Cart</a>
+                                <a href="{{ route('settings') }}" class="profile-dropdown-item profile-dropdown-mobile-only {{ request()->routeIs('settings') ? 'active' : '' }}"><i class="fa-solid fa-gear profile-dropdown-icon"></i> Settings</a>
                             @endif
                             <form id="logoutForm" action="{{ route('logout') }}" method="POST" style="margin: 0;">
                                 @csrf
                                 <button type="button" onclick="confirmLogout()" class="profile-dropdown-item"
-                                    style="width: 100%; text-align: left; background: none; border: none; font-family: inherit; cursor: pointer;">Logout</button>
+                                    style="width: 100%; text-align: left; background: none; border: none; font-family: inherit; cursor: pointer;"><i class="fa-solid fa-right-from-bracket profile-dropdown-icon"></i> Logout</button>
                             </form>
                         @else
                             <a href="{{ route('login') }}" class="profile-dropdown-item">Login</a>
@@ -172,7 +174,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-top" style="grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 30px;">
+            <div class="footer-top">
                 <div class="footer-col-1">
                     <div class="logo" style="color: white;">
                         <img src="{{ asset('image/logo.jpg') }}" alt="Zyh Corner Logo"
@@ -248,20 +250,46 @@
                     class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="mobile-nav-body">
-            <form id="mobileSearchForm" action="{{ request()->routeIs('custom-products') ? route('custom-products') : route('shop') }}" method="GET" style="margin-bottom: 20px; position: relative; overflow: visible !important;">
-                <div class="search-input-wrapper" style="border-radius: 6px;">
-                    <span style="padding-left: 12px; color: #999;"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    <input type="text" name="search" id="mobileSearchInput" autocomplete="off" placeholder="Search Product. . ." value="{{ request('search') }}" style="flex: 1; padding: 10px 12px; border: none; outline: none; font-size: 14px;">
-                    <button type="submit" style="background: #00b207; color: white; border: none; padding: 10px 16px; font-weight: 500; font-size: 14px; cursor: pointer;">Search</button>
-                </div>
-                <div id="mobileSearchSuggestions" class="search-suggestions-dropdown" style="display: none;"></div>
-            </form>
             <div class="mobile-nav-links">
                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
                 <a href="{{ route('shop') }}" class="{{ request()->routeIs('shop') ? 'active' : '' }}">Shop</a>
                 <a href="{{ route('custom-products') }}" class="{{ request()->routeIs('custom-products') ? 'active' : '' }}">Custom Products</a>
                 <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">About Us</a>
                 <a href="{{ route('contact') }}" class="{{ request()->routeIs('contact') ? 'active' : '' }}">Contact Us</a>
+                <a href="{{ route('faq') }}" class="{{ request()->routeIs('faq') ? 'active' : '' }}">FAQ</a>
+            </div>
+
+            <div class="mobile-nav-account-section">
+                <div class="mobile-nav-section-title">Navigasi Akun</div>
+                <div class="mobile-nav-account-links">
+                    @auth
+                        @if(Auth::user()->role === 'admin')
+                            <a href="{{ url('/admin/dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard Admin</a>
+                        @elseif(Auth::user()->role === 'kasir')
+                            <a href="{{ route('orders.index') }}"><i class="fa-solid fa-cash-register"></i> Kelola Pesanan</a>
+                        @else
+                            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                                <i class="fa-solid fa-table-cells-large"></i> Dashboard
+                            </a>
+                            <a href="{{ route('order.history') }}" class="{{ request()->routeIs('order.history', 'order.detail', 'order.return') ? 'active' : '' }}">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Order History
+                            </a>
+                            <a href="{{ route('userChart') }}" class="{{ request()->routeIs('userChart') ? 'active' : '' }}">
+                                <i class="fa-solid fa-bag-shopping"></i> Shopping Cart
+                            </a>
+                            <a href="{{ route('settings') }}" class="{{ request()->routeIs('settings') ? 'active' : '' }}">
+                                <i class="fa-solid fa-gear"></i> Settings
+                            </a>
+                        @endif
+                        <a href="#" onclick="event.preventDefault(); toggleMobileMenu(false); confirmLogout();" class="mobile-nav-logout-link">
+                            <i class="fa-solid fa-right-from-bracket"></i> Log-out
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="{{ request()->routeIs('login') ? 'active' : '' }}">
+                            <i class="fa-solid fa-right-to-bracket"></i> Login / Masuk
+                        </a>
+                    @endauth
+                </div>
             </div>
             <div class="mobile-nav-phone"
                 style="margin-top: 25px; padding-top: 16px; border-top: 1px solid #f2f2f2; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: #666;">
@@ -391,16 +419,18 @@
                         @php
                             $isCustomContext = request()->query('custom') == 1 || request()->routeIs('custom-products') || (isset($product) && isset($product->jenis_produk) && $product->jenis_produk === 'kustom');
                         @endphp
-                        <button type="button" class="pm-buy-btn" id="pmBuyBtn" style="{{ $isCustomContext ? 'background-color: #25d366;' : '' }}">
-                            @if ($isCustomContext)
-                                Pesan via WhatsApp <i class="fa-brands fa-whatsapp"></i>
-                            @else
-                                Beli Sekarang <i class="fa-solid fa-bag-shopping"></i>
-                            @endif
-                        </button>
-                        <button type="button" class="pm-cart-btn" id="pmCartBtn" title="Tambah ke Keranjang" aria-label="Tambah ke keranjang">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                        </button>
+                        <div class="pm-btn-group">
+                            <button type="button" class="pm-cart-btn" id="pmCartBtn" title="Tambah ke Keranjang" aria-label="Tambah ke keranjang">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </button>
+                            <button type="button" class="pm-buy-btn" id="pmBuyBtn" style="{{ $isCustomContext ? 'background-color: #25d366;' : '' }}">
+                                @if ($isCustomContext)
+                                    Pesan via WhatsApp <i class="fa-brands fa-whatsapp"></i>
+                                @else
+                                    Beli Sekarang <i class="fa-solid fa-bag-shopping"></i>
+                                @endif
+                            </button>
+                        </div>
                         <div id="pmStockWarning" class="pm-stock-warning" style="display: none;">
                             <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok produk tercapai
                         </div>
@@ -522,7 +552,6 @@
             }
 
             initSearch('headerSearchInput', 'headerSearchSuggestions', 'headerSearchForm');
-            initSearch('mobileSearchInput', 'mobileSearchSuggestions', 'mobileSearchForm');
         });
     </script>
 

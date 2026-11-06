@@ -69,6 +69,12 @@
                         <i class="fa-solid fa-chevron-down trigger-chevron"></i>
                     </button>
                     <div class="modern-filter-dropdown-menu">
+                        <div class="mobile-sheet-header">
+                            <span class="mobile-sheet-title"><i class="fa-solid fa-layer-group text-success me-2"></i> Pilih Kategori</span>
+                            <button type="button" class="sheet-close-btn" onclick="event.stopPropagation(); this.closest('.filter-dropdown-container').classList.remove('open');" title="Tutup">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                         <ul class="modern-dropdown-list">
                             <li>
                                 <button type="button" class="modern-dropdown-item {{ !request()->filled('category') ? 'active' : '' }}" onclick="selectCategoryFilter('')">
@@ -104,6 +110,9 @@
                                 <i class="fa-solid fa-sliders"></i>
                                 <span>Atur Rentang Harga</span>
                             </div>
+                            <button type="button" class="sheet-close-btn" onclick="event.stopPropagation(); document.getElementById('priceDropdownContainer').classList.remove('open');" title="Tutup">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
 
                         <div class="price-inputs-grid">
@@ -149,6 +158,12 @@
                         <i class="fa-solid fa-chevron-down trigger-chevron"></i>
                     </button>
                     <div class="modern-filter-dropdown-menu" style="min-width: 200px;">
+                        <div class="mobile-sheet-header">
+                            <span class="mobile-sheet-title"><i class="fa-solid fa-arrow-down-wide-short text-success me-2"></i> Urutkan Produk</span>
+                            <button type="button" class="sheet-close-btn" onclick="event.stopPropagation(); this.closest('.filter-dropdown-container').classList.remove('open');" title="Tutup">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                         <ul class="modern-dropdown-list">
                             <li>
                                 <button type="button" class="modern-dropdown-item {{ $sortByVal == 'latest' ? 'active' : '' }}" onclick="selectSortFilter('latest')">
@@ -180,6 +195,12 @@
                         <i class="fa-solid fa-chevron-down trigger-chevron"></i>
                     </button>
                     <div class="modern-filter-dropdown-menu" style="min-width: 140px;">
+                        <div class="mobile-sheet-header">
+                            <span class="mobile-sheet-title"><i class="fa-solid fa-grip text-success me-2"></i> Tampilkan</span>
+                            <button type="button" class="sheet-close-btn" onclick="event.stopPropagation(); this.closest('.filter-dropdown-container').classList.remove('open');" title="Tutup">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                         <ul class="modern-dropdown-list">
                             <li>
                                 <button type="button" class="modern-dropdown-item {{ $showVal == '16' ? 'active' : '' }}" onclick="selectShowFilter('16')">
@@ -276,9 +297,9 @@
                             class="product-name" onclick="event.stopPropagation();">{{ $product->nama_produk }}</a>
                         <div class="product-price">
                             @if ($product->harga_max && $product->harga_max > $product->harga)
-                                Rp. {{ number_format($product->harga, 0, ',', '.') }} - Rp. {{ number_format($product->harga_max, 0, ',', '.') }}
+                                <span class="price-now">Rp. {{ number_format($product->harga, 0, ',', '.') }} - Rp. {{ number_format($product->harga_max, 0, ',', '.') }}</span>
                             @else
-                                Rp. {{ number_format($product->harga, 0, ',', '.') }}
+                                <span class="price-now">Rp. {{ number_format($product->harga, 0, ',', '.') }}</span>
                             @endif
                         </div>
 

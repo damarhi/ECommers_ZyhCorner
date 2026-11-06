@@ -161,9 +161,11 @@
                             <input class="qty-input" type="text" value="1" id="qtyInput" min="1" max="{{ $product->stok > 0 ? $product->stok : 999 }}" oninput="changeQty(0)">
                             <button type="button" class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
                         </div>
-                        <button class="btn-buy" onclick="buyCustomNow()" style="background-color: #25d366 !important;">
-                            <i class="fa-brands fa-whatsapp"></i> Pesan via WhatsApp @if($product->stok <= 0) (Pre-Order) @endif
-                        </button>
+                        <div class="pi-btn-group">
+                            <button class="btn-buy" onclick="buyCustomNow()" style="background-color: #25d366 !important;">
+                                <i class="fa-brands fa-whatsapp"></i> Pesan via WhatsApp @if($product->stok <= 0) (Pre-Order) @endif
+                            </button>
+                        </div>
                         <div id="qtyStockWarning" class="qty-stock-warning" style="display: none;">
                             <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok tercapai (tersisa {{ $product->stok }} unit)
                         </div>
@@ -173,12 +175,14 @@
                             <input class="qty-input" type="text" value="1" id="qtyInput" min="1" max="{{ $product->stok }}" oninput="changeQty(0)">
                             <button type="button" class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
                         </div>
-                        <button class="btn-buy" onclick="buyNow()">
-                            <i class="fa-solid fa-bag-shopping"></i> Beli Sekarang
-                        </button>
-                        <button type="button" class="btn-cart-detail" onclick="addToCartFromDetail()" title="Tambah ke Keranjang" aria-label="Tambah ke keranjang">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                        </button>
+                        <div class="pi-btn-group">
+                            <button type="button" class="btn-cart-detail" onclick="addToCartFromDetail()" title="Tambah ke Keranjang" aria-label="Tambah ke keranjang">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </button>
+                            <button class="btn-buy" onclick="buyNow()">
+                                <i class="fa-solid fa-bag-shopping"></i> Beli Sekarang
+                            </button>
+                        </div>
                         <div id="qtyStockWarning" class="qty-stock-warning" style="display: none;">
                             <i class="fa-solid fa-circle-exclamation" style="margin-right: 3px;"></i> Maksimal stok tercapai (tersisa {{ $product->stok }} unit)
                         </div>
@@ -188,19 +192,20 @@
                             <input class="qty-input" type="text" value="0" id="qtyInput" disabled style="background-color: #f5f5f5;">
                             <button class="qty-btn" disabled><i class="fa-solid fa-plus"></i></button>
                         </div>
-                        <button class="btn-buy disabled" disabled style="background-color: #e6e6e6 !important; color: #999999 !important; cursor: not-allowed;">
-                            <i class="fa-solid fa-ban"></i> Stok Habis
-                        </button>
-                        <button type="button" class="btn-cart-detail disabled" disabled title="Stok Habis" aria-label="Stok habis">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                        </button>
+                        <div class="pi-btn-group">
+                            <button type="button" class="btn-cart-detail disabled" disabled title="Stok Habis" aria-label="Stok habis">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </button>
+                            <button class="btn-buy disabled" disabled style="background-color: #e6e6e6 !important; color: #999999 !important; cursor: not-allowed;">
+                                <i class="fa-solid fa-ban"></i> Stok Habis
+                            </button>
+                        </div>
                     @endif
-                </div>
             </div>
-
         </div>
+    </div>
 
-        {{-- TABS --}}
+    {{-- TABS --}}
         <div class="tabs-section">
             <div class="tab-nav">
                 <button class="tab-btn active" onclick="switchTab('desc', this)">Deskripsi</button>
@@ -318,10 +323,10 @@
                                     class="product-name" onclick="event.stopPropagation();">{{ $rp->nama_produk }}</a>
                                 <div class="product-price">
                                     @if ($rp->has_diskon)
-                                        Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}
-                                        <span class="old" style="font-size: 13px; text-decoration: line-through; color: #999; margin-left: 5px;">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
+                                        <span class="price-now">Rp. {{ number_format($rp->harga_diskon, 0, ',', '.') }}</span>
+                                        <span class="old">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
                                     @else
-                                        Rp. {{ number_format($rp->harga, 0, ',', '.') }}
+                                        <span class="price-now">Rp. {{ number_format($rp->harga, 0, ',', '.') }}</span>
                                     @endif
                                 </div>
 

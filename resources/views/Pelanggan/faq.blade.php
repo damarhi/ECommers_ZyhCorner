@@ -11,27 +11,24 @@
 @endsection
 
 @section('content')
-    <div class="faq-page" style="background: #f8faf9; padding: 40px 0 60px;">
-        <div class="container" style="max-width: 820px;">
+    <div class="faq-page">
+        <div class="container faq-container">
 
             <!-- Search & Filter -->
-            <div style="margin-bottom: 28px;">
-                <div style="position: relative; margin-bottom: 20px;">
-                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #00b207; font-size: 16px;"></i>
-                    <input type="text" id="faqSearchInput" onkeyup="filterFaqs()" 
-                           placeholder="Cari pertanyaan..." 
-                           style="width: 100%; padding: 14px 18px 14px 46px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 15px; outline: none; background: #fff; transition: border-color 0.2s;"
-                           onfocus="this.style.borderColor='#00b207'" onblur="this.style.borderColor='#e5e7eb'">
+            <div class="faq-controls">
+                <div class="faq-search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass faq-search-icon"></i>
+                    <input type="text" id="faqSearchInput" class="faq-search-input" onkeyup="filterFaqs()"
+                           placeholder="Cari pertanyaan...">
                 </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="faq-tab active" onclick="filterCategory('All', this)">Semua</button>
-                    <button class="faq-tab" onclick="filterCategory('Pemesanan', this)">Pemesanan</button>
-                    <button class="faq-tab" onclick="filterCategory('Pengiriman', this)">Pengiriman</button>
-                    <button class="faq-tab" onclick="filterCategory('Pembayaran', this)">Pembayaran</button>
-                    <button class="faq-tab" onclick="filterCategory('Produk', this)">Produk</button>
+                <div class="faq-tabs">
+                    <button type="button" class="faq-tab active" onclick="filterCategory('All', this)">Semua</button>
+                    <button type="button" class="faq-tab" onclick="filterCategory('Pemesanan', this)">Pemesanan</button>
+                    <button type="button" class="faq-tab" onclick="filterCategory('Pengiriman', this)">Pengiriman</button>
+                    <button type="button" class="faq-tab" onclick="filterCategory('Pembayaran', this)">Pembayaran</button>
+                    <button type="button" class="faq-tab" onclick="filterCategory('Produk', this)">Produk</button>
                 </div>
             </div>
-
             <!-- FAQ List -->
             <div id="faqAccordion">
                 <div class="faq-card" data-category="Pemesanan">
@@ -96,19 +93,19 @@
             </div>
 
             <!-- No Results -->
-            <div id="noResultsMsg" style="display: none; text-align: center; padding: 50px 20px; background: #fff; border-radius: 14px; border: 1px solid #e5e7eb; margin-top: 12px;">
-                <p style="color: #94a3b8; margin: 0;">Pertanyaan tidak ditemukan. Coba kata kunci lain.</p>
+            <div id="noResultsMsg" class="faq-no-results" style="display: none;">
+                <p>Pertanyaan tidak ditemukan. Coba kata kunci lain.</p>
             </div>
 
             <!-- CTA -->
-            <div style="margin-top: 40px; padding: 36px 28px; border-radius: 16px; text-align: center; color: #fff; background: linear-gradient(135deg, #00b207, #15803d); box-shadow: 0 8px 24px rgba(0,178,7,0.2);">
-                <h3 style="font-weight: 700; font-size: 20px; margin: 0 0 8px;">Masih punya pertanyaan?</h3>
-                <p style="opacity: 0.9; font-size: 14px; margin: 0 0 20px;">Hubungi tim kami untuk bantuan lebih lanjut.</p>
-                <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-                    <a href="{{ route('contact') }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: #fff; color: #00b207; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; transition: transform 0.2s;">
+            <div class="faq-cta-card">
+                <h3 class="faq-cta-title">Masih punya pertanyaan?</h3>
+                <p class="faq-cta-desc">Hubungi tim kami untuk bantuan lebih lanjut.</p>
+                <div class="faq-cta-actions">
+                    <a href="{{ route('contact') }}" class="faq-cta-btn faq-cta-btn-primary">
                         <i class="fa-solid fa-paper-plane"></i> Hubungi Kami
                     </a>
-                    <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; border: 2px solid rgba(255,255,255,0.5); color: #fff; border-radius: 50px; font-weight: 600; font-size: 14px; text-decoration: none; transition: transform 0.2s;">
+                    <a href="https://wa.me/{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}" target="_blank" rel="noopener noreferrer" class="faq-cta-btn faq-cta-btn-secondary">
                         <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </a>
                 </div>
@@ -116,10 +113,6 @@
 
         </div>
     </div>
-@endsection
-
-@section('styles')
-
 @endsection
 
 @section('scripts')

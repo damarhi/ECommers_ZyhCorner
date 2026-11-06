@@ -43,21 +43,22 @@ function filterFaqs() {
 
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof gsap !== 'undefined') {
-        gsap.from('#faqSearchInput, .faq-tab', {
-            y: -20,
+        gsap.from('.faq-controls', {
+            y: -14,
             opacity: 0,
-            duration: 0.65,
-            stagger: 0.08,
-            ease: 'power3.out'
+            duration: 0.45,
+            ease: 'power2.out',
+            clearProps: 'transform,opacity'
         });
 
-        gsap.from('.faq-card', {
-            y: 35,
+        gsap.from('.faq-card, .faq-cta-card', {
+            y: 20,
             opacity: 0,
-            duration: 0.75,
-            stagger: 0.07,
-            ease: 'power3.out',
-            delay: 0.15
+            duration: 0.5,
+            stagger: 0.05,
+            ease: 'power2.out',
+            delay: 0.1,
+            clearProps: 'transform,opacity'
         });
     }
 });

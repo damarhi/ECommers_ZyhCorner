@@ -16,5 +16,7 @@ class AboutUsTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('About Us');
         $response->assertSee('100% Trusted Organic Food Store');
+        // Ensure core value cards are not animated by GSAP to prevent opacity: 0 freeze
+        $response->assertDontSee("gsap.from('.about-value-card'");
     }
 }

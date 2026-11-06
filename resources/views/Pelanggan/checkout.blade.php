@@ -51,7 +51,7 @@
 
                     @if($hasSavedAddresses)
                         <div class="saved-addresses-selector">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div class="saved-addresses-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <label for="savedAddressSelect" style="font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 0;">
                                     <i class="fa-solid fa-address-book" style="color: #00b207;"></i> Pilih dari Alamat Tersimpan:
                                 </label>
@@ -149,7 +149,7 @@
 
                                 <!-- Row 4: Map & GPS Coordinate (Biteship Point B) -->
                                 <div class="form-group-custom">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div class="checkout-map-label-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                         <label style="margin-bottom: 0;">
                                             <i class="fa-solid fa-map-location-dot"></i> Titik Lokasi Pengantaran di Peta
                                         </label>
@@ -214,7 +214,7 @@
             </div>
             <!-- Step 2: Shipping Courier Method -->
             <div class="checkout-card">
-                <div class="checkout-step-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                <div class="checkout-step-header checkout-step-header-shipping" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; align-items: flex-start; gap: 12px;">
                         <span class="step-badge">2</span>
                         <div>
@@ -337,8 +337,8 @@
                         <div class="payment-option-item active" onclick="selectPaymentMethod('cod')">
                             <div class="payment-option-header">
                                 <input type="radio" id="payCod" name="paymentGroup" value="COD" checked>
-                                <label for="payCod" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div>
+                                <label for="payCod" class="payment-option-label" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div class="payment-option-text">
                                         <div class="payment-title">Cash on Delivery (COD)</div>
                                         <div class="payment-subtitle">Bayar langsung tunai kepada kurir saat pesanan sampai</div>
                                     </div>
@@ -351,8 +351,8 @@
                         <div class="payment-option-item" onclick="selectPaymentMethod('transfer')">
                             <div class="payment-option-header">
                                 <input type="radio" id="payTransfer" name="paymentGroup" value="Transfer">
-                                <label for="payTransfer" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div>
+                                <label for="payTransfer" class="payment-option-label" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div class="payment-option-text">
                                         <div class="payment-title">Transfer Bank & Virtual Account</div>
                                         <div class="payment-subtitle">Transfer manual atau Virtual Account terverifikasi</div>
                                     </div>
@@ -369,8 +369,8 @@
                         <div class="payment-option-item" onclick="selectPaymentMethod('ewallet')">
                             <div class="payment-option-header">
                                 <input type="radio" id="payEwallet" name="paymentGroup" value="E-Wallet">
-                                <label for="payEwallet" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                                    <div>
+                                <label for="payEwallet" class="payment-option-label" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                                    <div class="payment-option-text">
                                         <div class="payment-title">E-Wallet & QRIS Digital</div>
                                     </div>
                                     <div class="payment-logos-preview">

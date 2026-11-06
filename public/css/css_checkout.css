@@ -68,3 +68,10 @@
         background-color: #f8fafc !important;
         box-shadow: none !important;
     }
+    @media (max-width: 768px) {
+        .checkout-step-header-shipping .btn-refresh-shipping {
+            width: 100%;
+            justify-content: center;
+            padding: 8px 14px;
+        }
+    }

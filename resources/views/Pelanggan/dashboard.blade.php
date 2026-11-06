@@ -61,9 +61,9 @@
                 <!-- Billing Address & Address Book Card -->
                 <div class="col-md-6 mb-4">
                     <div class="dashboard-card billing-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div class="billing-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <div class="billing-title" style="margin-bottom: 0;">Buku Alamat Pengiriman</div>
-                            <button type="button" onclick="openAddAddressModal()" class="green-link" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            <button type="button" onclick="openAddAddressModal()" class="green-link btn-add-address-inline" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
                                 <i class="fa-solid fa-plus"></i> Tambah Alamat
                             </button>
                         </div>

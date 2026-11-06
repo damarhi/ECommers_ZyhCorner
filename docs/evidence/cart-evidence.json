@@ -1,0 +1,53 @@
+{
+  "contract": "Shopping Cart (/cart) Opsi 2 Two-Section Mobile Card layout eliminating horizontal slide (scrollWidth === clientWidth === 343px, overflow-x: hidden, min-width: 0) while preserving 100% of the Desktop (> 768px) table layout.",
+  "targetViewports": [
+    "375x812",
+    "1440x900"
+  ],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "Remove button (28x28px) and quantity controls (96x34px box with 28x28px buttons) are directly visible and reachable inside the 343px mobile card without horizontal scrolling."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Mobile 375x812: scrollDivClientWidth=343px, scrollDivScrollWidth=343px, isHorizontallyScrollable=false (reduced from 648px to 343px). Desktop 1440x900: 100% unchanged (tableWrapper=840x350px, table=838x269px, firstRow=838x109px, totalCard=360x410px)."
+  },
+  "contentStates": {
+    "loading": {
+      "status": "not-applicable",
+      "reason": "Cart state is read synchronously from localStorage (window.cart) on DOMContentLoaded."
+    },
+    "empty": {
+      "status": "pass",
+      "evidence": ".empty-cart-page renders 'Keranjang belanja Anda kosong' and 'Pergi ke Toko' button when cartItems.length === 0."
+    },
+    "error": {
+      "status": "pass",
+      "evidence": ".cart-stock-warning (#cartQtyWarning_<id>) displays stock limit warning when user increments quantity to maxStock."
+    },
+    "partial": {
+      "status": "pass",
+      "evidence": "Products with and without custom_text render cleanly in both mobile card and desktop table layouts."
+    },
+    "success": {
+      "status": "pass",
+      "evidence": "Quantity increment/decrement, item removal, subtotal calculation, and Proceed to Checkout link work across mobile and desktop."
+    },
+    "permission": {
+      "status": "not-applicable",
+      "reason": "Shopping cart view (/cart) is accessible to customers without special role permission gates."
+    }
+  },
+  "renderedEvidence": [
+    {
+      "viewport": "375x812",
+      "artifact": "cart-mobile-375x812.png",
+      "observation": "Non-slideable Two-Section Mobile Card (343px width, 0px horizontal scroll) showing image, wrapped product title, unit price, top-right remove button, and bottom dashed row with Jumlah Pesanan, Subtotal, and (- qty +) controls."
+    },
+    {
+      "viewport": "1440x900",
+      "artifact": "cart-desktop-1440x900.png",
+      "observation": "Desktop 2-column layout (840px table wrapper + 360px Cart Totals card) preserved 100% unchanged."
+    }
+  ]
+}

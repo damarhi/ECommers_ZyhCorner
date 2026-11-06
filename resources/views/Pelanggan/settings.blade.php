@@ -62,8 +62,8 @@
                         </div>
                         <div class="settings-panel-body">
                             <form id="formAccountSettings" onsubmit="saveAccountSettings(event)">
-                                <div class="row align-items-center">
-                                    <div class="col-md-7">
+                                <div class="row align-items-center settings-profile-row">
+                                    <div class="col-md-7 settings-profile-form-col">
                                         <div class="form-group-settings">
                                             <label for="inputFullName"><i class="fa-solid fa-user text-muted mr-1"></i> Nama Lengkap</label>
                                             <input type="text" id="inputFullName" class="form-control-settings"
@@ -82,14 +82,14 @@
                                             <input type="tel" id="inputAccountPhone" class="form-control-settings"
                                                 value="{{ $user->no_hp }}" placeholder="08xxxxxxxxxx" required>
                                         </div>
-                                        <div style="margin-top: 24px;">
+                                        <div class="settings-submit-wrapper" style="margin-top: 24px;">
                                             <button type="submit" class="btn-save-settings">
                                                 <i class="fa-solid fa-check"></i> Simpan Perubahan
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div class="col-md-5">
+                                    <div class="col-md-5 settings-profile-avatar-col">
                                         <div class="avatar-wrapper">
                                             <div class="avatar-circle" onclick="document.getElementById('avatarFileInput').click()" style="cursor: pointer;" title="Klik untuk mengganti foto profil">
                                                 <img id="avatarImage"
@@ -118,8 +118,8 @@
                 <!-- Tab 2: Alamat Pengiriman (Display Card Murni dari Dashboard) -->
                 <div class="settings-tab-content" id="tabContentAddress" style="display: none;">
                     <div class="settings-panel">
-                        <div class="settings-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                            <div style="display: flex; align-items: center; gap: 14px;">
+                        <div class="settings-panel-header settings-address-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div class="settings-panel-header-main" style="display: flex; align-items: center; gap: 14px;">
                                 <div class="settings-panel-header-icon" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">
                                     <i class="fa-solid fa-location-dot"></i>
                                 </div>
@@ -327,7 +327,7 @@
                                     <span>Kata sandi baru minimal 6 karakter dan tidak boleh sama dengan kata sandi lama.</span>
                                 </div>
 
-                                <div style="margin-top: 24px;">
+                                <div class="settings-submit-wrapper" style="margin-top: 24px;">
                                     <button type="submit" class="btn-save-settings">
                                         <i class="fa-solid fa-lock"></i> Perbarui Kata Sandi
                                     </button>

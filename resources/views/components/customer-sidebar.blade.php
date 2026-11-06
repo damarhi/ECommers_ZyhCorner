@@ -1,6 +1,6 @@
 @props(['active' => 'dashboard'])
 
-<div class="col-lg-3 col-md-4 mb-4">
+<div class="col-lg-3 col-md-4 mb-4 customer-sidebar-col">
     <div class="sidebar-navigation">
         <div class="sidebar-title">Navigation</div>
         <ul class="nav-menu-list">

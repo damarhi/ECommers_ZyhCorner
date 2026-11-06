@@ -52,12 +52,12 @@
                         <span class="info-label">Shipping Method:</span>
                         <span class="info-value">{{ $order->shipping_method }}</span>
                     </div>
-                    <div class="info-row">
+                    <div class="info-row info-row-block-mobile">
                         <span class="info-label">Address:</span>
                         <span class="info-value text-muted">{{ $order->alamat_pengiriman ?: 'Alamat belum diatur' }}</span>
                     </div>
                     @if($order->catatan_pesanan)
-                    <div class="info-row">
+                    <div class="info-row info-row-block-mobile">
                         <span class="info-label">Notes:</span>
                         <span class="info-value text-italic text-muted">"{{ $order->catatan_pesanan }}"</span>
                     </div>
@@ -183,8 +183,8 @@
                             @endif
                             <!-- Card Rekening Resmi Toko Zyh Corner -->
                             <div class="bank-rekening-box" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="bank-rekening-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <div class="bank-rekening-identity" style="display: flex; align-items: center; gap: 8px;">
                                         <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; background: #1E2753; color: #ffffff; padding: 3px 8px; border-radius: 4px;">{{ $storeBank['name'] ?? 'BCA' }}</span>
                                         <span style="font-size: 12px; color: #475569; font-weight: 600;">a/n {{ $storeBank['account_holder'] ?? 'ZYH CORNER PASTRY' }}</span>
                                     </div>

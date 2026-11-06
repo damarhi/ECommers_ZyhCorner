@@ -569,48 +569,178 @@ footer.footer a:hover {
 }
 
 @media (max-width: 768px) {
+    .customer-sidebar-col {
+        display: none !important;
+    }
+    .dashboard-wrapper > .row > .col-lg-9.col-md-8 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 0 0 100% !important;
+    }
     .dashboard-wrapper {
-        margin: 20px auto 40px;
+        margin: 16px auto 36px;
+        padding: 0 12px;
+    }
+    .dashboard-wrapper .row > .col-md-6.mb-4 {
+        margin-bottom: 14px !important;
     }
     .dashboard-card {
-        padding: 20px;
+        padding: 18px 16px;
+    }
+    .profile-card .profile-img-container {
+        width: 88px;
+        height: 88px;
+        margin-bottom: 10px;
+    }
+    .profile-card .profile-name {
+        font-size: 18px;
+        margin-bottom: 2px;
+    }
+    .profile-card .profile-role {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .billing-card-header {
+        gap: 8px;
+        flex-wrap: nowrap;
+        margin-bottom: 10px !important;
+    }
+    .billing-card .billing-title {
+        font-size: 11.5px !important;
+        letter-spacing: 0.4px !important;
+        white-space: nowrap;
+        margin-bottom: 0 !important;
+    }
+    .billing-card .btn-add-address-inline {
+        font-size: 12.5px !important;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .billing-card .address-item-card {
+        padding: 12px;
+    }
+    .billing-card .billing-name {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    .billing-card .billing-address {
+        font-size: 13px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+        min-height: 0;
+    }
+    .billing-card .billing-contact {
+        font-size: 13px;
+        margin-bottom: 4px;
+        word-break: break-word;
+    }
+    .billing-card .address-item-actions {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        justify-content: space-between;
     }
     .order-history-card {
-        padding: 20px;
+        padding: 18px 16px;
+        margin-top: 2px;
+    }
+    .card-header-flex {
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+    }
+    .card-header-title {
+        font-size: 17px;
     }
     .order-row-item {
         flex-direction: column;
         align-items: stretch;
-        gap: 15px;
-        padding: 15px 0;
+        gap: 12px;
+        padding: 14px 0;
     }
-    .order-status-badge {
-        align-self: flex-start;
+    .order-product-info {
+        gap: 12px;
+        width: 100%;
+    }
+    .dashboard-wrapper .order-product-info .order-img-wrapper {
+        width: 64px !important;
+        height: 64px !important;
+    }
+    .order-details-meta {
+        flex: 1;
+        min-width: 0;
+    }
+    .order-date {
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+    .order-summary {
+        font-size: 13px;
+        margin-top: 3px;
+        line-height: 1.4;
     }
     .order-actions-flex {
         width: 100%;
-        justify-content: flex-start;
-        gap: 10px;
+        display: flex;
         flex-wrap: wrap;
-    }
-    .order-actions-flex button, .order-actions-flex a {
-        flex: 1;
-        text-align: center;
-        padding: 8px 10px;
-        font-size: 12px;
-        white-space: nowrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
     }
     .order-actions-flex .tracking-action-wrapper {
-        flex: 1;
-        width: 100%;
-        align-items: stretch;
+        display: contents !important;
     }
-    .order-actions-flex .tracking-action-wrapper button {
+    .order-actions-flex .order-status-badge {
+        order: -1;
+        flex: 0 0 100%;
         width: 100%;
-        text-align: center;
-        padding: 8px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
         font-size: 12px;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 6px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        line-height: 1.3;
+    }
+    .order-actions-flex .order-status-badge::before {
+        content: "Status:";
+        font-weight: 500;
+        color: #64748b;
+    }
+    .order-actions-flex .order-status-badge.status-pending {
+        background: #fff7ed;
+        border-color: #fed7aa;
+        color: #ea580c;
+    }
+    .order-actions-flex .order-status-badge.status-processing,
+    .order-actions-flex .order-status-badge.status-completed,
+    .order-actions-flex .order-status-badge.status-on_the_way {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #15803d;
+    }
+    .order-actions-flex .order-status-badge.status-cancelled {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+    .order-actions-flex > button,
+    .order-actions-flex > a,
+    .order-actions-flex .tracking-action-wrapper > button,
+    .order-actions-flex .tracking-action-wrapper > a {
+        flex: 1 1 calc(50% - 4px);
+        min-height: 38px;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px;
+        text-align: center;
+        padding: 8px 12px !important;
+        font-size: 12.5px !important;
         white-space: nowrap;
+        margin: 0;
     }
 }
 

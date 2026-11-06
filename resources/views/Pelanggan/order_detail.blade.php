@@ -1405,37 +1405,250 @@
         font-weight: 700;
     }
 
+    /* Desktop / Mobile Products Display Seam */
+    .desktop-products-table-wrap {
+        display: block;
+    }
+    .mobile-products-list {
+        display: none;
+    }
+    .mobile-product-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+    .mobile-product-card-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .mobile-product-img-wrap {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px;
+    }
+    .mobile-product-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+    .mobile-product-details {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .mobile-product-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.35;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .mobile-custom-text-pill {
+        margin-top: 3px;
+        align-self: flex-start;
+        font-size: 11px;
+        padding: 2px 7px;
+    }
+    .mobile-product-card-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #f1f5f9;
+        flex-wrap: wrap;
+    }
+    .mobile-product-qty-price {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: #475569;
+    }
+    .mobile-qty-pill {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .mobile-unit-price {
+        color: #64748b;
+        font-size: 12px;
+    }
+    .mobile-product-subtotal-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: auto;
+    }
+    .mobile-subtotal-label {
+        font-size: 11.5px;
+        color: #64748b;
+    }
+    .mobile-subtotal-val {
+        font-size: 14px;
+        font-weight: 700;
+        color: #00b207;
+    }
+
     @media (max-width: 768px) {
         .dashboard-wrapper {
-            margin: 20px auto 40px;
+            margin: 16px auto 32px;
+            padding: 0 12px;
+        }
+        .order-top-nav-bar {
+            margin-bottom: 12px;
         }
         .details-header-flex {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 14px;
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 14px;
         }
         .details-title-meta {
+            width: 100%;
+            gap: 6px;
+        }
+        .details-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 8px;
             flex-wrap: wrap;
+        }
+        .details-title {
+            font-size: 18px;
+            letter-spacing: -0.2px;
+        }
+        .order-status-pill {
+            font-size: 11.5px;
+            padding: 3px 10px;
+        }
+        .details-meta-sub {
+            font-size: 12px;
+            color: #64748b;
             gap: 6px;
         }
         .details-header-actions {
             width: 100%;
-            justify-content: flex-start;
-            gap: 10px;
+            margin-left: 0;
+        }
+        .header-actions-group {
+            display: flex;
+            width: 100%;
+            margin-left: 0;
+            gap: 8px;
             flex-wrap: wrap;
         }
-        .details-header-actions a,
-        .details-header-actions button,
-        .details-header-actions span {
-            flex: 1 1 auto;
+        .header-actions-group > * {
+            flex: 1 1 calc(50% - 4px);
+            min-width: 130px;
+            height: 38px;
+            padding: 0 12px;
+            font-size: 12.5px;
             text-align: center;
             justify-content: center;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin: 0 !important;
+        }
+        .header-actions-group > *:only-child {
+            flex: 1 1 100%;
+        }
+        .summary-cards-row {
+            margin-left: 0;
+            margin-right: 0;
+            margin-bottom: 16px;
+            row-gap: 12px;
+        }
+        .summary-cards-row > [class*="col-"] {
+            padding-left: 0;
+            padding-right: 0;
+            margin-bottom: 0 !important;
+        }
+        .summary-card {
+            padding: 14px 14px;
+            border-radius: 10px;
+        }
+        .summary-card-title {
+            font-size: 11.5px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+        }
+        .summary-card-address {
+            font-size: 13px;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+        .summary-card-footer {
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .summary-calc-row {
+            padding-bottom: 6px;
+            font-size: 12.5px;
+        }
+        .summary-card-footer.summary-total-footer {
+            padding: 8px 12px;
+            margin-top: 8px;
+        }
+        .tracking-card {
+            padding: 16px 14px;
+            margin-bottom: 16px;
+            border-radius: 10px;
+        }
+        .tracking-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+        }
+        .tracking-title-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tracking-title {
+            font-size: 14px;
+        }
+        .tracking-est-pill {
+            font-size: 12px;
+            padding: 4px 10px;
+            width: 100%;
+            box-sizing: border-box;
+            justify-content: flex-start;
         }
         .stepper-container {
             flex-direction: column;
             align-items: flex-start;
-            padding: 10px 10px;
-            gap: 20px;
+            padding: 4px 6px;
+            gap: 16px;
         }
         .step-item {
             flex-direction: row;
@@ -1443,7 +1656,7 @@
             max-width: 100%;
             align-items: flex-start;
             justify-content: flex-start;
-            gap: 14px;
+            gap: 12px;
             text-align: left;
             padding: 0;
             position: relative;
@@ -1455,11 +1668,16 @@
             justify-content: center;
             position: relative;
         }
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
         .step-trail-line {
             top: 28px;
             left: 13px;
             width: 0;
-            height: calc(100% + 20px);
+            height: calc(100% + 16px);
             transform: none;
         }
         .step-trail-line.trail-solid {
@@ -1491,6 +1709,37 @@
         }
         .step-sub-meta {
             justify-content: flex-start;
+            font-size: 12px;
+        }
+        .products-table-card {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .products-card-header {
+            padding: 12px 14px;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .products-card-title {
+            font-size: 13.5px;
+        }
+        .products-card-total {
+            font-size: 12.5px;
+        }
+        .products-card-total strong {
+            font-size: 14px;
+        }
+        .desktop-products-table-wrap {
+            display: none !important;
+        }
+        .mobile-products-list {
+            display: flex !important;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px 14px 16px;
         }
     }
 
@@ -2323,7 +2572,7 @@
                             Total Pesanan: <strong>Rp. {{ number_format($order->total, 0, ',', '.') }}</strong>
                         </div>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-responsive desktop-products-table-wrap">
                         <table class="products-table">
                             <thead>
                                 <tr>
@@ -2371,6 +2620,46 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Mobile Product Items List (Hidden on desktop, visible on mobile <= 768px) -->
+                    <div class="mobile-products-list">
+                        @forelse($items as $item)
+                            <div class="mobile-product-card">
+                                <div class="mobile-product-card-top">
+                                    <div class="mobile-product-img-wrap">
+                                        @if($item['product']->foto_1)
+                                            <img src="{{ asset('storage/' . $item['product']->foto_1) }}" alt="{{ $item['product']->nama_produk }}">
+                                        @else
+                                            <img src="{{ asset('image/logo_circle.png') }}" alt="{{ $item['product']->nama_produk }}">
+                                        @endif
+                                    </div>
+                                    <div class="mobile-product-details">
+                                        <div class="mobile-product-title">{{ $item['product']->nama_produk }}</div>
+                                        @if(!empty($item['custom_text']))
+                                            <div class="custom-cake-text-pill mobile-custom-text-pill">
+                                                <i class="fa-solid fa-pen-nib me-1"></i> Tulisan Kue: "{{ $item['custom_text'] }}"
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="mobile-product-card-bottom">
+                                    <div class="mobile-product-qty-price">
+                                        <span class="mobile-qty-pill">x{{ $item['qty'] }}</span>
+                                        <span class="mobile-unit-price">@ Rp. {{ number_format($item['price'], 0, ',', '.') }}</span>
+                                    </div>
+                                    <div class="mobile-product-subtotal-wrap">
+                                        <span class="mobile-subtotal-label">Subtotal:</span>
+                                        <span class="mobile-subtotal-val">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="products-table-empty">
+                                <i class="fa-solid fa-box-open"></i>
+                                Tidak ada rincian produk untuk pesanan ini.
+                            </div>
+                        @endforelse
                     </div>
                 </div>
 

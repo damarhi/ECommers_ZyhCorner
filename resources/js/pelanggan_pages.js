@@ -1977,7 +1977,7 @@ function renderCartPage(container, cartItems, subtotal) {
         <div class="cart-layout-grid">
             <!-- Left Column: Products Card & Table -->
             <div class="cart-table-wrapper">
-                <div style="overflow-x: auto;">
+                <div class="cart-table-scroll" style="overflow-x: auto;">
                     <table class="cart-table" style="width: 100%; border-collapse: collapse; min-width: 580px;">
                         <thead>
                             <tr style="background: #fafafa; border-bottom: 1.5px solid #e6e6e6; text-align: left;">
@@ -1990,34 +1990,41 @@ function renderCartPage(container, cartItems, subtotal) {
                         </thead>
                         <tbody>
                             ${cartItems.map(item => `
-                                <tr style="border-bottom: 1px solid #f2f2f2;">
-                                    <td style="padding: 18px 20px;">
+                                <tr class="cart-item-row" style="border-bottom: 1px solid #f2f2f2;">
+                                    <td class="cart-td-product" style="padding: 18px 20px;">
                                         <div class="cart-product-cell" style="display: flex; align-items: center; gap: 14px;">
                                             <div class="cart-product-img" style="width: 72px; height: 72px; border-radius: 8px; overflow: hidden; background: #fdfdfd; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; flex-shrink: 0;">
                                                 <img src="${item.img}" alt="${item.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                                             </div>
-                                            <div style="display: flex; flex-direction: column;">
+                                            <div class="cart-product-info" style="display: flex; flex-direction: column;">
                                                 <span class="cart-product-name" style="font-size: 14.5px; font-weight: 600; color: #1a1a1a;">${item.name}</span>
-                                                ${item.custom_text ? `<small style="color: #00b207; font-size: 12px; margin-top: 3px;">Custom Teks: "${item.custom_text}"</small>` : ''}
+                                                ${item.custom_text ? `<small class="cart-product-custom-text" style="color: #00b207; font-size: 12px; margin-top: 3px;">Custom Teks: "${item.custom_text}"</small>` : ''}
+                                                <span class="cart-mobile-unit-price">Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}</span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="padding: 18px 20px; font-size: 14px; font-weight: 500; color: #4d4d4d; white-space: nowrap;">
+                                    <td class="cart-td-price" style="padding: 18px 20px; font-size: 14px; font-weight: 500; color: #4d4d4d; white-space: nowrap;">
                                         Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}
                                     </td>
-                                    <td style="padding: 18px 20px;">
-                                        <div class="cart-qty-wrapper" style="display: flex; flex-direction: column; align-items: flex-start;">
-                                            <div class="cart-qty-box" style="display: inline-flex; align-items: center; border: 1.5px solid #e6e6e6; border-radius: 50px; background: #fff; width: 104px; height: 36px; padding: 2px; justify-content: space-between;">
-                                                <button type="button" class="cart-qty-btn" onclick="window.updateQty('${item.id}', -1)" style="width: 30px; height: 30px; border-radius: 50%; border: none; background: #f5f5f5; color: #333; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">-</button>
-                                                <input type="text" class="cart-qty-input" value="${item.qty}" readonly style="width: 36px; border: none; text-align: center; font-weight: 600; font-size: 13.5px; background: transparent; outline: none;">
-                                                <button type="button" class="cart-qty-btn" onclick="window.updateQty('${item.id}', 1)" style="width: 30px; height: 30px; border-radius: 50%; border: none; background: #f5f5f5; color: #333; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">+</button>
+                                    <td class="cart-td-qty" style="padding: 18px 20px;">
+                                        <div class="cart-qty-row-mobile">
+                                            <div class="cart-mobile-qty-meta">
+                                                <span class="cart-mobile-qty-label">Jumlah Pesanan</span>
+                                                <span class="cart-mobile-item-subtotal">Subtotal: <strong>Rp. ${new Intl.NumberFormat('id-ID').format(item.price * item.qty)}</strong></span>
                                             </div>
-                                            <span id="cartQtyWarning_${item.id}" class="cart-stock-warning" style="display: none; color: #dc2626; font-size: 11px; font-weight: 500; margin-top: 4px; line-height: 1.2;">
-                                                <i class="fa-solid fa-circle-exclamation" style="margin-right: 2px;"></i> Maks. stok
-                                            </span>
+                                            <div class="cart-qty-wrapper" style="display: flex; flex-direction: column; align-items: flex-start;">
+                                                <div class="cart-qty-box" style="display: inline-flex; align-items: center; border: 1.5px solid #e6e6e6; border-radius: 50px; background: #fff; width: 104px; height: 36px; padding: 2px; justify-content: space-between;">
+                                                    <button type="button" class="cart-qty-btn" onclick="window.updateQty('${item.id}', -1)" style="width: 30px; height: 30px; border-radius: 50%; border: none; background: #f5f5f5; color: #333; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">-</button>
+                                                    <input type="text" class="cart-qty-input" value="${item.qty}" readonly style="width: 36px; border: none; text-align: center; font-weight: 600; font-size: 13.5px; background: transparent; outline: none;">
+                                                    <button type="button" class="cart-qty-btn" onclick="window.updateQty('${item.id}', 1)" style="width: 30px; height: 30px; border-radius: 50%; border: none; background: #f5f5f5; color: #333; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">+</button>
+                                                </div>
+                                                <span id="cartQtyWarning_${item.id}" class="cart-stock-warning" style="display: none; color: #dc2626; font-size: 11px; font-weight: 500; margin-top: 4px; line-height: 1.2;">
+                                                    <i class="fa-solid fa-circle-exclamation" style="margin-right: 2px;"></i> Maks. stok
+                                                </span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td style="padding: 18px 20px; text-align: right;">
+                                    <td class="cart-td-remove" style="padding: 18px 20px; text-align: right;">
                                         <button type="button" class="cart-remove-btn" onclick="window.removeFromCart('${item.id}')" title="Hapus produk" style="background: none; border: 1px solid #e6e6e6; width: 28px; height: 28px; border-radius: 50%; color: #999; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;">
                                             <i class="fa-solid fa-xmark" style="font-size: 14px;"></i>
                                         </button>
@@ -2110,7 +2117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return;
         }
-        if (!e.target.closest('.filter-dropdown-container')) {
+        if (!e.target.closest('.modern-filter-dropdown-menu') && !e.target.closest('.price-popover-card')) {
             document.querySelectorAll('.filter-dropdown-container.open').forEach(c => c.classList.remove('open'));
         }
     });
@@ -2693,7 +2700,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Live search autocomplete initialization
     setupLiveSearch('headerSearchInput', 'headerSearchSuggestions', document.getElementById('headerSearchForm'));
-    setupLiveSearch('mobileSearchInput', 'mobileSearchSuggestions', document.getElementById('mobileSearchForm'));
 });
 
 // ==========================================================================
