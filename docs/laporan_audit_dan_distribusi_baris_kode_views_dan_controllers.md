@@ -1,197 +1,199 @@
-# Laporan Audit & Distribusi Baris Kode Views dan Controllers
+# Laporan Audit & Distribusi Baris Kode Views dan Controllers (Terbaru)
+
 **Aplikasi**: E-Commerce Zyh Corner (Laravel)  
-**Tanggal Audit**: 2026-10-31  
-**Lingkup Analisis**: Seluruh berkas pada `app/Http/Controllers` (22 file) dan `resources/views` (51 file)  
-**Total Berkas**: 73 file  
-**Total Baris Kode**: 29.038 baris  
-**Berkas CodeTour**: `.tours/architecture-views-and-controllers.tour`
+**Tanggal Audit Terbaru**: 2026-11-06  
+**Lingkup Analisis**: Seluruh berkas pada `app/Http/Controllers` (25 file) dan `resources/views` (55 file)  
+**Total Berkas**: 80 file  
+**Total Baris Kode**: 21.952 baris *(turun 7.086 baris / -24,4% dibanding audit awal 29.038 baris)*  
 
 ---
 
 ## 1. Ringkasan Eksekutif
 
-Audit dilakukan untuk memetakan volume kode, persebaran tanggung jawab, serta dominasi teknologi (PHP, CSS, JavaScript, HTML/Blade) pada layer **HTTP Controller** dan layer **Blade Views**.
+Audit ulang ini memetakan volume baris kode terkini, distribusi bahasa pemrograman/markup (**HTML**, **CSS**, **JavaScript**, **PHP/Blade**), serta dominasi teknologi pada setiap berkas di dalam `app/Http/Controllers` dan `resources/views` pasca-refaktorisasi modular (pemecahan *God Controller*, ekstraksi aset CSS/JS ke `public/` & `resources/`, pembuatan komponen Blade reusable, serta optimasi tata letak responsif *mobile*).
 
-| Komponen Layer | Jumlah File | Total Baris Kode | Dominasi Bahasa | Rata-rata Baris/File |
-| :--- | :---: | :---: | :--- | :---: |
-| **HTTP Controllers** (`app/Http/Controllers`) | 22 | 5.346 | **PHP (100%)** | 243 baris |
-| **Blade Views** (`resources/views`) | 51 | 23.692 | **Bervariasi (HTML, CSS, JS, PHP)** | 464 baris |
-| **Total Keseluruhan** | **73** | **29.038** | — | **397 baris** |
+### A. Ikhtisar Volume Per Layer
 
----
+| Komponen Layer | Jumlah File (Awal → Kini) | Total Baris (Awal → Kini) | Selisih Baris | Dominasi Bahasa Utama | Rata-rata Baris/File |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **HTTP Controllers** (`app/Http/Controllers`) | 22 → **25 file** | 5.346 → **5.594 baris** | +248 baris (+4,6%) | **PHP (100% di 25 file)** | **224 baris** *(turun dari 243)* |
+| **Blade Views** (`resources/views`) | 51 → **55 file** | 23.692 → **16.358 baris** | **-7.334 baris (-31,0%)** | **HTML (57,0% total baris; dominan di 49/55 file)** | **297 baris** *(turun dari 464)* |
+| **Total Keseluruhan** | 73 → **80 file** | 29.038 → **21.952 baris** | **-7.086 baris (-24,4%)** | **HTML & PHP** | **274 baris** *(turun dari 397)* |
 
-## 2. Rincian File Controller (`app/Http/Controllers`)
+### B. Komposisi Bahasa Agregat pada `resources/views` (55 File / 16.358 Baris)
 
-Seluruh file controller merupakan script PHP murni berorientasi objek yang menangani routing HTTP, validasi form, query Eloquent ORM, serta otentikasi.
-
-| No | File Controller | Total Baris | Baris PHP (%) | Dominasi | Peran Utama Arsitektur |
-| :---: | :--- | :---: | :---: | :---: | :--- |
-| 1 | `Admin/AdminDashboardController.php` | 65 | 54 (83,1%) | **PHP** | Agregasi data KPI dashboard admin (omset, produk, order) |
-| 2 | `Admin/AdminSettingsController.php` | 147 | 100 (68,0%) | **PHP** | Pengaturan profil admin, info kontak WhatsApp & toko |
-| 3 | `Admin/BannerController.php` | 134 | 106 (79,1%) | **PHP** | Manajemen CRUD, toggle status, dan upload gambar banner |
-| 4 | `Admin/CassierController.php` | 142 | 121 (85,2%) | **PHP** | Pengelolaan akun staf kasir & sinkronisasi user table |
-| 5 | `Admin/ContactMessageController.php` | 97 | 77 (79,4%) | **PHP** | Inbox pesan customer & update status tindak lanjut |
-| 6 | `Admin/CustomerController.php` | 138 | 115 (83,3%) | **PHP** | Data master pelanggan & fitur proteksi blokir akun |
-| 7 | `Admin/DiskonController.php` | 126 | 101 (80,2%) | **PHP** | Pembuatan dan pengaturan event diskon multi-produk |
-| 8 | `Admin/ExpiredProductController.php` | 87 | 69 (79,3%) | **PHP** | Monitoring & sinkronisasi produk mendekati kadaluarsa |
-| 9 | `Admin/KategoriController.php` | 103 | 83 (80,6%) | **PHP** | CRUD kategori master produk kue/pastry |
-| 10 | `Admin/PesananController.php` | **1.014** | **900 (88,8%)** | **PHP** | **Controller terbesar**: Order lifecycle, invoice, live AJAX search, bukti bayar |
-| 11 | `Admin/PosController.php` | 194 | 161 (83,0%) | **PHP** | Terminal Point of Sale (POS) offline kasir & restock |
-| 12 | `Admin/ProdukController.php` | 287 | 245 (85,4%) | **PHP** | CRUD master produk, toggle signature & tanggal expired ISO |
-| 13 | `Admin/ReturController.php` | 283 | 241 (85,2%) | **PHP** | Verifikasi klaim retur barang & status pengembalian dana |
-| 14 | `AuthController.php` | **519** | **437 (84,2%)** | **PHP** | Otentikasi multi-role, Google OAuth 2.0 & OTP email 6-digit |
-| 15 | `Controller.php` | 8 | 6 (75,0%) | **PHP** | Base abstract class controller framework |
-| 16 | `Pelanggan/CartCheckoutController.php` | 318 | 287 (90,3%) | **PHP** | Validasi stok keranjang, custom teks kue & ongkir Biteship |
-| 17 | `Pelanggan/CustomerAddressController.php` | 204 | 177 (86,8%) | **PHP** | Manajemen buku alamat pelanggan & pin koordinat GPS |
-| 18 | `Pelanggan/CustomerOrderController.php` | 324 | 283 (87,3%) | **PHP** | Riwayat pesanan pelanggan & pembatalan transaksi |
-| 19 | `Pelanggan/CustomerReturnController.php` | 204 | 174 (85,3%) | **PHP** | Pengajuan klaim retur pelanggan & upload foto kendala |
-| 20 | `Pelanggan/CustomerSettingsController.php` | 192 | 168 (87,5%) | **PHP** | Pengaturan profil akun pelanggan & upload avatar |
-| 21 | `Pelanggan/PelangganController.php` | **455** | **394 (86,6%)** | **PHP** | Storefront katalog: etalase home, shop, dan detail produk |
-| 22 | `Pelanggan/PembayaranController.php` | 305 | 265 (86,9%) | **PHP** | Webhook gateway Midtrans Snap & transfer bank manual |
+| Kategori Bahasa / Baris | Total Baris | Persentase (%) | Jumlah File yang Didominasi | Keterangan |
+| :--- | :---: | :---: | :---: | :--- |
+| **HTML (Markup Struktur)** | **9.317** | **57,0%** | **49 file** *(termasuk 2 imbang)* | Struktur DOM utama, tabel, kartu, form, dan komponen UI. |
+| **PHP / Blade Directives** | **3.816** | **23,3%** | **2 file** *(1 murni, 1 imbang HTML)* | Direktif `@if`, `@foreach`, `@extends`, `@php`, dan interpolasi `{{ }}`. |
+| **JavaScript (Inline `<script>`)** | **1.911** | **11,7%** | **1 file** | Logika interaktif halaman yang masih tertanam pada blok `<script>`. |
+| **CSS (Inline `<style>`)** | **224** | **1,4%** | **3 file** *(2 murni, 1 imbang HTML)* | Styling spesifik pada blok `<style>` yang belum dipindah ke file eksternal. |
+| **Baris Kosong (Blank/Formatting)** | **1.090** | **6,7%** | — | Pemisah antar blok kode untuk keterbacaan (*readability*). |
+| **Total `resources/views`** | **16.358** | **100,0%** | **55 file** | — |
 
 ---
 
-## 3. Rincian File View (`resources/views`)
+## 2. Rincian Lengkap File Controller (`app/Http/Controllers` — 25 File)
 
-Klasifikasi per baris kode pada file Blade:
-- **PHP/Blade**: Direktif Blade (`@if`, `@foreach`, `@extends`, `@section`), ekspresi interpolasi (`{ }`, `{!! !!}`), dan blok `@php`.
-- **CSS**: Baris kode di dalam blok `<style>...</style>`.
-- **JS**: Baris kode di dalam blok `<script>...</script>`.
-- **HTML**: Tag markup struktur halaman (`<div>`, `<table>`, `<form>`, teks statis).
+Seluruh **25 file controller** didominasi mutlak oleh **PHP (100%)**. Dari total **5.594 baris**, terdapat **4.823 baris kode/komentar PHP aktif (86,2%)** dan **771 baris kosong pemisah (13,8%)**.
 
-### A. Storefront Pelanggan (`resources/views/Pelanggan/`)
+> **Catatan Perubahan Arsitektur**: `Admin/PesananController.php` yang sebelumnya berukuran **1.014 baris** telah dipecah menjadi 4 controller spesialis: `PesananController.php` (208 baris), `LaporanController.php` (314 baris), `EksporController.php` (560 baris), dan `BuktiBayarController.php` (98 baris).
 
-| No | File View (Blade) | Total Baris | PHP/Blade | CSS | JS | HTML | Dominasi Bahasa & Penjelasan |
+| No | File Controller (`app/Http/Controllers/`) | Total Baris | Baris PHP Non-Kosong (%) | Baris PHP Murni (Tanpa Komentar) | Baris Kosong | Dominasi | Peran Utama Arsitektur |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| 1 | `order_detail.blade.php` | **3.400** | 309 (9,1%) | **1.615 (47,5%)** | 621 (18,3%) | 613 (18,0%) | **CSS & JS**: Halaman terpanjang dalam sistem. Berisi layout kartu simetris, stepper pengiriman 5 tahap, live tracker waybill Biteship, dan modal bukti bayar. |
-| 2 | `home.blade.php` | **1.771** | 364 (20,6%) | **1.060 (59,9%)** | 1 (0,1%) | 305 (17,2%) | **CSS**: Mengatur layout grid 4-kolom beranda (Zyh Signatures, Hot Deals, Best Seller), slider hero banner, dan responsive breakpoint. |
-| 3 | `order_history.blade.php` | **1.204** | 184 (15,3%) | 38 (3,2%) | **625 (51,9%)** | 280 (23,3%) | **JavaScript**: Mengelola tabs filter status pesanan, modal pembatalan mandiri, dan asynchronous tracking payload. |
-| 4 | `checkout.blade.php` | **1.165** | 48 (4,1%) | 72 (6,2%) | **612 (52,5%)** | 326 (28,0%) | **JavaScript**: Peta interaktif Leaflet OpenStreetMap, koordinat GPS, autocomplete kurir Biteship, dan switch metode bayar dinamis. |
-| 5 | `order_success.blade.php` | **873** | 87 (10,0%) | 0 (0,0%) | **492 (56,4%)** | 234 (26,8%) | **JavaScript**: Efek selebrasi canvas confetti, timer countdown pengalihan halaman, dan polling status konfirmasi kasir. |
-| 6 | `dashboard.blade.php` | 841 | 147 (17,5%) | 0 (0,0%) | 85 (10,1%) | **546 (64,9%)** | **HTML/Blade**: Struktur kartu profil ringkasan, widget transaksi terkini, dan modal buku alamat tersimpan. |
-| 7 | `settings.blade.php` | 670 | 83 (12,4%) | 0 (0,0%) | 20 (3,0%) | **510 (76,1%)** | **HTML/Blade**: Antarmuka pengaturan akun multi-tab (profil, alamat utama, ganti sandi). |
-| 8 | `detail.blade.php` | 420 | **169 (40,2%)** | 13 (3,1%) | 45 (10,7%) | 162 (38,6%) | **PHP/Blade**: Logika kondisional ketersediaan stok, badge mahkota ZYH Signature, baris expired seragam, dan tab spesifikasi. |
-| 9 | `return_detail.blade.php` | 317 | 115 (36,3%) | 0 (0,0%) | 0 (0,0%) | **180 (56,8%)** | **HTML/Blade**: Timeline status pengajuan retur barang, inspeksi foto kendala, dan tanggapan admin. |
-| 10 | `shop.blade.php` | 266 | **125 (47,0%)** | 0 (0,0%) | 22 (8,3%) | 100 (37,6%) | **PHP/Blade**: Grid etalase katalog, filter kategori, sorting prioritas stok, dan pagination. |
-| 11 | `faq.blade.php` | 263 | 10 (3,8%) | 75 (28,5%) | 61 (23,2%) | **94 (35,7%)** | **CSS/HTML**: Accordion interaktif pertanyaan yang sering diajukan pelanggan. |
-| 12 | `custom_products.blade.php` | 244 | **109 (44,7%)** | 0 (0,0%) | 22 (9,0%) | 96 (39,3%) | **PHP/Blade**: Etalase produk kustom pre-order dengan direct link WhatsApp generator. |
-| 13 | `contact.blade.php` | 227 | 17 (7,5%) | 3 (1,3%) | 88 (38,8%) | **90 (39,6%)** | **HTML / JS**: Form pesan bantuan pelanggan dengan handling AJAX submission. |
-| 14 | `about.blade.php` | 144 | 10 (6,9%) | 0 (0,0%) | 21 (14,6%) | **99 (68,8%)** | **HTML**: Profil narasi cerita toko Zyh Corner dan komitmen kualitas bahan. |
-| 15 | `return_order.blade.php` | 125 | 12 (9,6%) | 0 (0,0%) | 9 (7,2%) | **80 (64,0%)** | **HTML/Blade**: Formulir input komplain retur barang pesanan. |
-| 16 | `partials/multi_banner_grid.blade.php` | 109 | 51 (46,8%) | 0 (0,0%) | 0 (0,0%) | **54 (49,5%)** | **HTML / PHP**: Partial view render grid promo banner beranda. |
-| 17 | `userChart.blade.php` | 22 | 6 (27,3%) | 0 (0,0%) | 0 (0,0%) | **7 (31,8%)** | **HTML / PHP**: Komponen visualisasi mini statistik. |
+| 1 | `Admin/EksporController.php` *(Baru)* | **560** | 512 (91,4%) | 452 (80,7%) | 48 | **PHP** | Generator ekspor penjualan (XML `.xls`, TSV UTF-8, Google Sheets) & CSV pesanan |
+| 2 | `AuthController.php` | **519** | 437 (84,2%) | 393 (75,7%) | 82 | **PHP** | Otentikasi multi-role, Google OAuth 2.0 & verifikasi OTP email 6-digit |
+| 3 | `Pelanggan/PelangganController.php` | **481** | 418 (86,9%) | 396 (82,3%) | 63 | **PHP** | Storefront katalog pelanggan: beranda, filter katalog shop, detail produk, FAQ |
+| 4 | `Pelanggan/CustomerOrderController.php` | **324** | 283 (87,3%) | 261 (80,6%) | 41 | **PHP** | Riwayat pesanan pelanggan, detail pesanan, pelacakan Biteship & pembatalan |
+| 5 | `Pelanggan/CartCheckoutController.php` | **318** | 287 (90,3%) | 262 (82,4%) | 31 | **PHP** | Validasi stok keranjang, teks kustom kue & kalkulasi ongkir Biteship |
+| 6 | `Admin/LaporanController.php` *(Baru)* | **314** | 282 (89,8%) | 255 (81,2%) | 32 | **PHP** | Master seluruh penjualan, live AJAX search, dan laporan analitik keuangan |
+| 7 | `Pelanggan/PembayaranController.php` | **305** | 265 (86,9%) | 233 (76,4%) | 40 | **PHP** | Integrasi pembayaran Midtrans Snap & unggah bukti transfer bank manual |
+| 8 | `Admin/ProdukController.php` | **297** | 255 (85,9%) | 255 (85,9%) | 42 | **PHP** | CRUD master produk, produk kustom, toggle signature & stok kadaluarsa |
+| 9 | `Admin/ReturController.php` | **283** | 241 (85,2%) | 222 (78,4%) | 42 | **PHP** | Verifikasi klaim retur barang pelanggan & pembaruan status pengembalian |
+| 10 | `Admin/PesananController.php` *(Refaktor)* | **208** | 178 (85,6%) | 134 (64,4%) | 30 | **PHP** | Siklus hidup pesanan online, cetak invoice, konfirmasi cepat dapur & bulk delete |
+| 11 | `Pelanggan/CustomerAddressController.php` | **204** | 177 (86,8%) | 157 (77,0%) | 27 | **PHP** | Manajemen buku alamat pelanggan, alamat utama & koordinat GPS peta |
+| 12 | `Pelanggan/CustomerReturnController.php` | **204** | 174 (85,3%) | 149 (73,0%) | 30 | **PHP** | Pengajuan klaim retur pesanan oleh pelanggan & upload bukti foto/video |
+| 13 | `Admin/PosController.php` | **194** | 161 (83,0%) | 157 (80,9%) | 33 | **PHP** | Terminal Point of Sale (POS) kasir toko offline, checkout tunai & restock |
+| 14 | `Pelanggan/CustomerSettingsController.php` | **192** | 168 (87,5%) | 158 (82,3%) | 24 | **PHP** | Pengaturan profil akun pelanggan, unggah avatar, alamat & ganti password |
+| 15 | `Admin/CustomerController.php` | **184** | 159 (86,4%) | 159 (86,4%) | 25 | **PHP** | Master data pelanggan, sinkronisasi akun & fitur proteksi blokir akses |
+| 16 | `Admin/AdminSettingsController.php` | **147** | 129 (87,8%) | 125 (85,0%) | 18 | **PHP** | Pengaturan profil admin, informasi kontak toko, sosial media & rekening bank |
+| 17 | `Admin/CassierController.php` | **142** | 121 (85,2%) | 121 (85,2%) | 21 | **PHP** | Pengelolaan akun staf kasir, perizinan akses & bulk delete |
+| 18 | `Admin/BannerController.php` | **134** | 106 (79,1%) | 105 (78,4%) | 28 | **PHP** | Manajemen CRUD multi-slot banner karusel & toggle status aktif |
+| 19 | `Admin/DiskonController.php` | **126** | 101 (80,2%) | 99 (78,6%) | 25 | **PHP** | Pembuatan dan pengelolaan kampanye diskon multi-produk |
+| 20 | `Admin/KategoriController.php` | **103** | 83 (80,6%) | 82 (79,6%) | 20 | **PHP** | CRUD kategori master produk kue dan pastry |
+| 21 | `Admin/BuktiBayarController.php` *(Baru)* | **98** | 84 (85,7%) | 70 (71,4%) | 14 | **PHP** | Konfirmasi validasi dan penolakan bukti transfer bank manual |
+| 22 | `Admin/ContactMessageController.php` | **97** | 77 (79,4%) | 77 (79,4%) | 20 | **PHP** | Manajemen kotak masuk pesan bantuan pelanggan & status tindak lanjut |
+| 23 | `Admin/ExpiredProductController.php` | **87** | 69 (79,3%) | 64 (73,6%) | 18 | **PHP** | Monitoring, sinkronisasi, dan penghapusan produk kadaluarsa |
+| 24 | `Admin/AdminDashboardController.php` | **65** | 54 (83,1%) | 50 (76,9%) | 11 | **PHP** | Agregasi metrik KPI dashboard admin (omset, pesanan, grafik bulanan) |
+| 25 | `Controller.php` | **8** | 6 (75,0%) | 5 (62,5%) | 2 | **PHP** | Base abstract class controller Laravel |
+| — | **Total 25 File Controller** | **5.594** | **4.823 (86,2%)** | **4.441 (79,4%)** | **771 (13,8%)** | **PHP (100%)** | — |
 
 ---
 
-### B. Panel Admin & Kasir (`resources/views/Admin/`)
+## 3. Rincian Lengkap File View (`resources/views` — 55 File)
 
-| No | File View (Blade) | Total Baris | PHP/Blade | CSS | JS | HTML | Dominasi Bahasa & Penjelasan |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| 18 | `kelola_produk/discounts.blade.php` | 941 | 96 (10,2%) | 0 (0,0%) | 313 (33,3%) | **468 (49,7%)** | **HTML / JS**: Manajemen multi-select produk diskon, toggle aktif, dan modal konfirmasi. |
-| 19 | `kelola_carousel/banners.blade.php` | 917 | 153 (16,7%) | 19 (2,1%) | 149 (16,2%) | **538 (58,7%)** | **HTML / Blade**: Grid preview multi-slot banner dan modal upload gambar terisolasi. |
-| 20 | `kelola_penjualan/sales_report.blade.php` | 786 | 119 (15,1%) | **332 (42,2%)** | 50 (6,4%) | 218 (27,7%) | **CSS**: Styling tabel print-ready laporan keuangan, kartu omset kotor/net, dan filter tanggal. |
-| 21 | `kelola_penjualan/returs.blade.php` | 781 | 139 (17,8%) | 0 (0,0%) | 134 (17,2%) | **462 (59,2%)** | **HTML / Blade**: Tabel pemrosesan retur, filter status tabs, dan modal tindak lanjut admin. |
-| 22 | `kelola_penjualan/orders.blade.php` | 573 | 74 (12,9%) | 65 (11,3%) | 185 (32,3%) | **214 (37,3%)** | **HTML / JS**: Tabel master order, modal resi biteship, dan tombol quick confirm. |
-| 23 | `kelola_penjualan/pos.blade.php` | 566 | 48 (8,5%) | 44 (7,8%) | **223 (39,4%)** | 215 (38,0%) | **JavaScript**: Antarmuka kasir toko offline, add to cart realtime, dan modal restock produk. |
-| 24 | `pesan_kontak/index.blade.php` | 496 | 76 (15,3%) | 0 (0,0%) | 102 (20,6%) | **287 (57,9%)** | **HTML / JS**: Manajemen inbox pesan pelanggan dan modal balasan email. |
-| 25 | `kelola_produk/expired_products.blade.php` | 418 | 63 (15,1%) | 0 (0,0%) | 71 (17,0%) | **262 (62,7%)** | **HTML / Blade**: Monitoring produk kadaluarsa dan riwayat penghapusan. |
-| 26 | `kelola_penjualan/pos_checkout.blade.php` | 397 | 9 (2,3%) | 0 (0,0%) | **277 (69,8%)** | 79 (19,9%) | **JavaScript**: Kalkulasi kembalian tunai POS, diskon item, dan generate receipt print. |
-| 27 | `kelola_produk/products_form.blade.php` | 389 | 54 (13,9%) | 0 (0,0%) | 125 (32,1%) | **181 (46,5%)** | **HTML / JS**: Formulir produk dengan toggle signature dan format standar ISO Y-m-d expired. |
-| 28 | `kelola_akun/customers.blade.php` | 342 | 49 (14,3%) | 0 (0,0%) | 65 (19,0%) | **204 (59,6%)** | **HTML / JS**: Master data pelanggan dan modal status blokir akses akun. |
-| 29 | `kelola_akun/cassiers.blade.php` | 323 | 35 (10,8%) | 5 (1,5%) | 59 (18,3%) | **204 (63,2%)** | **HTML / JS**: Manajemen akun staf kasir dan perizinan akses sistem. |
-| 30 | `dashboard/dashboard.blade.php` | 321 | 36 (11,2%) | 0 (0,0%) | 111 (34,6%) | **165 (51,4%)** | **HTML / JS**: Render grafik penjualan bulanan menggunakan library Chart.js. |
-| 31 | `kelola_produk/products.blade.php` | 311 | 57 (18,3%) | 0 (0,0%) | 65 (20,9%) | **172 (55,3%)** | **HTML / JS**: Tabel master katalog etalase, status badge signature, dan stok. |
-| 32 | `kelola_produk/custom_products.blade.php` | 294 | 48 (16,3%) | 0 (0,0%) | 65 (22,1%) | **164 (55,8%)** | **HTML / JS**: Tabel master produk kustom pemesanan khusus. |
-| 33 | `kelola_akun/settings.blade.php` | 266 | 39 (14,7%) | 0 (0,0%) | 23 (8,6%) | **181 (68,0%)** | **HTML / Blade**: Form pengaturan rekening toko, nomor telepon WhatsApp, dan alamat fisik. |
-| 34 | `kelola_penjualan/order_detail_modal.blade.php` | 254 | 76 (29,9%) | 0 (0,0%) | 0 (0,0%) | **162 (63,8%)** | **HTML / Blade**: Modal ringkasan data rincian pesanan pelanggan untuk admin. |
-| 35 | `kelola_produk/categories.blade.php` | 245 | 33 (13,5%) | 5 (2,0%) | 59 (24,1%) | **133 (54,3%)** | **HTML / JS**: Tabel master kategori kue dan modal tambah kategori. |
-| 36 | `kelola_penjualan/verify_proof_modal.blade.php` | 225 | 36 (16,0%) | 0 (0,0%) | 75 (33,3%) | **101 (44,9%)** | **HTML / JS**: Modal verifikasi transfer bank, zoom foto bukti bayar, dan form alasan tolak. |
-| 37 | `kelola_penjualan/partials/all_sales_table.blade.php` | 139 | 57 (41,0%) | 0 (0,0%) | 0 (0,0%) | **80 (57,6%)** | **HTML / Blade**: Partial view baris tabel yang dirender ulang saat live AJAX search berjalan. |
-| 38 | `kelola_penjualan/invoice.blade.php` | 127 | 31 (24,4%) | 0 (0,0%) | 7 (5,5%) | **82 (64,6%)** | **HTML / Blade**: Halaman cetak invoice / nota transaksi resmi toko. |
-| 39 | `kelola_penjualan/all_sales.blade.php` | 115 | 13 (11,3%) | 0 (0,0%) | 0 (0,0%) | **93 (80,9%)** | **HTML / Blade**: Shell container live AJAX instant search master seluruh penjualan. |
+Klasifikasi per baris kode pada setiap berkas Blade:
+- **HTML**: Tag markup struktur halaman (`<div>`, `<section>`, `<table>`, `<form>`, `<input>`, teks statis, serta tag `<link>` / `<script src="...">` eksternal).
+- **PHP/Blade**: Direktif Blade (`@if`, `@foreach`, `@extends`, `@section`, `@props`), ekspresi interpolasi (`{{ }}`, `{!! !!}`), serta blok logika `@php ... @endphp`.
+- **CSS**: Baris aturan gaya di dalam blok `<style>...</style>` inline.
+- **JS**: Baris skrip di dalam blok `<script>...</script>` inline.
+- **Kosong**: Baris spasi pemisah antar elemen.
 
----
+### A. Storefront & Area Akun Pelanggan (`resources/views/Pelanggan/` — 17 File)
 
-### C. Master Layout (`resources/views/Layout/`)
-
-| No | File View (Blade) | Total Baris | PHP/Blade | CSS | JS | HTML | Dominasi Bahasa & Penjelasan |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| 40 | `layout_pelanggan.blade.php` | 529 | 91 (17,2%) | 34 (6,4%) | 103 (19,5%) | **262 (49,5%)** | **HTML / JS**: Header navigasi, cart drawer, modal Quick View produk, dan live search bar. |
-| 41 | `layout_pAdmin.blade.php` | 496 | 94 (19,0%) | 0 (0,0%) | 127 (25,6%) | **250 (50,4%)** | **HTML / JS**: Sidebar admin/kasir, header notifikasi, dan skrip live instant search listener. |
+| No | File View (`Pelanggan/`) | Total Baris | HTML | PHP/Blade | CSS | JS | Kosong | Didominasi Oleh & Keterangan |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 1 | `order_detail.blade.php` | **1.017** | **612 (60,2%)** | 321 (31,6%) | 0 (0,0%) | 22 (2,2%) | 62 (6,1%) | **HTML (60,2%) & PHP/Blade (31,6%)**: Menyusut 2.641 baris setelah CSS & JS diekstraksi ke `css_order_detail.css` dan `js_order_detail.js`. |
+| 2 | `order_success.blade.php` | **873** | 235 (26,9%) | 87 (10,0%) | 0 (0,0%) | **491 (56,2%)** | 60 (6,9%) | **JS (56,2%)**: Didominasi skrip animasi konfeti, unggah bukti bayar instan, dan *polling* status konfirmasi kasir. |
+| 3 | `home.blade.php` | **693** | 301 (43,4%) | **365 (52,7%)** | 0 (0,0%) | 0 (0,0%) | 27 (3,9%) | **PHP/Blade (52,7%) & HTML (43,4%)**: Seluruh 1.073 baris CSS inline telah dipindah ke `public/css/css_home.css`; kini fokus pada logika Blade etalase beranda. |
+| 4 | `detail.blade.php` | **433** | **173 (40,0%)** | **172 (39,7%)** | 13 (3,0%) | 45 (10,4%) | 30 (6,9%) | **HTML (40,0%) & PHP/Blade (39,7%)**: Markup galeri detail produk, badge ZYH Signature, informasi kadaluarsa, dan produk terkait. |
+| 5 | `dashboard.blade.php` | **431** | **180 (41,8%)** | 135 (31,3%) | 0 (0,0%) | 83 (19,3%) | 33 (7,7%) | **HTML (41,8%) & PHP/Blade (31,3%)**: Menyusut 410 baris karena ekstraksi komponen `<x-customer-sidebar>`, `<x-customer-address-modal>`, dan `<x-biteship-tracking-modal>`. |
+| 6 | `checkout.blade.php` | **430** | **329 (76,5%)** | 49 (11,4%) | 0 (0,0%) | 13 (3,0%) | 39 (9,1%) | **HTML (76,5%)**: Menyusut 735 baris setelah CSS & JS Leaflet/Biteship dipindah ke `css_checkout.css` dan `js_checkout.js`. |
+| 7 | `shop.blade.php` | **417** | **207 (49,6%)** | 162 (38,8%) | 0 (0,0%) | 22 (5,3%) | 26 (6,2%) | **HTML (49,6%) & PHP/Blade (38,8%)**: Katalog produk reguler, filter toolbar responsif, *custom price range*, dan paginasi. |
+| 8 | `order_history.blade.php` | **405** | **191 (47,2%)** | 181 (44,7%) | 0 (0,0%) | 5 (1,2%) | 28 (6,9%) | **HTML (47,2%) & PHP/Blade (44,7%)**: Menyusut 701 baris setelah CSS & JS diekstraksi ke `css_order_history.css` dan `js_order_history.js`. |
+| 9 | `custom_products.blade.php` | **390** | **202 (51,8%)** | 142 (36,4%) | 0 (0,0%) | 22 (5,6%) | 24 (6,2%) | **HTML (51,8%) & PHP/Blade (36,4%)**: Katalog produk kustom pre-order dengan filter kategori/harga dan tautan pemesanan. |
+| 10 | `settings.blade.php` | **369** | **247 (66,9%)** | 71 (19,2%) | 0 (0,0%) | 19 (5,1%) | 32 (8,7%) | **HTML (66,9%)**: Menyusut 301 baris berkat komponen `<x-customer-sidebar>` & `<x-customer-address-modal>`; berisi form profil, avatar, alamat, dan password. |
+| 11 | `return_detail.blade.php` | **286** | **153 (53,5%)** | 111 (38,8%) | 0 (0,0%) | 0 (0,0%) | 22 (7,7%) | **HTML (53,5%) & PHP/Blade (38,8%)**: Timeline status pengajuan retur barang, bukti foto/video, dan catatan admin. |
+| 12 | `contact.blade.php` | **227** | **90 (39,6%)** | 17 (7,5%) | 3 (1,3%) | **88 (38,8%)** | 29 (12,8%) | **HTML (39,6%) & JS (38,8%)**: Formulir kontak bantuan pelanggan dengan pengiriman AJAX dan notifikasi interaktif. |
+| 13 | `about.blade.php` | **174** | **127 (73,0%)** | 10 (5,7%) | 0 (0,0%) | 23 (13,2%) | 14 (8,0%) | **HTML (73,0%)**: Halaman profil cerita brand Zyh Corner, visi kualitas, dan grid keunggulan toko. |
+| 14 | `return_order.blade.php` | **125** | **80 (64,0%)** | 12 (9,6%) | 0 (0,0%) | 9 (7,2%) | 24 (19,2%) | **HTML (64,0%)**: Formulir pengajuan klaim retur pesanan dan unggah foto kendala produk. |
+| 15 | `faq.blade.php` | **120** | **93 (77,5%)** | 13 (10,8%) | 0 (0,0%) | 0 (0,0%) | 14 (11,7%) | **HTML (77,5%)**: Menyusut 143 baris setelah CSS & JS akordeon dipindah ke `css_faq.css` dan `js_faq.js`. |
+| 16 | `partials/multi_banner_grid.blade.php` | **109** | **54 (49,5%)** | **51 (46,8%)** | 0 (0,0%) | 0 (0,0%) | 4 (3,7%) | **HTML (49,5%) & PHP/Blade (46,8%)**: Partial view untuk merender grid promo banner dinamis. |
+| 17 | `userChart.blade.php` | **22** | **7 (31,8%)** | 6 (27,3%) | 0 (0,0%) | 0 (0,0%) | 9 (40,9%) | **HTML (31,8%) & PHP/Blade (27,3%)**: Template mini visualisasi grafik pengguna. |
+| — | **Subtotal `Pelanggan/` (17 File)** | **6.521** | **3.281 (50,3%)** | **1.905 (29,2%)** | **16 (0,2%)** | **842 (12,9%)** | **477 (7,3%)** | **HTML (15 file), JS (1 file), PHP/Blade (1 file)** |
 
 ---
 
-### D. Otentikasi Pengguna (`resources/views/Auth/`)
+### B. Panel Admin & Kasir (`resources/views/Admin/` — 22 File)
 
-| No | File View (Blade) | Total Baris | PHP/Blade | CSS | JS | HTML | Dominasi Bahasa & Penjelasan |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| 42 | `google_verify.blade.php` | 214 | 12 (5,6%) | **81 (37,9%)** | 73 (34,1%) | 22 (10,3%) | **CSS**: Verifikasi nomor handphone pendaftaran Google dengan styling kartu terisolasi. |
-| 43 | `register_verify.blade.php` | 214 | 12 (5,6%) | **81 (37,9%)** | 73 (34,1%) | 22 (10,3%) | **CSS**: Halaman input 6-digit box OTP email dengan auto-focus script. |
-| 44 | `register.blade.php` | 135 | 18 (13,3%) | **50 (37,0%)** | 14 (10,4%) | 34 (25,2%) | **CSS**: Halaman registrasi akun baru pelanggan dan validasi visual. |
-| 45 | `login.blade.php` | 126 | 14 (11,1%) | **50 (39,7%)** | 18 (14,3%) | 30 (23,8%) | **CSS**: Halaman login multi-role dengan tombol Google OAuth 2.0. |
+Seluruh **22 file view Admin** kini **100% didominasi oleh HTML** (baik secara tunggal maupun berpasangan dengan PHP/Blade atau JS) karena CSS dan JS seperti laporan penjualan, POS kasir, serta skrip *bulk delete* telah diekstraksi ke berkas eksternal (`css_sales_report.css`, `css_pos.css`, `js_pos.js`, `js_pos_checkout.js`, `admin-bulk-actions.js`, `admin-confirmations.js`).
 
----
-
-### E. Template Email Notifikasi (`resources/views/emails/`) & Halaman Error (`errors/`)
-
-| No | File View (Blade) | Total Baris | PHP/Blade | CSS | JS | HTML | Dominasi Bahasa & Penjelasan |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| 46 | `errors/403.blade.php` | 227 | 29 (12,8%) | **139 (61,2%)** | 0 (0,0%) | 30 (13,2%) | **CSS**: Tampilan larangan hak akses peran dengan styling minimalis modern. |
-| 47 | `emails/pesan_kontak_baru_admin.blade.php` | 179 | 7 (3,9%) | **120 (67,0%)** | 0 (0,0%) | 48 (26,8%) | **CSS**: Email template responsive inline styling untuk notifikasi pesan masuk admin. |
-| 48 | `emails/pesanan_baru_kasir.blade.php` | 93 | 15 (16,1%) | 19 (20,4%) | 0 (0,0%) | **55 (59,1%)** | **HTML / CSS**: Email pemberitahuan order masuk untuk tim kasir. |
-| 49 | `emails/retur_produk_kasir.blade.php` | 73 | 10 (13,7%) | 15 (20,5%) | 0 (0,0%) | **45 (61,6%)** | **HTML / CSS**: Email notifikasi pengajuan komplain retur pelanggan. |
-| 50 | `emails/produk_kadaluarsa_kasir.blade.php` | 67 | 7 (10,4%) | 15 (22,4%) | 0 (0,0%) | **42 (62,7%)** | **HTML / CSS**: Email peringatan berkala stok kadaluarsa. |
-| 51 | `emails/otp.blade.php` | 52 | 1 (1,9%) | 0 (0,0%) | 0 (0,0%) | **46 (88,5%)** | **HTML**: Email pengiriman kode OTP 6-digit. |
-
----
-
-## 4. Analisis Mendalam & Peluang Restrukturisasi
-
-### A. Kasus God Controller: `Admin/PesananController.php` (1.014 Baris)
-File ini memiliki ukuran 4x lipat rata-rata controller lainnya. Pemetaan tanggung jawabnya:
-1. **CRUD & Lifecycle Pesanan**: `index()`, `update()`, `destroy()`, `quickConfirm()`, `printInvoice()` (~180 baris).
-2. **Verifikasi Bukti Bayar Bank**: `confirmProof()`, `rejectProof()` (~80 baris).
-3. **Pencarian & Laporan Penjualan**: `allSales()`, `salesReport()` (~290 baris).
-4. **Generator Export File**: `exportAllSales()`, `exportOrders()` (~465 baris).
-
-**Akar Penyebab Volume**:
-- Metode `exportAllSales()` (430 baris) dan `salesReport()` (226 baris) mencakup **65% isi file**.
-- Terdapat duplikasi logika query filter (~180 baris) antara `salesReport()` dan `exportAllSales()`.
-
-**Rekomendasi Pemecahan (*Deep Module / Service Layer*)**:
-Mengekstrak dua service kelas terdedikasi:
-- `app/Services/SalesReportService.php` (menangani filter query & kalkulasi KPI omset/diskon/retur).
-- `app/Services/SalesExportService.php` (menangani perakitan file CSV/TSV & Google Sheets redirect).
-> **Dampak**: `PesananController.php` menyusut dari **1.014 baris menjadi ~150–180 baris** tanpa mengubah satupun rute di `routes/web.php` dan seluruh automated test suite tetap lulus 100%.
-
-### B. Pola Embedded CSS & JS Masif pada Blade Views
-Beberapa file view memiliki proporsi CSS atau JS yang melampaui 50% dari keseluruhan baris:
-- **Didominasi CSS**:
-  - `Pelanggan/order_detail.blade.php` (1.615 baris CSS / 47,5%)
-  - `Pelanggan/home.blade.php` (1.060 baris CSS / 59,9%)
-  - `Admin/kelola_penjualan/sales_report.blade.php` (332 baris CSS / 42,2%)
-  *Tujuan Desain Saat Ini*: Menjamin performa *self-contained* dan mengeliminasi *Cumulative Layout Shift (CLS)* tanpa bergantung pada file bundler eksternal terpisah.
-- **Didominasi JavaScript**:
-  - `Pelanggan/order_history.blade.php` (625 baris JS / 51,9%)
-  - `Pelanggan/checkout.blade.php` (612 baris JS / 52,5%)
-  - `Pelanggan/order_success.blade.php` (492 baris JS / 56,4%)
-  - `Admin/kelola_penjualan/pos_checkout.blade.php` (277 baris JS / 69,8%)
-  *Tujuan Desain Saat Ini*: Menggerakkan fungsionalitas asinkron dinamis seperti Leaflet Map GPS geocoding, autocomplete Biteship, polling status transaksi, dan POS scanner.
+| No | File View (`Admin/`) | Total Baris | HTML | PHP/Blade | CSS | JS | Kosong | Didominasi Oleh & Keterangan |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 18 | `kelola_produk/discounts.blade.php` | **889** | **474 (53,3%)** | 111 (12,5%) | 0 (0,0%) | 246 (27,7%) | 58 (6,5%) | **HTML (53,3%) & JS (27,7%)**: Tabel manajemen diskon, modal multi-select produk diskon, dan kalkulasi potongan harga. |
+| 19 | `kelola_carousel/banners.blade.php` | **761** | **541 (71,1%)** | 156 (20,5%) | 19 (2,5%) | 0 (0,0%) | 45 (5,9%) | **HTML (71,1%)**: Grid manajemen multi-slot banner karusel; JS telah diekstraksi ke `public/js/js_banners.js`. |
+| 20 | `kelola_penjualan/returs.blade.php` | **734** | **468 (63,8%)** | 154 (21,0%) | 0 (0,0%) | 73 (9,9%) | 39 (5,3%) | **HTML (63,8%)**: Tabel verifikasi klaim retur pelanggan, filter tab status, dan modal inspeksi bukti retur. |
+| 21 | `kelola_penjualan/orders.blade.php` | **494** | **242 (49,0%)** | 96 (19,4%) | 0 (0,0%) | 124 (25,1%) | 32 (6,5%) | **HTML (49,0%) & JS (25,1%)**: Tabel pesanan online aktif, input resi pengiriman, dan tombol konfirmasi cepat. |
+| 22 | `pesan_kontak/index.blade.php` | **448** | **296 (66,1%)** | 86 (19,2%) | 0 (0,0%) | 41 (9,2%) | 25 (5,6%) | **HTML (66,1%)**: Manajemen kotak masuk pesan pelanggan dan modal detail/balasan pesan. |
+| 23 | `kelola_produk/products_form.blade.php` | **389** | **181 (46,5%)** | 54 (13,9%) | 0 (0,0%) | 125 (32,1%) | 29 (7,5%) | **HTML (46,5%) & JS (32,1%)**: Formulir tambah/edit produk dengan pratinjau gambar, toggle signature, dan tanggal expired. |
+| 24 | `kelola_produk/expired_products.blade.php` | **361** | **269 (74,5%)** | 78 (21,6%) | 0 (0,0%) | 0 (0,0%) | 14 (3,9%) | **HTML (74,5%)**: Tabel monitoring stok mendekati/sudah kadaluarsa dan riwayat penghapusan. |
+| 25 | `kelola_penjualan/sales_report.blade.php` | **359** | **220 (61,3%)** | 120 (33,4%) | 0 (0,0%) | 5 (1,4%) | 14 (3,9%) | **HTML (61,3%) & PHP/Blade (33,4%)**: Menyusut 427 baris setelah CSS & JS dipindah ke `css_sales_report.css` dan `js_sales_report.js`. |
+| 26 | `dashboard/dashboard.blade.php` | **321** | **166 (51,7%)** | 36 (11,2%) | 0 (0,0%) | 110 (34,3%) | 9 (2,8%) | **HTML (51,7%) & JS (34,3%)**: Kartu KPI ringkasan penjualan dan konfigurasi grafik bulanan Chart.js. |
+| 27 | `kelola_penjualan/pos.blade.php` | **311** | **224 (72,0%)** | 68 (21,9%) | 0 (0,0%) | 7 (2,3%) | 12 (3,9%) | **HTML (72,0%)**: Menyusut 255 baris setelah CSS & JS kasir dipindah ke `css_pos.css` dan `js_pos.js`. |
+| 28 | `kelola_akun/customers.blade.php` | **298** | **216 (72,5%)** | 67 (22,5%) | 0 (0,0%) | 0 (0,0%) | 15 (5,0%) | **HTML (72,5%) & PHP/Blade (22,5%)**: Tabel master pelanggan dan aksi proteksi blokir/buka blokir akun. |
+| 29 | `kelola_produk/products.blade.php` | **278** | **186 (66,9%)** | 80 (28,8%) | 0 (0,0%) | 0 (0,0%) | 12 (4,3%) | **HTML (66,9%) & PHP/Blade (28,8%)**: Tabel katalog produk reguler, indikator stok, dan badge signature. |
+| 30 | `kelola_akun/cassiers.blade.php` | **276** | **212 (76,8%)** | 36 (13,0%) | 5 (1,8%) | 8 (2,9%) | 15 (5,4%) | **HTML (76,8%)**: Tabel pengelolaan akun staf kasir beserta modal tambah/edit kasir. |
+| 31 | `kelola_akun/settings.blade.php` | **266** | **181 (68,0%)** | 39 (14,7%) | 0 (0,0%) | 23 (8,6%) | 23 (8,6%) | **HTML (68,0%)**: Halaman pengaturan profil admin, informasi kontak toko, dan nomor rekening bank. |
+| 32 | `kelola_produk/custom_products.blade.php` | **262** | **179 (68,3%)** | 71 (27,1%) | 0 (0,0%) | 0 (0,0%) | 12 (4,6%) | **HTML (68,3%) & PHP/Blade (27,1%)**: Tabel daftar produk kustom pre-order di panel admin. |
+| 33 | `kelola_penjualan/order_detail_modal.blade.php` | **254** | **162 (63,8%)** | 76 (29,9%) | 0 (0,0%) | 0 (0,0%) | 16 (6,3%) | **HTML (63,8%) & PHP/Blade (29,9%)**: Komponen modal rincian item pesanan dan informasi pengiriman pelanggan. |
+| 34 | `kelola_penjualan/verify_proof_modal.blade.php` | **225** | **101 (44,9%)** | 36 (16,0%) | 0 (0,0%) | 75 (33,3%) | 13 (5,8%) | **HTML (44,9%) & JS (33,3%)**: Modal inspeksi bukti transfer bank, pratinjau gambar, dan form alasan penolakan. |
+| 35 | `kelola_produk/categories.blade.php` | **198** | **141 (71,2%)** | 34 (17,2%) | 5 (2,5%) | 8 (4,0%) | 10 (5,1%) | **HTML (71,2%)**: Tabel master kategori produk kue beserta modal CRUD kategori. |
+| 36 | `kelola_penjualan/partials/all_sales_table.blade.php` | **146** | **85 (58,2%)** | 59 (40,4%) | 0 (0,0%) | 0 (0,0%) | 2 (1,4%) | **HTML (58,2%) & PHP/Blade (40,4%)**: Partial baris tabel yang dirender pada fitur pencarian AJAX penjualan. |
+| 37 | `kelola_penjualan/all_sales.blade.php` | **128** | **95 (74,2%)** | 24 (18,8%) | 0 (0,0%) | 0 (0,0%) | 9 (7,0%) | **HTML (74,2%)**: Halaman utama daftar seluruh penjualan (Online & POS Offline). |
+| 38 | `kelola_penjualan/invoice.blade.php` | **127** | **82 (64,6%)** | 31 (24,4%) | 0 (0,0%) | 7 (5,5%) | 7 (5,5%) | **HTML (64,6%) & PHP/Blade (24,4%)**: Template cetak nota / *invoice* resmi pesanan pelanggan. |
+| 39 | `kelola_penjualan/pos_checkout.blade.php` | **104** | **80 (76,9%)** | 9 (8,7%) | 0 (0,0%) | 7 (6,7%) | 8 (7,7%) | **HTML (76,9%)**: Menyusut 293 baris setelah seluruh JS kalkulator kembalian dipindah ke `js_pos_checkout.js`. |
+| — | **Subtotal `Admin/` (22 File)** | **7.629** | **5.001 (65,6%)** | **1.519 (19,9%)** | **29 (0,4%)** | **859 (11,3%)** | **421 (5,5%)** | **HTML mendominasi seluruh 22 file (100%)** |
 
 ---
 
-## 5. Walkthrough CodeTour Terpandu
+### C. Master Layout (`resources/views/Layout/` — 2 File)
 
-Untuk menelusuri secara langsung interaksi antara controller dan view di atas dalam editor VS Code / IDE:
-Buka berkas: **`.tours/architecture-views-and-controllers.tour`**
-Tour ini mencakup 10 titik penelusuran arsitektur penting:
-1. `app/Http/Controllers/Controller.php` (Base Controller Foundation)
-2. `app/Http/Controllers/Pelanggan/PelangganController.php` (Katalog Etalase)
-3. `resources/views/Pelanggan/home.blade.php` (CSS-Dominated Styling)
-4. `app/Http/Controllers/Pelanggan/CartCheckoutController.php` (Checkout Logic & Biteship)
-5. `resources/views/Pelanggan/checkout.blade.php` (JS-Dominated Interactivity & Leaflet Map)
-6. `app/Http/Controllers/Pelanggan/PembayaranController.php` (Gateway Midtrans & Bank Proof)
-7. `resources/views/Pelanggan/order_detail.blade.php` (Order Detail & Tracking Stepper)
-8. `app/Http/Controllers/Admin/PesananController.php` (Admin Orders & POS Central Dispatch)
-9. `resources/views/Admin/kelola_penjualan/pos.blade.php` (POS Cashier Realtime UI)
-10. `app/Http/Controllers/AuthController.php` (Authentication & Security Engine)
+| No | File View (`Layout/`) | Total Baris | HTML | PHP/Blade | CSS | JS | Kosong | Didominasi Oleh & Keterangan |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 40 | `layout_pelanggan.blade.php` | **570** | **291 (51,1%)** | 107 (18,8%) | 34 (6,0%) | 99 (17,4%) | 39 (6,8%) | **HTML (51,1%)**: Kerangka utama storefront pelanggan (header, navigasi responsif, *cart drawer*, modal *Quick View*, footer). |
+| 41 | `layout_pAdmin.blade.php` | **446** | **260 (58,3%)** | 94 (21,1%) | 0 (0,0%) | 67 (15,0%) | 25 (5,6%) | **HTML (58,3%)**: Kerangka utama panel admin & kasir (sidebar, navbar notifikasi, pemuat global `admin-bulk-actions.js`). |
+| — | **Subtotal `Layout/` (2 File)** | **1.016** | **551 (54,2%)** | **201 (19,8%)** | **34 (3,3%)** | **166 (16,3%)** | **64 (6,3%)** | **HTML mendominasi seluruh 2 file** |
+
+---
+
+### D. Komponen Blade Reusable (`resources/views/components/` — 3 File Baru)
+
+| No | File View (`components/`) | Total Baris | HTML | PHP/Blade | CSS | JS | Kosong | Didominasi Oleh & Keterangan |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 42 | `customer-address-modal.blade.php` *(Baru)* | **316** | **279 (88,3%)** | 9 (2,8%) | 0 (0,0%) | 0 (0,0%) | 28 (8,9%) | **HTML (88,3%)**: Komponen modal buku alamat pelanggan & pemilih titik koordinat peta Leaflet (digunakan di Dashboard & Settings). |
+| 43 | `biteship-tracking-modal.blade.php` *(Baru)* | **71** | **65 (91,5%)** | 2 (2,8%) | 0 (0,0%) | 0 (0,0%) | 4 (5,6%) | **HTML (91,5%)**: Komponen modal pelacakan resi kurir Biteship (digunakan di Dashboard & Riwayat Pesanan). |
+| 44 | `customer-sidebar.blade.php` *(Baru)* | **34** | **24 (70,6%)** | 9 (26,5%) | 0 (0,0%) | 0 (0,0%) | 1 (2,9%) | **HTML (70,6%) & PHP/Blade (26,5%)**: Komponen navigasi menu akun pelanggan (`<x-customer-sidebar>`) di 5 halaman profil. |
+| — | **Subtotal `components/` (3 File)** | **421** | **368 (87,4%)** | **20 (4,8%)** | **0 (0,0%)** | **0 (0,0%)** | **33 (7,8%)** | **HTML mendominasi seluruh 3 file** |
+
+---
+
+### E. Otentikasi Pengguna (`resources/views/Auth/` — 4 File)
+
+| No | File View (`Auth/`) | Total Baris | HTML | PHP/Blade | CSS | JS | Kosong | Didominasi Oleh & Keterangan |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 45 | `register.blade.php` | **135** | 34 (25,2%) | 18 (13,3%) | **50 (37,0%)** | 14 (10,4%) | 19 (14,1%) | **CSS (37,0%) & HTML (25,2%)**: Formulir pendaftaran akun pelanggan baru dengan kartu terisolasi. |
+| 46 | `login.blade.php` | **126** | 30 (23,8%) | 14 (11,1%) | **50 (39,7%)** | 18 (14,3%) | 14 (11,1%) | **CSS (39,7%) & HTML (23,8%)**: Halaman login multi-role dan autentikasi Google OAuth 2.0. |
+| 47 | `google_verify.blade.php` | **52** | **23 (44,2%)** | 15 (28,8%) | 0 (0,0%) | 6 (11,5%) | 8 (15,4%) | **HTML (44,2%) & PHP/Blade (28,8%)**: Menyusut 162 baris setelah CSS/JS OTP dipindah ke `auth-otp.css` & `auth-otp.js`. |
+| 48 | `register_verify.blade.php` | **52** | **23 (44,2%)** | 15 (28,8%) | 0 (0,0%) | 6 (11,5%) | 8 (15,4%) | **HTML (44,2%) & PHP/Blade (28,8%)**: Menyusut 162 baris berkat pemakaian bersama `auth-otp.css` & `auth-otp.js`. |
+| — | **Subtotal `Auth/` (4 File)** | **365** | **110 (30,1%)** | **62 (17,0%)** | **100 (27,4%)** | **44 (12,1%)** | **49 (13,4%)** | **HTML (2 file), CSS (2 file)** |
+
+---
+
+### F. Template Email Notifikasi (`resources/views/emails/` — 6 File) & Error (`errors/` — 1 File)
+
+| No | File View (`emails/` & `errors/`) | Total Baris | HTML | PHP/Blade | CSS | JS | Kosong | Didominasi Oleh & Keterangan |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 49 | `emails/pesan_kontak_baru_admin.blade.php` | **80** | **28 (35,0%)** | 18 (22,5%) | 25 (31,2%) | 0 (0,0%) | 9 (11,2%) | **HTML (35,0%) & CSS (31,2%)**: Menyusut 99 baris setelah mewarisi `@extends('emails.layout')`. |
+| 50 | `errors/403.blade.php` | **72** | **30 (41,7%)** | **30 (41,7%)** | 0 (0,0%) | 0 (0,0%) | 12 (16,7%) | **PHP/Blade (41,7%) & HTML (41,7%)**: Menyusut 155 baris setelah CSS animasi gembok dipindah ke `public/css/css_403.css`. |
+| 51 | `emails/pesanan_baru_kasir.blade.php` | **66** | **35 (53,0%)** | 23 (34,8%) | 0 (0,0%) | 0 (0,0%) | 8 (12,1%) | **HTML (53,0%) & PHP/Blade (34,8%)**: Template email notifikasi pesanan baru untuk kasir berbasis `emails.layout`. |
+| 52 | `emails/otp.blade.php` | **52** | **46 (88,5%)** | 1 (1,9%) | 0 (0,0%) | 0 (0,0%) | 5 (9,6%) | **HTML (88,5%)**: Template email pengiriman kode verifikasi OTP 6-digit. |
+| 53 | `emails/retur_produk_kasir.blade.php` | **50** | **25 (50,0%)** | 18 (36,0%) | 0 (0,0%) | 0 (0,0%) | 7 (14,0%) | **HTML (50,0%) & PHP/Blade (36,0%)**: Template email notifikasi pengajuan retur pelanggan berbasis `emails.layout`. |
+| 54 | `emails/produk_kadaluarsa_kasir.blade.php` | **44** | **22 (50,0%)** | 15 (34,1%) | 0 (0,0%) | 0 (0,0%) | 7 (15,9%) | **HTML (50,0%) & PHP/Blade (34,1%)**: Template email peringatan stok kadaluarsa berbasis `emails.layout`. |
+| 55 | `emails/layout.blade.php` *(Baru)* | **42** | **20 (47,6%)** | 2 (4,8%) | **20 (47,6%)** | 0 (0,0%) | 0 (0,0%) | **CSS (47,6%) & HTML (47,6%)**: Master layout dasar untuk seluruh email notifikasi sistem. |
+| — | **Subtotal `emails/` & `errors/` (7 File)** | **406** | **206 (50,7%)** | **107 (26,4%)** | **45 (11,1%)** | **0 (0,0%)** | **48 (11,8%)** | **HTML (5 file), CSS/HTML Imbang (1 file), PHP/HTML Imbang (1 file)** |
+
+---
+
+## 4. Kesimpulan & Temuan Utama Audit
+
+1. **Dominasi pada Layer Controller (`app/Http/Controllers`)**:
+   - **100% (25 dari 25 file)** didominasi oleh **PHP** (total **5.594 baris**, dengan **4.823 baris aktif / 86,2%**).
+   - Tidak ada lagi *God Controller* yang menembus 1.000 baris. Controller terbesar saat ini adalah `Admin/EksporController.php` (**560 baris**) dan `AuthController.php` (**519 baris**), sementara `Admin/PesananController.php` telah turun dari **1.014 baris menjadi 208 baris (-79,5%)**.
+
+2. **Dominasi pada Layer View (`resources/views`)**:
+   - Secara agregat (**16.358 baris** pada **55 file**), kode view kini didominasi oleh **HTML sebesar 57,0% (9.317 baris)**, diikuti oleh **PHP/Blade sebesar 23,3% (3.816 baris)**, **JavaScript sebesar 11,7% (1.911 baris)**, **baris kosong sebesar 6,7% (1.090 baris)**, dan **CSS sebesar 1,4% (224 baris)**.
+   - Berdasarkan dominasi per berkas:
+     - **Didominasi HTML**: **49 file (89,1%)** — seluruh halaman Admin (22 file), Master Layout (2 file), Blade Components (3 file), mayoritas halaman Pelanggan termasuk `order_detail.blade.php` & `order_history.blade.php` (15 file), halaman OTP Auth (2 file), serta mayoritas template Email (5 file).
+     - **Didominasi CSS**: **3 file (5,5%)** — `Auth/login.blade.php` (39,7% CSS), `Auth/register.blade.php` (37,0% CSS), serta `emails/layout.blade.php` (47,6% CSS, imbang dengan HTML).
+     - **Didominasi JavaScript**: **1 file (1,8%)** — `Pelanggan/order_success.blade.php` (56,2% JS).
+     - **Didominasi PHP/Blade**: **2 file (3,6%)** — `Pelanggan/home.blade.php` (52,7% PHP/Blade) dan `errors/403.blade.php` (41,7% PHP/Blade, imbang dengan HTML).

@@ -1,0 +1,140 @@
+/* ============================================================================
+ * Order History Page Styles (Extracted from Pelanggan/order_history.blade.php)
+ * ============================================================================ */
+
+.btn-pay-now-solid {
+    background-color: #00b207 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: 0.3s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.btn-pay-now-solid:hover {
+    background-color: #008f05 !important;
+}
+
+.btn-tracking-solid {
+    background-color: #00b207 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: 0.3s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.btn-tracking-solid:hover {
+    background-color: #008f05 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 178, 7, 0.2);
+}
+
+/* Cancel Reason Popup Styles */
+.cancel-reason-popup {
+    border-radius: 12px !important;
+    padding: 30px 20px !important;
+    max-width: 520px !important;
+}
+
+.cancel-reason-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    text-align: left !important;
+    color: #1a1a1a !important;
+    padding: 0 10px !important;
+}
+
+.cancel-reason-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border: 1.5px solid #e6e6e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: white;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.cancel-reason-option:hover {
+    border-color: #00b207;
+    background-color: #f8fff8;
+}
+
+.cancel-reason-option.selected {
+    border-color: #00b207;
+    background-color: #f0fdf0;
+}
+
+.cancel-reason-option input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d0d0d0;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
+    transition: all 0.25s ease;
+}
+
+.cancel-reason-option input[type="radio"]:checked {
+    border-color: #00b207;
+}
+
+.cancel-reason-option input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background-color: #00b207;
+    border-radius: 50%;
+}
+
+.cancel-reason-option span {
+    flex: 1;
+}
+
+.cancel-reason-cancel-btn {
+    border: 2px solid #00b207 !important;
+    color: #00b207 !important;
+    background: white !important;
+    border-radius: 50px !important;
+    font-weight: 600 !important;
+    padding: 10px 30px !important;
+    font-size: 14px !important;
+}
+
+.cancel-reason-cancel-btn:hover {
+    background: #f0fdf0 !important;
+}
+
+.cancel-reason-confirm-btn {
+    border-radius: 50px !important;
+    font-weight: 600 !important;
+    padding: 10px 30px !important;
+    font-size: 14px !important;
+}
