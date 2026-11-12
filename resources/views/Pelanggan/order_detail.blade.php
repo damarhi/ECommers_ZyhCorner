@@ -254,7 +254,7 @@
                                     <i class="fa-solid fa-location-dot"></i> Alamat Pengiriman
                                 </div>
                                 <div class="summary-card-name" id="displayBillingName">{{ $order->customer_name ?? $user->nama }}</div>
-                                <div class="summary-card-address" id="displayBillingAddress">{{ $order->alamat_pengiriman ?? $user->alamat ?? '-' }}</div>
+                                <div class="summary-card-address" id="displayBillingAddress">{{ $order->resolved_address['street'] ?? $order->alamat_pengiriman ?? $user->alamat ?? '-' }}</div>
                             </div>
                             <div class="summary-card-footer">
                                 <button type="button" class="btn-detail-address" onclick="openAddressDetailModal()">
@@ -719,19 +719,47 @@
                     <span class="section-card-title">
                         <i class="fa-solid fa-location-dot text-danger me-1"></i> Alamat Lengkap
                     </span>
+                    @if(!empty($order->resolved_address['gps']))
+                        <span class="badge" style="background: #e8f5e9; color: #2e7d32; font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                            📍 GPS Terverifikasi
+                        </span>
+                    @endif
                 </div>
-                <div class="modal-kv-box address-box">{{ $order->alamat_pengiriman ?? $user->alamat ?? '-' }}</div>
+                <div class="modal-kv-box address-box">
+                    <div style="font-weight: 600; color: #1e293b;">
+                        {{ $order->resolved_address['street'] ?? $order->alamat_pengiriman ?? $user->alamat ?? '-' }}
+                    </div>
+                    @if(!empty($order->resolved_address['detected_place']) && !str_contains($order->resolved_address['street'] ?? '', $order->resolved_address['detected_place']))
+                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                            <strong>Landmark:</strong> {{ $order->resolved_address['detected_place'] }}
+                        </div>
+                    @endif
+                    @if(!empty($order->resolved_address['area']) || !empty($order->resolved_address['postal_code']))
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                            {{ $order->resolved_address['area'] ?? '' }} ({{ $order->resolved_address['postal_code'] ?? '' }})
+                        </div>
+                    @endif
+                    @if(!empty($order->resolved_address['gps']))
+                        <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <span style="font-size: 11px; font-family: monospace; color: #64748b;">📍 {{ $order->resolved_address['gps'] }}</span>
+                            <a href="{{ $order->resolved_address['maps_url'] ?? 'https://maps.google.com/?q=' . urlencode($order->resolved_address['gps']) }}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #2563eb; text-decoration: underline;">Buka Peta ↗</a>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <!-- Card 3: Catatan Pengiriman (Kondisional) -->
-            @if(!empty($order->catatan_pesanan))
+            @php
+                $cleanNotes = $order->clean_notes;
+            @endphp
+            @if(!empty($cleanNotes))
                 <div class="modal-section-card note-card">
                     <div class="section-card-head">
                         <span class="section-card-title text-amber">
                             <i class="fa-regular fa-note-sticky text-amber me-1"></i> Catatan Pengiriman
                         </span>
                     </div>
-                    <div class="modal-kv-box notes-box">{{ $order->catatan_pesanan }}</div>
+                    <div class="modal-kv-box notes-box">{{ $cleanNotes }}</div>
                 </div>
             @endif
         </div>

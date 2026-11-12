@@ -3,116 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice - {{ $order->order_number }}</title>
-    <!-- Use Outfit/Inter font for modern aesthetics -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Struk Invoice - {{ $order->order_number }}</title>
+    <!-- Modern legible font for thermal receipt printing -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/invoice.css') }}">
 </head>
 <body>
 
-    <div class="invoice-container">
-        <!-- Control buttons (Hidden when printing) -->
-        <div class="no-print-header no-print">
-            <button onclick="window.close();" class="btn btn-light">
+    <!-- Screen Control Toolbar (Hidden when printed) -->
+    <div class="no-print-toolbar no-print">
+        <div class="toolbar-info">
+            <span>Struk Thermal 80mm</span>
+        </div>
+        <div class="toolbar-actions">
+            <button type="button" onclick="window.close(); if(!window.closed){ history.back(); }" class="btn btn-light">
                 Kembali
             </button>
-            <button onclick="window.print();" class="btn btn-primary">
-                Cetak Invoice
+            <button type="button" onclick="window.print();" class="btn btn-primary">
+                Cetak Struk
             </button>
         </div>
+    </div>
 
-        <!-- Invoice Header -->
-        <div class="invoice-header">
-            <div>
-                <h1 class="store-logo">{{ \App\Models\StoreSetting::get('store_name', 'Zyh Corner') }}</h1>
-                <div class="store-info">
-                    <strong>{{ \App\Models\StoreSetting::get('store_tagline', 'Pastry & Bakery Specialist') }}</strong><br>
-                    {{ \App\Models\StoreSetting::get('store_address', 'Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654') }}<br>
-                    Hubungi: {{ \App\Models\StoreSetting::get('store_phone', '0812-3456-789') }} | {{ \App\Models\StoreSetting::get('store_email', 'contact@zyhcorner.com') }}
-                </div>
-            </div>
-            <div>
-                <h2 class="invoice-title">Invoice</h2>
-                <div class="invoice-meta">
-                    <div><span class="invoice-meta-label">No. Order:</span> {{ $order->order_number }}</div>
-                    <div><span class="invoice-meta-label">Tanggal:</span> {{ $order->created_at->format('d M Y') }}</div>
-                    <div><span class="invoice-meta-label">Status Bayar:</span> 
-                        @if($order->payment_status == 'Paid')
-                            <span class="badge badge-success">Paid</span>
-                        @else
-                            <span class="badge badge-secondary">Pending</span>
-                        @endif
-                    </div>
-                </div>
+    <!-- Thermal 80mm Receipt Container -->
+    <div class="receipt-container invoice-container">
+        
+        <!-- Store Header -->
+        <div class="store-header">
+            <h1 class="store-logo">{{ \App\Models\StoreSetting::get('store_name', 'Zyh Corner') }}</h1>
+            <div class="store-tagline">{{ \App\Models\StoreSetting::get('store_tagline', 'Pastry & Bakery Specialist') }}</div>
+            <div class="store-address">{{ \App\Models\StoreSetting::get('store_address', 'Jl. Pemda, Pangkalan Kerinci Kota, Kec. Pangkalan Kerinci, Kabupaten Pelalawan, Riau 28654') }}</div>
+            <div class="store-contacts">
+                WA: {{ \App\Models\StoreSetting::get('store_phone', '0812-3456-789') }} | {{ \App\Models\StoreSetting::get('store_email', 'contact@zyhcorner.com') }}
             </div>
         </div>
 
-        <!-- Invoice Details -->
-        <div class="invoice-details">
-            <div class="details-box">
-                <h3>Ditagihkan Kepada</h3>
-                <p><strong>{{ $order->customer_name }}</strong></p>
-                <p><span class="label">Email</span>: {{ $order->email_pembeli ?? '-' }}</p>
-                <p><span class="label">Alamat Kirim</span>: {{ $order->alamat_pengiriman ?? '-' }}</p>
+        <hr class="divider-dashed">
+
+        <!-- Transaction Meta -->
+        <div class="receipt-meta">
+            <div class="meta-row">
+                <span class="meta-label">No. Order</span>
+                <span class="meta-value meta-order-number">
+                    {{ $order->order_number }}
+                    <span class="channel-tag">{{ $order->jenis_penjualan }}</span>
+                </span>
             </div>
-            <div class="details-box">
-                <h3>Informasi Pengiriman & Pembayaran</h3>
-                <p><span class="label">Metode Bayar</span>: {{ $order->payment_method ?? '-' }}</p>
-                <p><span class="label">Metode Kirim</span>: {{ $order->shipping_method ?? '-' }}</p>
-                <p><span class="label">Jenis Penjualan</span>: {{ $order->jenis_penjualan }}</p>
-                @if($order->catatan_pesanan)
-                    <p><span class="label">Catatan</span>: {{ $order->catatan_pesanan }}</p>
+            <div class="meta-row">
+                <span class="meta-label">Tanggal</span>
+                <span class="meta-value">{{ $order->created_at->format('d/m/Y H:i') }} WIB</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Metode Bayar</span>
+                <span class="meta-value">{{ $order->payment_method ?? 'Tunai' }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Status Bayar</span>
+                <span class="meta-value status-pill">
+                    @if(strtoupper($order->payment_status) == 'PAID' || $order->payment_status == 'Dibayar')
+                        [LUNAS]
+                    @else
+                        [PENDING]
+                    @endif
+                </span>
+            </div>
+        </div>
+
+        <hr class="divider-dashed">
+
+        <!-- Customer & Delivery Info -->
+        <div class="receipt-customer">
+            <div class="section-title">Pelanggan & Pengiriman</div>
+            <div class="customer-detail-row">
+                <span class="meta-label">Nama</span>
+                <span class="meta-value font-weight-bold">{{ $order->customer_name }}</span>
+            </div>
+            @if(!empty($customerPhone))
+            @php
+                $displayPhone = (string) $customerPhone;
+                if (!str_starts_with($displayPhone, '0') && !str_starts_with($displayPhone, '+') && !str_starts_with($displayPhone, '62')) {
+                    $displayPhone = '0' . $displayPhone;
+                }
+            @endphp
+            <div class="customer-detail-row">
+                <span class="meta-label">No. HP</span>
+                <span class="meta-value">{{ $displayPhone }}</span>
+            </div>
+            @endif
+            @if(!empty($order->email_pembeli))
+            <div class="customer-detail-row">
+                <span class="meta-label">Email</span>
+                <span class="meta-value">{{ $order->email_pembeli }}</span>
+            </div>
+            @endif
+            @if(!empty($order->shipping_method))
+            <div class="customer-detail-row">
+                <span class="meta-label">Kurir</span>
+                <span class="meta-value">{{ $order->shipping_method }}</span>
+            </div>
+            @endif
+            @if(!empty($customerAddress['street']) || !empty($order->alamat_pengiriman))
+            <div class="address-card">
+                <div class="address-header-row">
+                    <span class="meta-label">Alamat Pengiriman</span>
+                    @if(!empty($customerAddress['label']))
+                        <span class="address-label-badge">{{ $customerAddress['label'] }}</span>
+                    @endif
+                </div>
+                <div class="address-street">
+                    {{ $customerAddress['street'] ?? $order->alamat_pengiriman }}
+                </div>
+                @if(!empty($customerAddress['area']) || !empty($customerAddress['postal_code']))
+                <div class="address-sub-area">
+                    {{ $customerAddress['area'] ?? '' }}
+                    @if(!empty($customerAddress['postal_code']) && !str_contains($customerAddress['street'] ?? '', $customerAddress['postal_code']))
+                        ({{ $customerAddress['postal_code'] }})
+                    @endif
+                </div>
+                @endif
+                @if(!empty($customerAddress['detected_place']) && !str_contains($customerAddress['street'] ?? '', $customerAddress['detected_place']))
+                <div class="address-geo-place">
+                    <strong>Landmark/Tempat:</strong> {{ $customerAddress['detected_place'] }}
+                </div>
+                @endif
+                @if(!empty($customerAddress['notes']))
+                <div class="address-landmark">
+                    <strong>Patokan:</strong> {{ $customerAddress['notes'] }}
+                </div>
+                @endif
+                @if(!empty($customerAddress['gps']))
+                <div class="address-gps">
+                    &#128205; GPS: {{ $customerAddress['gps'] }}
+                    @if(!empty($customerAddress['detected_road']) && !str_contains($customerAddress['street'] ?? '', $customerAddress['detected_road']))
+                        ({{ $customerAddress['detected_road'] }})
+                    @endif
+                </div>
                 @endif
             </div>
+            @elseif(!empty($customerAddress['is_pickup']))
+            <div class="customer-detail-row" style="margin-top: 4px;">
+                <span class="meta-label">Metode</span>
+                <span class="address-pickup-badge">Ambil di Toko / Kasir Langsung</span>
+            </div>
+            @endif
+
+            @php
+                $displayNotes = isset($cleanNotes) ? $cleanNotes : trim(preg_replace('/\[Titik GPS:[^\]]+\]/i', '', preg_replace('/\[Penerima:[^\]]+\]/i', '', $order->catatan_pesanan ?? '')));
+            @endphp
+            @if(!empty($displayNotes))
+            <div class="customer-notes-block">
+                <strong>Catatan:</strong> {{ $displayNotes }}
+            </div>
+            @endif
         </div>
 
-        <!-- Items Table -->
-        <table class="table-items">
-            <thead>
-                <tr>
-                    <th style="width: 40px; text-align: center;">No</th>
-                    <th>Nama Produk</th>
-                    <th style="text-align: right; width: 150px;">Harga Satuan</th>
-                    <th style="text-align: center; width: 80px;">Qty</th>
-                    <th style="text-align: right; width: 150px;">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($items as $index => $item)
-                <tr>
-                    <td class="center">{{ $index + 1 }}</td>
-                    <td style="font-weight: 500;">{{ $item['name'] }}</td>
-                    <td class="num">Rp. {{ number_format($item['price'], 0, ',', '.') }}</td>
-                    <td class="center">{{ $item['qty'] }}</td>
-                    <td class="num" style="font-weight: 600;">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" style="text-align: center; color: #888; padding: 30px;">Tidak ada item pesanan.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+        <hr class="divider-dashed">
 
-        <!-- Summary -->
-        <div class="invoice-summary">
-            <div class="summary-box">
-                <div class="summary-row">
-                    <span class="lbl">Subtotal</span>
-                    <span class="val">Rp. {{ number_format($order->total, 0, ',', '.') }}</span>
+        <!-- Items Section -->
+        <div class="section-title" style="margin-bottom: 4px;">Item Belanja</div>
+        <div class="items-list">
+            @forelse($items as $index => $item)
+            <div class="item-entry">
+                <div class="item-title-row">
+                    <span class="item-name">{{ $index + 1 }}. {{ $item['name'] }}</span>
                 </div>
-                <div class="summary-row total">
-                    <span class="lbl">Total Bayar</span>
-                    <span class="val">Rp. {{ number_format($order->total, 0, ',', '.') }}</span>
+                @if(!empty($item['custom_text']))
+                <div class="item-custom-text">
+                    &bull; Tulisan: "{{ $item['custom_text'] }}"
                 </div>
+                @endif
+                <div class="item-calc-row">
+                    <span class="item-qty-price">{{ $item['qty'] }} &times; Rp. {{ number_format($item['price'], 0, ',', '.') }}</span>
+                    <span class="item-subtotal">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</span>
+                </div>
+            </div>
+            @empty
+            <div style="text-align: center; color: #666666; padding: 12px 0;">
+                Tidak ada item pesanan.
+            </div>
+            @endforelse
+        </div>
+
+        <hr class="divider-dashed">
+
+        <!-- Billing Summary -->
+        <div class="receipt-summary">
+            <div class="summary-row">
+                <span class="lbl">Subtotal Produk</span>
+                <span class="val">Rp. {{ number_format($order->items_subtotal, 0, ',', '.') }}</span>
+            </div>
+            @if($order->shipping_cost > 0)
+            <div class="summary-row">
+                <span class="lbl">Ongkos Kirim</span>
+                <span class="val">Rp. {{ number_format($order->shipping_cost, 0, ',', '.') }}</span>
+            </div>
+            @endif
+            <div class="summary-row total">
+                <span class="lbl">TOTAL BAYAR</span>
+                <span class="val">Rp. {{ number_format($order->total, 0, ',', '.') }}</span>
             </div>
         </div>
 
+        <hr class="divider-dashed">
+
         <!-- Footer -->
-        <div class="invoice-footer">
-            <p>Terima kasih telah berbelanja di <strong>{{ \App\Models\StoreSetting::get('store_name', 'Zyh Corner') }}</strong>!</p>
-            <p style="font-size: 11px; color: #aaa; margin-top: 5px;">Ini adalah dokumen resmi yang diterbitkan secara otomatis oleh sistem.</p>
+        <div class="receipt-footer">
+            <div class="footer-thanks">Terima Kasih Atas Kunjungan Anda!</div>
+            <div class="footer-note">Simpan struk ini sebagai bukti transaksi resmi.</div>
+            <div class="footer-timestamp">
+                Dicetak: {{ now()->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB
+            </div>
         </div>
+
     </div>
 
     <!-- Automatically trigger printer dialog on page load -->

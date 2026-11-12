@@ -17,9 +17,9 @@
                                 {{ $order->jenis_penjualan }}
                             </span>
                         </div>
-                        <small class="text-muted d-inline-flex align-items-center gap-1.5 mt-0.5" style="font-size: 12px;">
-                            <i class="mdi mdi-clock-outline text-muted" style="font-size: 14px; line-height: 1;"></i>
-                            <span>{{ $order->created_at->format('d M Y, H:i') }} WIB</span>
+                        <small class="d-inline-flex align-items-center gap-1.5 mt-0.5" style="font-size: 12px; color: #475569;">
+                            <i class="mdi mdi-clock-outline text-primary" style="font-size: 14px; line-height: 1;"></i>
+                            <span class="font-weight-600">{{ $order->created_at->format('d M Y, H:i') }} WIB</span>
                         </small>
                     </div>
                 </div>
@@ -30,42 +30,140 @@
                 <!-- Grid Informasi: 2 Kolom Bersih & Simetris -->
                 <div class="row g-3 mb-4">
                     <!-- Kolom Kiri: Pelanggan & Pengiriman -->
+                    @php
+                        $resolvedAddr = $order->resolved_address;
+                        $customerPhone = $resolvedAddr['recipient_phone'] ?? $order->customer_phone;
+                        $cleanNotes = $resolvedAddr['clean_notes'] ?? $order->clean_notes;
+                    @endphp
                     <div class="col-md-6">
-                        <div class="h-100 d-flex flex-column" style="padding: 18px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                            <div class="text-uppercase text-muted font-weight-bold mb-3 pb-2 border-bottom d-flex align-items-center gap-2" style="font-size: 11px; letter-spacing: 0.6px;">
-                                <i class="mdi mdi-account-circle-outline text-primary" style="font-size: 16px; line-height: 1;"></i>
-                                <span>Informasi Pelanggan</span>
+                        <div class="modal-info-panel h-100 d-flex flex-column">
+                            <div class="modal-panel-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="mdi mdi-account-circle-outline text-primary" style="font-size: 18px; line-height: 1;"></i>
+                                    <span style="font-size: 12px; font-weight: 600; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Informasi Pelanggan</span>
+                                </div>
+                                @if(!empty($resolvedAddr['label']))
+                                    <span class="badge bg-white text-dark border" style="font-size: 10.5px; font-weight: 500; padding: 2px 8px; border-color: #cbd5e1 !important;">
+                                        {{ $resolvedAddr['label'] }}
+                                    </span>
+                                @endif
                             </div>
                             
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Nama Pelanggan</span>
-                                <strong class="text-dark text-end" style="font-size: 13px;">{{ $order->customer_name }}</strong>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Nama Pelanggan</span>
+                                <span class="modal-data-value">{{ $order->customer_name }}</span>
                             </div>
 
-                            @if($order->email_pembeli)
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Email</span>
-                                <span class="text-dark font-weight-600 text-end text-truncate ms-2" style="font-size: 13px; max-width: 200px;">{{ $order->email_pembeli }}</span>
-                            </div>
-                            @endif
-
-                            @if($order->alamat_pengiriman)
-                            <div class="mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500 d-block mb-1.5" style="font-size: 12px;">Alamat Pengiriman</span>
-                                <div class="d-flex align-items-start gap-2">
-                                    <i class="mdi mdi-map-marker-outline text-primary flex-shrink-0" style="font-size: 16px; margin-top: 1px; line-height: 1;"></i>
-                                    <span class="text-dark font-weight-500" style="font-size: 12.5px; line-height: 1.5;">{{ $order->alamat_pengiriman }}</span>
+                            @if(!empty($customerPhone))
+                            @php
+                                $cleanPhone = preg_replace('/[^0-9]/', '', $customerPhone);
+                                if (str_starts_with($cleanPhone, '0')) {
+                                    $waPhone = '62' . substr($cleanPhone, 1);
+                                } elseif (str_starts_with($cleanPhone, '62')) {
+                                    $waPhone = $cleanPhone;
+                                } else {
+                                    $waPhone = '62' . $cleanPhone;
+                                }
+                            @endphp
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">No. WhatsApp / HP</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="modal-data-value">{{ $customerPhone }}</span>
+                                    <a href="https://wa.me/{{ $waPhone }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-success d-inline-flex align-items-center gap-1" style="font-size: 11px; padding: 2px 8px; border-radius: 4px;" title="Hubungi via WhatsApp">
+                                        <i class="mdi mdi-whatsapp"></i> Chat
+                                    </a>
                                 </div>
                             </div>
                             @endif
 
-                            @if($order->catatan_pesanan)
+                            @if($order->email_pembeli)
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Email</span>
+                                <span class="modal-data-value text-truncate ms-2" style="max-width: 200px;">{{ $order->email_pembeli }}</span>
+                            </div>
+                            @endif
+
+                            @if(!empty($order->shipping_method))
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Metode Kurir</span>
+                                @if(str_contains(strtolower($order->shipping_method ?? ''), 'ambil') || str_contains(strtolower($order->shipping_method ?? ''), 'pickup'))
+                                    <span class="badge-courier-pickup">
+                                        <i class="mdi mdi-store-check"></i> {{ $order->shipping_method }}
+                                    </span>
+                                @else
+                                    <span class="badge-courier-delivery">
+                                        <i class="mdi mdi-truck-fast"></i> {{ $order->shipping_method }}
+                                    </span>
+                                @endif
+                            </div>
+                            @endif
+
+                            @if(!empty($resolvedAddr['street']) || !empty($order->alamat_pengiriman))
+                            <div class="py-2.5 border-bottom" style="border-color: #f1f5f9 !important;">
+                                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                    <span class="modal-data-label">Alamat Pengiriman</span>
+                                    @if(!empty($resolvedAddr['gps']))
+                                        <span class="badge badge-soft-success d-inline-flex align-items-center gap-1" style="font-size: 10.5px; font-weight: 500; padding: 2px 7px;">
+                                            <i class="mdi mdi-crosshairs-gps"></i> Terverifikasi GPS
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="modal-address-box">
+                                    <div class="modal-address-street">
+                                        {{ $resolvedAddr['street'] ?? $order->alamat_pengiriman }}
+                                    </div>
+
+                                    @if(!empty($resolvedAddr['detected_place']) && !str_contains($resolvedAddr['street'] ?? '', $resolvedAddr['detected_place']))
+                                    <div class="modal-address-landmark">
+                                        <i class="mdi mdi-store-marker-outline text-primary"></i> <span>Landmark: {{ $resolvedAddr['detected_place'] }}</span>
+                                    </div>
+                                    @endif
+
+                                    @if(!empty($resolvedAddr['area']) || !empty($resolvedAddr['postal_code']))
+                                    <div class="modal-address-subarea">
+                                        {{ $resolvedAddr['area'] ?? '' }}
+                                        @if(!empty($resolvedAddr['postal_code']) && !str_contains($resolvedAddr['street'] ?? '', $resolvedAddr['postal_code']))
+                                            <span class="modal-address-postcode">{{ $resolvedAddr['postal_code'] }}</span>
+                                        @endif
+                                    </div>
+                                    @endif
+
+                                    @if(!empty($resolvedAddr['notes']))
+                                    <div class="modal-address-subarea mt-1.5" style="color: #64748b; font-style: italic;">
+                                        <span class="not-italic text-secondary">Patokan:</span> {{ $resolvedAddr['notes'] }}
+                                    </div>
+                                    @endif
+
+                                    @if(!empty($resolvedAddr['gps']))
+                                    <div class="mt-2.5 pt-2 border-top d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-color: #e2e8f0 !important;">
+                                        <span class="modal-address-gps">
+                                            <i class="mdi mdi-map-marker text-danger"></i> {{ $resolvedAddr['gps'] }}
+                                        </span>
+                                        <a href="{{ $resolvedAddr['maps_url'] ?? 'https://maps.google.com/?q=' . urlencode($resolvedAddr['gps']) }}" target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1" style="font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                                            <i class="mdi mdi-open-in-new"></i> Buka Google Maps
+                                        </a>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                            @elseif(str_contains(strtolower($order->shipping_method ?? ''), 'ambil') || str_contains(strtolower($order->shipping_method ?? ''), 'pickup') || $order->jenis_penjualan === 'Offline')
+                            <div class="py-2.5 border-bottom" style="border-color: #f1f5f9 !important;">
+                                <span class="modal-data-label d-block mb-1.5">Metode Pengambilan</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge-courier-pickup" style="font-size: 11.5px; padding: 4px 10px;">
+                                        <i class="mdi mdi-store-check"></i> Ambil Langsung di Outlet
+                                    </span>
+                                </div>
+                            </div>
+                            @endif
+
+                            @if(!empty($cleanNotes))
                             <div class="mt-auto pt-3">
-                                <span class="text-muted font-weight-500 d-block mb-1.5" style="font-size: 11.5px;">Catatan Pesanan</span>
-                                <div style="padding: 10px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <span class="modal-data-label d-block mb-1.5">Catatan Pelanggan</span>
+                                <div class="modal-notes-container">
                                     <div class="d-flex align-items-start gap-2">
-                                        <i class="mdi mdi-note-text-outline text-muted flex-shrink-0" style="font-size: 15px; margin-top: 1px; line-height: 1;"></i>
-                                        <span class="text-secondary fst-italic" style="font-size: 12px; line-height: 1.5;">“{{ $order->catatan_pesanan }}”</span>
+                                        <i class="mdi mdi-note-text-outline text-muted flex-shrink-0" style="font-size: 16px; margin-top: 1px; line-height: 1;"></i>
+                                        <span class="modal-notes-text">“{{ $cleanNotes }}”</span>
                                     </div>
                                 </div>
                             </div>
@@ -75,68 +173,75 @@
 
                     <!-- Kolom Kanan: Status & Pembayaran -->
                     <div class="col-md-6">
-                        <div class="h-100 d-flex flex-column" style="padding: 18px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                            <div class="text-uppercase text-muted font-weight-bold mb-3 pb-2 border-bottom d-flex align-items-center gap-2" style="font-size: 11px; letter-spacing: 0.6px;">
-                                <i class="mdi mdi-credit-card-outline text-primary" style="font-size: 16px; line-height: 1;"></i>
-                                <span>Status & Pembayaran</span>
+                        <div class="modal-info-panel h-100 d-flex flex-column">
+                            <div class="modal-panel-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="mdi mdi-credit-card-outline text-primary" style="font-size: 18px; line-height: 1;"></i>
+                                    <span style="font-size: 12px; font-weight: 600; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Status & Pembayaran</span>
+                                </div>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Metode Bayar</span>
-                                <span class="font-weight-600 text-dark" style="font-size: 13px;">
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Metode Bayar</span>
+                                <span class="modal-data-value">
                                     {{ $order->payment_method ?? 'Transfer' }}
                                 </span>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Status Bayar</span>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Status Bayar</span>
                                 <div>
                                     @if(strtoupper($order->payment_status) == 'PAID' || $order->payment_status == 'Dibayar')
-                                        <span class="badge badge-soft-success" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Dibayar</span>
+                                        <span class="badge badge-soft-success font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Dibayar</span>
                                     @else
-                                        <span class="badge badge-soft-warning" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Tertunda</span>
+                                        <span class="badge badge-soft-warning font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Tertunda</span>
                                     @endif
                                 </div>
                             </div>
 
                             @if($order->has_payment_proof)
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Bukti Transfer</span>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Bukti Transfer</span>
                                 <div>
-                                    <button type="button" class="btn btn-xs btn-outline-warning d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#verifyProofModal{{ $order->id }}" style="font-size: 11px; padding: 2px 8px; border-radius: 4px;">
+                                    <button type="button" class="btn btn-xs btn-outline-warning d-inline-flex align-items-center gap-1 font-weight-500" data-bs-toggle="modal" data-bs-target="#verifyProofModal{{ $order->id }}" style="font-size: 11px; padding: 2px 8px; border-radius: 4px;">
                                         <i class="mdi mdi-file-document-check-outline"></i> Verifikasi Bukti
                                     </button>
                                 </div>
                             </div>
                             @endif
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Status Pesanan</span>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Status Pesanan</span>
                                 <div id="modal-detail-status-badge-{{ $order->id }}">
                                     @if($order->order_status == 'menunggu pembayaran')
-                                        <span class="badge badge-soft-warning" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Menunggu Pembayaran</span>
+                                        <span class="badge badge-soft-warning font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Menunggu Pembayaran</span>
                                     @elseif($order->order_status == 'menunggu konfirmasi')
-                                        <span class="badge badge-soft-warning badge-pulse-amber" style="font-size: 11px; font-weight: 600; padding: 3px 9px;">Menunggu Konfirmasi</span>
+                                        <span class="badge badge-soft-warning badge-pulse-amber font-weight-600" style="font-size: 11.5px; padding: 4px 10px;">Menunggu Konfirmasi</span>
                                     @elseif($order->order_status == 'dikemas')
-                                        <span class="badge badge-soft-info" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Dikemas</span>
+                                        <span class="badge badge-soft-info font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Dikemas</span>
                                     @elseif($order->order_status == 'dikirim')
-                                        <span class="badge badge-soft-primary" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Dikirim</span>
+                                        <span class="badge badge-soft-primary font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Dikirim</span>
                                     @elseif($order->order_status == 'selesai')
-                                        <span class="badge badge-soft-success" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Selesai</span>
+                                        <span class="badge badge-soft-success font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Selesai</span>
                                     @elseif($order->order_status == 'batal')
-                                        <span class="badge badge-soft-danger" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">Dibatalkan</span>
+                                        <span class="badge badge-soft-danger font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">Dibatalkan</span>
                                     @else
-                                        <span class="badge badge-soft-dark" style="font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px;">{{ $order->order_status }}</span>
+                                        <span class="badge badge-soft-dark font-weight-600" style="font-size: 11.5px; padding: 4px 10px; border-radius: 4px;">{{ $order->order_status }}</span>
                                     @endif
                                 </div>
                             </div>
 
                             @if($order->shipping_method)
-                            <div class="d-flex justify-content-between align-items-center mt-auto pt-3">
-                                <span class="text-muted font-weight-500" style="font-size: 12px;">Kurir Pengiriman</span>
-                                <span class="font-weight-600 text-dark d-inline-flex align-items-center gap-1.5" style="font-size: 13px;">
-                                    <i class="mdi mdi-truck-delivery-outline text-primary" style="font-size: 16px; line-height: 1;"></i>
-                                    <span>{{ $order->shipping_method }}</span>
-                                </span>
+                            <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top" style="border-color: #f1f5f9 !important;">
+                                <span class="modal-data-label">Kurir Pengiriman</span>
+                                @if(str_contains(strtolower($order->shipping_method ?? ''), 'ambil') || str_contains(strtolower($order->shipping_method ?? ''), 'pickup'))
+                                    <span class="badge-courier-pickup">
+                                        <i class="mdi mdi-store-check"></i> {{ $order->shipping_method }}
+                                    </span>
+                                @else
+                                    <span class="badge-courier-delivery">
+                                        <i class="mdi mdi-truck-delivery-outline"></i> {{ $order->shipping_method }}
+                                    </span>
+                                @endif
                             </div>
                             @endif
                         </div>
@@ -144,19 +249,19 @@
                 </div>
                 
                 <!-- Items Section: Daftar Produk & Rincian Tagihan Terpadu -->
-                <div class="text-uppercase text-muted font-weight-bold mb-2 d-flex align-items-center gap-2" style="font-size: 11px; letter-spacing: 0.6px;">
-                    <i class="mdi mdi-cube-outline text-primary" style="font-size: 16px; line-height: 1;"></i>
+                <div class="text-uppercase mb-2 d-flex align-items-center gap-2" style="font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: #0f172a;">
+                    <i class="mdi mdi-cube-outline text-primary" style="font-size: 18px; line-height: 1;"></i>
                     <span>Daftar Produk Dipesan</span>
                 </div>
 
-                <div class="rounded-3 border overflow-hidden" style="border-color: #e2e8f0 !important;">
-                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                <div class="rounded-3 border overflow-hidden" style="border-color: #cbd5e1 !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);">
+                    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
                         <table class="table table-hover align-middle mb-0">
-                            <thead style="background: #f8fafc; position: sticky; top: 0; z-index: 1;">
+                            <thead style="background: #f1f5f9; position: sticky; top: 0; z-index: 1;">
                                 <tr>
-                                    <th style="padding: 12px 18px; font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">PRODUK</th>
-                                    <th class="text-center" style="width: 75px; padding: 12px 18px; font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">QTY</th>
-                                    <th class="text-end" style="width: 150px; padding: 12px 18px; font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">SUBTOTAL</th>
+                                    <th style="padding: 11px 18px; font-size: 11.5px; font-weight: 600; color: #334155; letter-spacing: 0.5px; border-bottom: 1.5px solid #cbd5e1;">PRODUK</th>
+                                    <th class="text-center" style="width: 75px; padding: 11px 18px; font-size: 11.5px; font-weight: 600; color: #334155; letter-spacing: 0.5px; border-bottom: 1.5px solid #cbd5e1;">QTY</th>
+                                    <th class="text-end" style="width: 150px; padding: 11px 18px; font-size: 11.5px; font-weight: 600; color: #334155; letter-spacing: 0.5px; border-bottom: 1.5px solid #cbd5e1;">SUBTOTAL</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -190,7 +295,7 @@
                                 @forelse($modalItems as $item)
                                 <tr>
                                     <td style="padding: 12px 18px; white-space: normal; word-wrap: break-word;">
-                                        <div class="font-weight-600 text-dark" style="font-size: 13px;">{{ $item['name'] }}</div>
+                                        <div class="font-weight-500" style="font-size: 13px; color: #0f172a;">{{ $item['name'] }}</div>
                                         @if(!empty($item['custom_text']))
                                             <div class="badge badge-soft-info mt-1.5 d-inline-flex align-items-center gap-1.5" style="font-size: 11px; font-weight: 500; white-space: normal; text-align: left; max-width: 100%; padding: 3px 8px; border-radius: 4px;">
                                                 <i class="mdi mdi-lead-pencil flex-shrink-0" style="font-size: 12px; line-height: 1;"></i>
@@ -198,8 +303,8 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td class="text-center text-dark font-weight-600" style="padding: 12px 18px; font-size: 13px;">{{ $item['qty'] }}</td>
-                                    <td class="text-end font-weight-600 text-dark" style="padding: 12px 18px; font-size: 13px;">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                                    <td class="text-center font-weight-500" style="padding: 12px 18px; font-size: 13px; color: #0f172a;">{{ $item['qty'] }}</td>
+                                    <td class="text-end font-weight-500" style="padding: 12px 18px; font-size: 13px; color: #0f172a;">Rp. {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                                 @empty
                                 <tr>
                                     <td colspan="3" class="text-center py-3.5 text-muted" style="font-size: 12px;">
@@ -212,22 +317,22 @@
                     </div>
 
                     <!-- Breakdown Tagihan Terintegrasi (Tanpa celah, sejajar dengan kolom subtotal) -->
-                    <div class="border-top" style="padding: 16px 20px; background: #f8fafc; border-color: #e2e8f0 !important;">
+                    <div class="border-top" style="padding: 16px 20px; background: #f8fafc; border-color: #cbd5e1 !important;">
                         <div class="row justify-content-end">
                             <div class="col-sm-7 col-md-6 col-lg-5">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted font-weight-500" style="font-size: 12.5px;">Subtotal Produk</span>
-                                    <span class="text-dark font-weight-600" style="font-size: 12.5px;">Rp. {{ number_format($order->items_subtotal, 0, ',', '.') }}</span>
+                                    <span class="modal-data-label" style="font-size: 12.5px;">Subtotal Produk</span>
+                                    <span class="modal-data-value" style="font-size: 13px;">Rp. {{ number_format($order->items_subtotal, 0, ',', '.') }}</span>
                                 </div>
                                 @if($order->shipping_cost > 0)
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted font-weight-500" style="font-size: 12.5px;">Ongkos Kirim</span>
-                                    <span class="text-dark font-weight-600" style="font-size: 12.5px;">Rp. {{ number_format($order->shipping_cost, 0, ',', '.') }}</span>
+                                    <span class="modal-data-label" style="font-size: 12.5px;">Ongkos Kirim</span>
+                                    <span class="modal-data-value" style="font-size: 13px;">Rp. {{ number_format($order->shipping_cost, 0, ',', '.') }}</span>
                                 </div>
                                 @endif
-                                <div class="d-flex justify-content-between pt-2 mt-1.5 border-top" style="border-color: #e2e8f0 !important;">
-                                    <span class="text-dark font-weight-bold" style="font-size: 13px;">Total Tagihan</span>
-                                    <strong class="font-weight-bold" style="font-size: 16px; color: #1E2753;">Rp. {{ number_format($order->total, 0, ',', '.') }}</strong>
+                                <div class="d-flex justify-content-between pt-2.5 mt-2 border-top" style="border-color: #cbd5e1 !important;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #0f172a;">Total Tagihan</span>
+                                    <strong style="font-size: 16.5px; font-weight: 700; color: #1E2753;">Rp. {{ number_format($order->total, 0, ',', '.') }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -237,9 +342,9 @@
             
             <!-- Footer Modal -->
             <div class="modal-footer border-top bg-light d-flex justify-content-between align-items-center flex-shrink-0" style="padding: 14px 24px;">
-                <span class="text-muted d-inline-flex align-items-center gap-1.5" style="font-size: 12px;">
-                    <span>ID Pesanan:</span>
-                    <strong class="text-dark font-weight-700">#{{ $order->id }}</strong>
+                <span class="d-inline-flex align-items-center gap-1.5" style="font-size: 12.5px; color: #334155;">
+                    <span class="font-weight-600">ID Pesanan:</span>
+                    <strong class="font-weight-700" style="color: #0f172a;">#{{ $order->id }}</strong>
                 </span>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal" style="padding: 6px 18px; border-radius: 6px; font-weight: 500; font-size: 12.5px;">Tutup</button>

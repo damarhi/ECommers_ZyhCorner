@@ -257,17 +257,20 @@
                 <!-- Header Modal -->
                 <div class="modal-header border-bottom py-2.5 px-3 px-sm-4 bg-white flex-shrink-0">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="d-inline-flex align-items-center justify-content-center text-primary rounded-circle" style="width: 34px; height: 34px; background-color: #ede9fe; color: #4f46e5 !important;">
+                        <span class="d-inline-flex align-items-center justify-content-center text-primary rounded-circle" style="width: 36px; height: 36px; background-color: #ede9fe; color: #4f46e5 !important;">
                             <i class="mdi mdi-keyboard-return" style="font-size: 18px;"></i>
                         </span>
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h6 class="modal-title font-weight-bold mb-0 text-dark" id="detailReturModalLabel{{ $retur->id }}" style="font-size: 15px;">
+                                <h6 class="modal-title font-weight-bold mb-0 text-dark" id="detailReturModalLabel{{ $retur->id }}" style="font-size: 15.5px;">
                                     Detail Retur #{{ $retur->id }}
                                 </h6>
-                                <span class="badge badge-soft-dark" style="font-size: 10px; font-weight: 600; padding: 2px 6px;">Pesanan #{{ $retur->order_id }}</span>
+                                @php $cleanOrderId = ltrim($retur->order_id, '#'); @endphp
+                                <span class="badge bg-white text-dark border" style="font-size: 10.5px; font-weight: 500; padding: 2px 8px; border-color: #cbd5e1 !important;">
+                                    Pesanan #{{ $cleanOrderId }}
+                                </span>
                             </div>
-                            <small class="text-muted" style="font-size: 11px;">Rincian pengajuan retur barang dari pelanggan.</small>
+                            <small class="text-secondary" style="font-size: 11.5px; color: #64748b !important;">Rincian pengajuan retur barang dari pelanggan.</small>
                         </div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
@@ -276,96 +279,108 @@
                     <div class="row g-3">
                         <!-- Left Column: Detail Fields -->
                         <div class="col-md-6">
-                            <div class="p-3 rounded-3 h-100" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                <div class="text-uppercase text-muted font-weight-bold mb-2.5 d-flex align-items-center" style="font-size: 10px; letter-spacing: 0.5px;">
-                                    <i class="mdi mdi-information-outline me-1 text-primary" style="font-size: 14px;"></i> Data Pengajuan
+                            <div class="modal-info-panel h-100 d-flex flex-column">
+                                <div class="modal-panel-header">
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <i class="mdi mdi-information-outline text-primary" style="font-size: 18px; line-height: 1;"></i>
+                                        <span style="font-size: 12px; font-weight: 600; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Data Pengajuan</span>
+                                    </div>
                                 </div>
 
-                                <div class="mb-2 pb-1.5 border-bottom">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Nama Pelanggan</span>
-                                    <strong class="text-dark" style="font-size: 12.5px;">{{ $retur->customer_name }}</strong>
+                                <div class="modal-data-row">
+                                    <span class="modal-data-label">Nama Pelanggan</span>
+                                    <span class="modal-data-value">{{ $retur->customer_name }}</span>
                                 </div>
 
-                                <div class="mb-2 pb-1.5 border-bottom">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Nama Produk</span>
-                                    <span class="text-dark font-weight-500" style="font-size: 12.5px;">{{ $retur->product_name }}</span>
+                                <div class="modal-data-row">
+                                    <span class="modal-data-label">Nama Produk</span>
+                                    <span class="modal-data-value text-truncate ms-2" style="max-width: 170px;" title="{{ $retur->product_name }}">{{ $retur->product_name }}</span>
                                 </div>
 
-                                <div class="mb-2 pb-1.5 border-bottom">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Tanggal Retur</span>
-                                    <span class="text-dark" style="font-size: 12px;">{{ $retur->return_date }}</span>
+                                <div class="modal-data-row">
+                                    <span class="modal-data-label">Tanggal Retur</span>
+                                    <span class="modal-data-value">{{ $retur->return_date }}</span>
                                 </div>
 
-                                <div class="mb-2 pb-1.5 border-bottom">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Status Retur</span>
-                                    <div class="mt-0.5">
+                                <div class="modal-data-row">
+                                    <span class="modal-data-label">Status Retur</span>
+                                    <div>
                                         @php $dStatus = strtolower($retur->status ?? ''); @endphp
                                         @if(in_array($dStatus, ['accepted', 'diterima', 'disetujui']))
-                                            <span class="badge badge-soft-success" style="font-size: 10px; font-weight: 600; padding: 2px 7px;">Diterima</span>
+                                            <span class="badge badge-soft-success font-weight-600" style="font-size: 11px; padding: 3px 9px; border-radius: 4px;">Diterima</span>
                                         @elseif(in_array($dStatus, ['done', 'completed', 'selesai']))
-                                            <span class="badge badge-soft-dark" style="font-size: 10px; font-weight: 600; padding: 2px 7px;">Selesai</span>
+                                            <span class="badge badge-soft-dark font-weight-600" style="font-size: 11px; padding: 3px 9px; border-radius: 4px;">Selesai</span>
                                         @elseif(in_array($dStatus, ['rejected', 'ditolak']))
-                                            <span class="badge badge-soft-danger" style="font-size: 10px; font-weight: 600; padding: 2px 7px;">Ditolak</span>
+                                            <span class="badge badge-soft-danger font-weight-600" style="font-size: 11px; padding: 3px 9px; border-radius: 4px;">Ditolak</span>
                                         @elseif(in_array($dStatus, ['processed', 'processing', 'diproses']))
-                                            <span class="badge badge-soft-info" style="font-size: 10px; font-weight: 600; padding: 2px 7px;">Diproses</span>
+                                            <span class="badge badge-soft-info font-weight-600" style="font-size: 11px; padding: 3px 9px; border-radius: 4px;">Diproses</span>
                                         @else
-                                            <span class="badge badge-soft-warning" style="font-size: 10px; font-weight: 600; padding: 2px 7px;">Baru</span>
+                                            <span class="badge badge-soft-warning font-weight-600" style="font-size: 11px; padding: 3px 9px; border-radius: 4px;">Baru</span>
                                         @endif
                                     </div>
                                 </div>
 
                                 @if($retur->catatan_admin)
-                                    <div class="mb-2 pb-1.5 border-bottom">
-                                        <span class="text-primary d-block font-weight-500" style="font-size: 10.5px;">
-                                            <i class="mdi mdi-comment-account-outline me-1"></i>Catatan / Alasan Admin
+                                    <div class="py-2.5 border-bottom" style="border-color: #f1f5f9 !important;">
+                                        <span class="modal-data-label d-block mb-1 text-primary">
+                                            <i class="mdi mdi-comment-account-outline me-1"></i>Catatan Admin
                                         </span>
-                                        <p class="text-dark mb-0 mt-0.5 fw-medium" style="font-size: 12px; line-height: 1.4;">
-                                            {{ $retur->catatan_admin }}
-                                        </p>
+                                        <div class="modal-notes-container mt-1">
+                                            <span class="modal-notes-text not-italic" style="color: #0f172a !important; font-style: normal !important;">{{ $retur->catatan_admin }}</span>
+                                        </div>
                                     </div>
                                 @endif
 
-                                <div>
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Alasan Pengajuan Pelanggan</span>
-                                    <p class="text-dark mb-0 mt-1 fst-italic" style="font-size: 12px; line-height: 1.4;">
-                                        "{{ $retur->reason }}"
-                                    </p>
+                                <div class="mt-auto pt-3">
+                                    <span class="modal-data-label d-block mb-1.5">Alasan Pengajuan Pelanggan</span>
+                                    <div class="modal-notes-container">
+                                        <div class="d-flex align-items-start gap-1.5">
+                                            <i class="mdi mdi-comment-question-outline text-muted flex-shrink-0" style="font-size: 15px; margin-top: 1px;"></i>
+                                            <span class="modal-notes-text">“{{ $retur->reason }}”</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Right Column: Proof Photo -->
                         <div class="col-md-6 d-flex flex-column">
-                            <div class="text-uppercase text-muted font-weight-bold mb-2 d-flex align-items-center" style="font-size: 10px; letter-spacing: 0.5px;">
-                                <i class="mdi mdi-camera-outline me-1 text-primary" style="font-size: 14px;"></i> Foto Bukti Retur
+                            <div class="modal-panel-header mb-2.5">
+                                <div class="d-flex align-items-center gap-1.5">
+                                    <i class="mdi mdi-camera-outline text-primary" style="font-size: 18px; line-height: 1;"></i>
+                                    <span style="font-size: 12px; font-weight: 600; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Foto Bukti Retur</span>
+                                </div>
                             </div>
                             @if($retur->foto_retur)
-                                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center bg-light p-2.5 rounded-3 border" style="min-height: 200px;">
+                                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center p-2.5 rounded-3 border bg-white" style="border-color: #cbd5e1 !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05); min-height: 220px;">
                                     <a href="{{ asset($retur->foto_retur) }}" target="_blank" title="Klik untuk membuka ukuran penuh">
                                         <img src="{{ asset($retur->foto_retur) }}" alt="Foto Bukti Retur" style="max-height: 220px; max-width: 100%; object-fit: contain; border-radius: 6px;">
                                     </a>
                                 </div>
-                                <a href="{{ asset($retur->foto_retur) }}" target="_blank" class="btn btn-xs btn-outline-primary w-100 mt-2 py-1" style="border-radius: 6px; font-size: 11px;">
-                                    <i class="mdi mdi-open-in-new me-1"></i> Buka Foto Ukuran Penuh
+                                <a href="{{ asset($retur->foto_retur) }}" target="_blank" class="btn btn-xs btn-outline-primary w-100 mt-2 py-1.5 d-inline-flex align-items-center justify-content-center gap-1.5 font-weight-500" style="border-radius: 6px; font-size: 11.5px;">
+                                    <i class="mdi mdi-open-in-new"></i> Buka Foto Ukuran Penuh
                                 </a>
                             @else
-                                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center bg-light text-muted border rounded-3 p-3 text-center" style="min-height: 200px;">
-                                    <i class="mdi mdi-image-off-outline" style="font-size: 40px; opacity: 0.35;"></i>
-                                    <span class="mt-2" style="font-size: 11.5px;">Pelanggan tidak melampirkan foto bukti.</span>
+                                <div class="modal-empty-proof flex-grow-1">
+                                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 48px; height: 48px; background: #e2e8f0; color: #64748b;">
+                                        <i class="mdi mdi-image-off-outline" style="font-size: 24px;"></i>
+                                    </div>
+                                    <span class="text-dark font-weight-500 mb-1" style="font-size: 12.5px;">Tidak Ada Foto Bukti</span>
+                                    <small class="text-secondary" style="font-size: 11.5px; color: #64748b !important;">Pelanggan tidak melampirkan foto bukti pada pengajuan ini.</small>
                                 </div>
                             @endif
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 0 0 12px 12px;">
-                    <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="text-muted" style="font-size: 11px; margin-right: 4px;">Ubah Status:</span>
+                <div class="modal-footer border-top bg-light py-2.5 px-3 px-sm-4 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-radius: 0 0 12px 12px; border-color: #cbd5e1 !important;">
+                    <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                        <span class="modal-data-label me-1" style="font-size: 12px;">Ubah Status:</span>
                         @if(strtolower($retur->status) !== 'accepted')
                             <form action="{{ route('returs.update-status', $retur->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="status" value="Accepted">
-                                <button type="submit" class="btn btn-xs btn-outline-success py-1 px-2" style="font-size: 10.5px; border-radius: 4px;" title="Terima Retur">
+                                <button type="submit" class="btn-status-action btn-status-accept" title="Terima Retur">
                                     <i class="mdi mdi-check"></i> Terima
                                 </button>
                             </form>
@@ -375,7 +390,7 @@
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="status" value="Processed">
-                                <button type="submit" class="btn btn-xs btn-outline-info py-1 px-2" style="font-size: 10.5px; border-radius: 4px;" title="Proses Retur">
+                                <button type="submit" class="btn-status-action btn-status-process" title="Proses Retur">
                                     <i class="mdi mdi-progress-clock"></i> Proses
                                 </button>
                             </form>
@@ -385,7 +400,7 @@
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="status" value="Rejected">
-                                <button type="submit" class="btn btn-xs btn-outline-danger py-1 px-2" style="font-size: 10.5px; border-radius: 4px;" title="Tolak Retur">
+                                <button type="submit" class="btn-status-action btn-status-reject" title="Tolak Retur">
                                     <i class="mdi mdi-close"></i> Tolak
                                 </button>
                             </form>
@@ -395,15 +410,14 @@
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="status" value="Done">
-                                <button type="submit" class="btn btn-xs btn-outline-dark py-1 px-2" style="font-size: 10.5px; border-radius: 4px;" title="Tandai Selesai">
+                                <button type="submit" class="btn-status-action btn-status-done" title="Tandai Selesai">
                                     <i class="mdi mdi-check-all"></i> Selesai
                                 </button>
                             </form>
                         @endif
                     </div>
-                    <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Tutup</button>
+                    <button type="button" class="btn btn-light btn-sm px-3.5 py-1.5" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px; background: #ffffff; border: 1px solid #cbd5e1; color: #334155;">Tutup</button>
                 </div>
-            </div>
         </div>
     </div>
 
@@ -422,9 +436,12 @@
                                 <h6 class="modal-title font-weight-bold mb-0 text-dark" id="editReturModalLabel{{ $retur->id }}" style="font-size: 15px;">
                                     Keputusan Retur Produk
                                 </h6>
-                                <span class="badge bg-light text-primary border" style="font-size: 10px; font-weight: 600; padding: 2px 6px;">#{{ $retur->id }}</span>
+                                @php $cleanEditOrderId = ltrim($retur->order_id, '#'); @endphp
+                                <span class="badge bg-light text-primary border" style="font-size: 10.5px; font-weight: 500; padding: 2px 7px; border-color: #cbd5e1 !important;">
+                                    #{{ $retur->id }}
+                                </span>
                             </div>
-                            <small class="text-muted" style="font-size: 11px;">Tentukan status pengajuan retur dan berikan catatan alasan untuk pelanggan.</small>
+                            <small class="text-secondary" style="font-size: 11.5px; color: #64748b !important;">Tentukan status pengajuan retur dan berikan catatan alasan untuk pelanggan.</small>
                         </div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 11px;"></button>
@@ -434,39 +451,39 @@
                     @method('PUT')
                     <div class="modal-body p-3 p-sm-4 bg-white" style="overflow-y: auto;">
                         <!-- Ringkasan Data Pengajuan Pelanggan (Read-Only / Terkunci) -->
-                        <div class="bg-light border rounded-3 p-3 mb-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
-                                <span class="text-uppercase text-muted font-weight-bold" style="font-size: 10px; letter-spacing: 0.5px;">
-                                    <i class="mdi mdi-lock-outline me-1"></i>Data Pengajuan Pelanggan (Terkunci)
+                        <div class="bg-white border rounded-3 p-3 mb-3" style="border-color: #cbd5e1 !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);">
+                            <div class="d-flex align-items-center justify-content-between mb-2.5 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
+                                <span class="text-uppercase font-weight-600" style="font-size: 11px; letter-spacing: 0.5px; color: #0f172a;">
+                                    <i class="mdi mdi-lock-outline me-1 text-primary"></i>Data Pengajuan Pelanggan (Terkunci)
                                 </span>
-                                <span class="badge bg-white text-muted border" style="font-size: 10px;">ID Pesanan: {{ $retur->order_id }}</span>
+                                <span class="badge bg-white text-dark border" style="font-size: 10.5px; font-weight: 500; border-color: #cbd5e1 !important;">ID Pesanan: #{{ $cleanEditOrderId }}</span>
                             </div>
                             <div class="row g-2 mb-2">
                                 <div class="col-sm-6">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Nama Pelanggan</span>
-                                    <span class="text-dark font-weight-500" style="font-size: 12px;">{{ $retur->customer_name }}</span>
+                                    <span class="d-block" style="font-size: 11px; color: #475569; font-weight: 500;">Nama Pelanggan</span>
+                                    <span class="text-dark font-weight-500" style="font-size: 12.5px;">{{ $retur->customer_name }}</span>
                                 </div>
                                 <div class="col-sm-6">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Tanggal Retur</span>
-                                    <span class="text-dark font-weight-500" style="font-size: 12px;">{{ $retur->return_date }}</span>
+                                    <span class="d-block" style="font-size: 11px; color: #475569; font-weight: 500;">Tanggal Retur</span>
+                                    <span class="text-dark font-weight-500" style="font-size: 12.5px;">{{ $retur->return_date }}</span>
                                 </div>
-                                <div class="col-12">
-                                    <span class="text-muted d-block" style="font-size: 10.5px;">Nama Produk</span>
-                                    <span class="text-dark font-weight-500" style="font-size: 12px;">{{ $retur->product_name }}</span>
+                                <div class="col-12 mt-1">
+                                    <span class="d-block" style="font-size: 11px; color: #475569; font-weight: 500;">Nama Produk</span>
+                                    <span class="text-dark font-weight-500" style="font-size: 12.5px;">{{ $retur->product_name }}</span>
                                 </div>
                             </div>
-                            <div>
-                                <span class="text-muted d-block" style="font-size: 10.5px;">Alasan Pengajuan Pelanggan:</span>
-                                <p class="text-dark mb-0 mt-0.5 fst-italic" style="font-size: 11.5px; line-height: 1.4;">
-                                    "{{ $retur->reason }}"
-                                </p>
+                            <div class="mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                                <span class="d-block mb-1" style="font-size: 11px; color: #475569; font-weight: 500;">Alasan Pengajuan Pelanggan:</span>
+                                <div class="modal-notes-container mt-1">
+                                    <span class="modal-notes-text">“{{ $retur->reason }}”</span>
+                                </div>
                             </div>
                             @if($retur->foto_retur)
-                                <div class="mt-2 pt-2 border-top d-flex align-items-center justify-content-between">
-                                    <span class="text-muted" style="font-size: 11px;">
+                                <div class="mt-2.5 pt-2 border-top d-flex align-items-center justify-content-between" style="border-color: #f1f5f9 !important;">
+                                    <span class="text-secondary" style="font-size: 11.5px; color: #475569 !important;">
                                         <i class="mdi mdi-image-check text-success me-1"></i>Foto bukti tersedia
                                     </span>
-                                    <a href="{{ asset($retur->foto_retur) }}" target="_blank" class="btn btn-xs btn-outline-primary py-0.5 px-2" style="font-size: 10.5px; border-radius: 4px;">
+                                    <a href="{{ asset($retur->foto_retur) }}" target="_blank" class="btn btn-xs btn-outline-primary py-1 px-2.5 font-weight-500" style="font-size: 11px; border-radius: 4px;">
                                         Lihat Foto Bukti
                                     </a>
                                 </div>
@@ -475,7 +492,7 @@
 
                         <!-- Form Status & Catatan Keputusan Admin (Hanya ini yang diubah) -->
                         <div class="form-group mb-2.5">
-                            <label class="form-label font-weight-bold mb-1 text-dark" style="font-size: 12px;">
+                            <label class="form-label font-weight-600 mb-1 text-dark" style="font-size: 12px;">
                                 Status Retur <span class="text-danger">*</span>
                             </label>
                             @php $eStatus = strtolower($retur->status ?? ''); @endphp
@@ -500,9 +517,9 @@
                             </small>
                         </div>
                     </div>
-                    <div class="modal-footer border-top bg-light py-2 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 12px 12px;">
-                        <button type="button" class="btn btn-light btn-sm px-3 py-1" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px;">Batal</button>
-                        <button type="submit" class="btn btn-gradient-primary btn-sm px-3 py-1 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
+                    <div class="modal-footer border-top bg-light py-2.5 px-3 px-sm-4 d-flex justify-content-end gap-2" style="border-radius: 0 0 12px 12px; border-color: #cbd5e1 !important;">
+                        <button type="button" class="btn btn-light btn-sm px-3.5 py-1.5" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500; font-size: 12px; background: #ffffff; border: 1px solid #cbd5e1; color: #334155;">Batal</button>
+                        <button type="submit" class="btn btn-gradient-primary btn-sm px-3.5 py-1.5 shadow-sm d-inline-flex align-items-center" style="border-radius: 6px; font-weight: 500; font-size: 12px;">
                             <i class="mdi mdi-check-circle-outline me-1" style="font-size: 14px;"></i> Simpan Keputusan
                         </button>
                     </div>

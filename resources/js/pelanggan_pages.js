@@ -2306,6 +2306,86 @@ window.initCheckoutMap = function() {
     });
 };
 
+let reverseGeocodeTimer = null;
+window.reverseGeocodeCoords = function(lat, lng) {
+    clearTimeout(reverseGeocodeTimer);
+    reverseGeocodeTimer = setTimeout(function() {
+        const displayEl = document.getElementById('coordsDisplay');
+        const streetEl = document.getElementById('streetAddress');
+        const postalEl = document.getElementById('postalCode');
+        const areaEl = document.getElementById('areaSearchInput');
+
+        if (displayEl) {
+            displayEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Mendeteksi jalan & tempat (${lat.toFixed(5)}, ${lng.toFixed(5)})...`;
+        }
+
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        fetch(url, {
+            headers: { 'Accept-Language': 'id,en;q=0.9' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.address) {
+                if (displayEl) {
+                    displayEl.innerHTML = `Titik koordinat terpilih: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                }
+                return;
+            }
+
+            const addr = data.address;
+            const road = addr.road || addr.highway || addr.pedestrian || '';
+            const place = data.name && data.name !== road ? data.name : '';
+            const sub = addr.suburb || addr.village || addr.neighbourhood || '';
+            const district = addr.district || addr.city_district || '';
+            const city = addr.city || addr.town || addr.county || '';
+            const postcode = addr.postcode || '';
+
+            const labelParts = [place, road, sub].filter(Boolean);
+            const friendlyName = labelParts.length > 0 ? labelParts.join(' - ') : (data.display_name ? data.display_name.split(',')[0] : '');
+
+            if (displayEl) {
+                displayEl.innerHTML = `📍 <strong>${friendlyName || 'Lokasi Terpilih'}</strong> (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+            }
+
+            // Autofill street address if empty or dummy
+            if (streetEl) {
+                const currentVal = streetEl.value.trim();
+                const isDummy = !currentVal || /^(sdasd|asdasd|tes|test|xxx|dummy|[a-z]{1,6})$/i.test(currentVal);
+                if (isDummy) {
+                    const streetParts = [place, road, sub].filter(Boolean);
+                    if (streetParts.length > 0) {
+                        streetEl.value = streetParts.join(', ');
+                    } else if (data.display_name) {
+                        streetEl.value = data.display_name;
+                    }
+                    streetEl.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+
+            // Autofill postal code if empty
+            if (postalEl && !postalEl.value.trim() && postcode) {
+                postalEl.value = postcode;
+                postalEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            // Autofill area name if empty
+            if (areaEl && !areaEl.value.trim()) {
+                const areaParts = [sub, district, city].filter(Boolean);
+                if (areaParts.length > 0) {
+                    areaEl.value = areaParts.join(', ');
+                    areaEl.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        })
+        .catch(err => {
+            console.warn('Reverse geocode error:', err);
+            if (displayEl) {
+                displayEl.innerHTML = `Titik koordinat terpilih: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            }
+        });
+    }, 350);
+};
+
 window.updateCoordsInputs = function(lat, lng) {
     const latEl = document.getElementById('latitude');
     const lngEl = document.getElementById('longitude');
@@ -2319,6 +2399,7 @@ window.updateCoordsInputs = function(lat, lng) {
     if (sumGps) {
         sumGps.style.display = 'inline-flex';
     }
+    window.reverseGeocodeCoords(lat, lng);
 };
 
 // ==========================================================================

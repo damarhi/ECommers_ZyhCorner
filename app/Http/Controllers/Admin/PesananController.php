@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pesanan;
 use App\Models\Produk;
+use App\Models\User;
+use App\Models\UserAddress;
+use App\Models\Customer;
+use App\Services\GeoLocationService;
 use Illuminate\Http\Request;
 
 class PesananController extends Controller
@@ -180,11 +184,134 @@ class PesananController extends Controller
                     'qty' => $qty,
                     'price' => $price,
                     'subtotal' => $price * $qty,
+                    'custom_text' => $item['custom_text'] ?? null,
                 ];
             }
         }
-        
-        return view('Admin.kelola_penjualan.invoice', compact('order', 'items'));
+        $customerPhone = null;
+        $customerAddress = [
+            'label' => null,
+            'street' => $order->alamat_pengiriman,
+            'area' => null,
+            'postal_code' => null,
+            'notes' => null,
+            'gps' => null,
+            'is_pickup' => ($order->jenis_penjualan === 'Offline' && empty($order->alamat_pengiriman)),
+        ];
+
+        if (!empty($order->email_pembeli)) {
+            $customerUser = User::where('email', $order->email_pembeli)->first();
+            if ($customerUser) {
+                if (!empty($customerUser->no_hp)) {
+                    $customerPhone = $customerUser->no_hp;
+                }
+
+                $userAddr = UserAddress::where('user_id', $customerUser->user_id)
+                    ->orderByDesc('is_default')
+                    ->first();
+
+                if ($userAddr) {
+                    $customerAddress['label'] = $userAddr->label;
+                    if (empty($customerAddress['street'])) {
+                        $customerAddress['street'] = $userAddr->street_address;
+                    }
+                    $customerAddress['area'] = $userAddr->destination_area_name;
+                    $customerAddress['postal_code'] = $userAddr->postal_code;
+                    $customerAddress['notes'] = $userAddr->notes;
+                    if ($userAddr->latitude && $userAddr->longitude) {
+                        $customerAddress['gps'] = $userAddr->latitude . ', ' . $userAddr->longitude;
+                    }
+                } elseif (empty($customerAddress['street'])) {
+                    $customerAddress['street'] = $customerUser->alamat;
+                    $customerRec = Customer::where('user_id', $customerUser->user_id)->first();
+                    if (empty($customerAddress['street']) && $customerRec && !empty($customerRec->location)) {
+                        $customerAddress['street'] = $customerRec->location;
+                    }
+                }
+            }
+        }
+
+        if (empty($customerPhone) && empty($customerAddress['street']) && !empty($order->customer_name)) {
+            $matchedUser = User::where('nama', $order->customer_name)->first();
+            if ($matchedUser) {
+                if (!empty($matchedUser->no_hp)) {
+                    $customerPhone = $matchedUser->no_hp;
+                }
+                $userAddr = UserAddress::where('user_id', $matchedUser->user_id)->orderByDesc('is_default')->first();
+                if ($userAddr) {
+                    $customerAddress['label'] = $userAddr->label;
+                    $customerAddress['street'] = $userAddr->street_address;
+                    $customerAddress['area'] = $userAddr->destination_area_name;
+                    $customerAddress['postal_code'] = $userAddr->postal_code;
+                    $customerAddress['notes'] = $userAddr->notes;
+                    if ($userAddr->latitude && $userAddr->longitude) {
+                        $customerAddress['gps'] = $userAddr->latitude . ', ' . $userAddr->longitude;
+                    }
+                } elseif (!empty($matchedUser->alamat)) {
+                    $customerAddress['street'] = $matchedUser->alamat;
+                }
+            }
+        }
+
+        if (!empty($order->catatan_pesanan)) {
+            if (empty($customerAddress['gps']) && preg_match('/\[Titik GPS:\s*([-\d.]+),\s*([-\d.]+)/i', $order->catatan_pesanan, $matches)) {
+                $customerAddress['gps'] = $matches[1] . ', ' . $matches[2];
+            }
+            if (empty($customerPhone) && preg_match('/\[Penerima:\s*[^()]*\(([^)]+)\)\]/i', $order->catatan_pesanan, $matches)) {
+                $customerPhone = trim($matches[1]);
+            }
+        }
+        $customerAddress['detected_place'] = null;
+        $customerAddress['detected_road'] = null;
+
+        if (!empty($customerAddress['gps'])) {
+            $coords = explode(',', (string) $customerAddress['gps']);
+            if (count($coords) === 2) {
+                $lat = trim($coords[0]);
+                $lng = trim($coords[1]);
+                $geoInfo = GeoLocationService::reverseGeocode($lat, $lng);
+                if ($geoInfo) {
+                    $customerAddress['detected_place'] = $geoInfo['place_name'];
+                    $customerAddress['detected_road'] = $geoInfo['road'];
+
+                    $cleanStreet = trim(preg_replace('/\(Kode Pos:.*?\)/i', '', (string)$customerAddress['street']));
+                    $isDummyStreet = false;
+                    if (empty($cleanStreet) || (strlen($cleanStreet) <= 8 && preg_match('/^[a-z0-9_-]+$/i', $cleanStreet))) {
+                        $isDummyStreet = true;
+                    }
+
+                    if ($isDummyStreet) {
+                        $resolvedParts = array_filter([$geoInfo['place_name'], $geoInfo['road']]);
+                        if (!empty($resolvedParts)) {
+                            $customerAddress['street'] = implode(', ', $resolvedParts);
+                        } elseif (!empty($geoInfo['display_name'])) {
+                            $customerAddress['street'] = $geoInfo['display_name'];
+                        }
+                    }
+
+                    if (empty($customerAddress['area']) && !empty($geoInfo['area'])) {
+                        $customerAddress['area'] = $geoInfo['area'];
+                    }
+                    if (empty($customerAddress['postal_code']) && !empty($geoInfo['postal_code'])) {
+                        $customerAddress['postal_code'] = $geoInfo['postal_code'];
+                    }
+                }
+            }
+        }
+
+        if (empty($customerAddress['postal_code']) && !empty($customerAddress['street'])) {
+            if (preg_match('/(?:Kode Pos:\s*|,\s*)(\d{5})/i', $customerAddress['street'], $matches)) {
+                $customerAddress['postal_code'] = $matches[1];
+            }
+        }
+
+        // Sanitize catatan_pesanan for the customer note box (strip internal brackets [Penerima: ...] & [Titik GPS: ...])
+        $cleanNotes = $order->catatan_pesanan ?? '';
+        $cleanNotes = preg_replace('/\[Penerima:\s*[^()]*\([^)]+\)\]/i', '', $cleanNotes);
+        $cleanNotes = preg_replace('/\[Titik GPS:\s*[^\]]+\]/i', '', $cleanNotes);
+        $cleanNotes = trim($cleanNotes);
+
+        return view('Admin.kelola_penjualan.invoice', compact('order', 'items', 'customerPhone', 'customerAddress', 'cleanNotes'));
     }
 
     /**

@@ -32,18 +32,18 @@
                 <div class="row g-4 align-items-start">
                     <!-- Kolom Kiri: Pratinjau Bukti Pembayaran -->
                     <div class="col-md-6 text-center">
-                        <div class="proof-image-container p-2 border rounded-3 bg-light" style="border-color: #e2e8f0 !important;">
+                        <div class="proof-image-container p-2.5 border rounded-3 bg-white" style="border-color: #cbd5e1 !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);">
                             @if($order->has_payment_proof && $order->payment_proof_url)
                                 <a href="{{ $order->payment_proof_url }}" target="_blank" title="Klik untuk memperbesar bukti transfer">
                                     <img src="{{ $order->payment_proof_url }}" alt="Bukti Transfer {{ $order->order_number }}" class="img-fluid rounded-2 shadow-sm" style="max-height: 380px; width: 100%; object-fit: contain; background: #fff;">
                                 </a>
-                                <div class="mt-2 text-muted" style="font-size: 11.5px;">
-                                    <i class="mdi mdi-magnify-plus-outline me-1"></i> Klik gambar untuk melihat ukuran penuh
+                                <div class="mt-2 text-dark font-weight-600" style="font-size: 11.5px;">
+                                    <i class="mdi mdi-magnify-plus-outline me-1 text-primary"></i> Klik gambar untuk melihat ukuran penuh
                                 </div>
                             @else
                                 <div class="py-5 text-center text-muted">
-                                    <i class="mdi mdi-image-off-outline mb-2" style="font-size: 48px; color: #cbd5e1;"></i>
-                                    <p class="mb-0 font-weight-500" style="font-size: 13px;">Belum ada berkas bukti transfer yang diunggah.</p>
+                                    <i class="mdi mdi-image-off-outline mb-2" style="font-size: 48px; color: #94a3b8;"></i>
+                                    <p class="mb-0 font-weight-500 text-dark" style="font-size: 13px;">Belum ada berkas bukti transfer yang diunggah.</p>
                                 </div>
                             @endif
                         </div>
@@ -52,32 +52,34 @@
                     <!-- Kolom Kanan: Rincian & Formulir Verifikasi -->
                     <div class="col-md-6">
                         <!-- Box 1: Informasi Pembayaran -->
-                        <div class="p-3 bg-light rounded-3 border mb-3" style="border-color: #e2e8f0 !important;">
-                            <div class="text-uppercase text-muted font-weight-bold mb-2 pb-1 border-bottom d-flex align-items-center gap-1.5" style="font-size: 11px; letter-spacing: 0.5px;">
-                                <i class="mdi mdi-information-outline text-primary"></i>
-                                <span>Informasi Pembayaran</span>
+                        <div class="modal-info-panel mb-3">
+                            <div class="modal-panel-header">
+                                <div class="d-flex align-items-center gap-1.5">
+                                    <i class="mdi mdi-information-outline text-primary" style="font-size: 18px;"></i>
+                                    <span style="font-size: 12px; font-weight: 600; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Informasi Pembayaran</span>
+                                </div>
                             </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: #f1f5f9 !important; font-size: 12.5px;">
-                                <span class="text-muted">Metode Bayar:</span>
-                                <strong class="text-dark">{{ $order->payment_method ?? 'Transfer Bank' }}</strong>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Metode Bayar:</span>
+                                <span class="modal-data-value">{{ $order->payment_method ?? 'Transfer Bank' }}</span>
                             </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: #f1f5f9 !important; font-size: 12.5px;">
-                                <span class="text-muted">Nominal Transfer:</span>
-                                <strong class="text-success" style="font-size: 14px;">Rp. {{ number_format($order->total, 0, ',', '.') }}</strong>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Nominal Transfer:</span>
+                                <span class="modal-data-value text-success font-weight-600" style="font-size: 14px;">Rp. {{ number_format($order->total, 0, ',', '.') }}</span>
                             </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: #f1f5f9 !important; font-size: 12.5px;">
-                                <span class="text-muted">Waktu Unggah:</span>
-                                <span class="text-dark font-weight-500">{{ $order->bukti_pembayaran_uploaded_at ? $order->bukti_pembayaran_uploaded_at->isoFormat('D MMM YYYY, HH:mm') . ' WIB' : '-' }}</span>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Waktu Unggah:</span>
+                                <span class="modal-data-value">{{ $order->bukti_pembayaran_uploaded_at ? $order->bukti_pembayaran_uploaded_at->isoFormat('D MMM YYYY, HH:mm') . ' WIB' : '-' }}</span>
                             </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom" style="border-color: #f1f5f9 !important; font-size: 12.5px;">
-                                <span class="text-muted">Status Pesanan:</span>
-                                <span class="text-dark font-weight-500">{{ ucfirst($order->order_status) }}</span>
+                            <div class="modal-data-row">
+                                <span class="modal-data-label">Status Pesanan:</span>
+                                <span class="modal-data-value">{{ ucfirst($order->order_status) }}</span>
                             </div>
                             @if($order->catatan_verifikasi_pembayaran)
-                                <div class="mt-2 pt-2 border-top" style="font-size: 12px;">
-                                    <span class="text-muted d-block mb-1 font-weight-500">Catatan Riwayat Verifikasi:</span>
-                                    <div class="p-2 bg-white rounded border text-muted" style="font-size: 11.5px; border-color: #e2e8f0 !important;">
-                                        {{ $order->catatan_verifikasi_pembayaran }}
+                                <div class="mt-2.5 pt-2 border-top" style="border-color: #cbd5e1 !important;">
+                                    <span class="modal-data-label d-block mb-1">Catatan Riwayat Verifikasi:</span>
+                                    <div class="modal-notes-container">
+                                        <span class="modal-notes-text">{{ $order->catatan_verifikasi_pembayaran }}</span>
                                     </div>
                                 </div>
                             @endif
@@ -85,7 +87,7 @@
 
                         @if($order->payment_status !== 'Paid')
                             <!-- Box 2: Alasan Penolakan Langsung Aktif (Minimalis, Simple, Tanpa Collapse) -->
-                            <div class="p-3 rounded-3 border bg-white" style="border-color: #e2e8f0 !important;">
+                            <div class="p-3 rounded-3 border bg-white" style="border-color: #cbd5e1 !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);">
                                 <form action="{{ route('orders.reject-proof', $order->id) }}" method="POST" id="formRejectProof{{ $order->id }}">
                                     @csrf
                                     <div class="d-flex align-items-center justify-content-between mb-2">

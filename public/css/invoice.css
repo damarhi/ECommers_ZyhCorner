@@ -1,209 +1,519 @@
+/* ==========================================================================
+   Zyh Corner - Thermal Invoice / Receipt 80 mm (3 Inci)
+   Optimized for 80mm POS Thermal Roll & Screen Preview
+   ========================================================================== */
+
+/* Universal Box Sizing & Font Setup */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    color: #333;
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #000000;
     margin: 0;
-    padding: 20px;
-    background-color: #fff;
+    padding: 0;
+    background-color: #f1f5f9;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    -webkit-font-smoothing: antialiased;
 }
-.invoice-container {
-    max-width: 800px;
-    margin: 0 auto;
-    border: 1px solid #eaeaea;
-    padding: 40px;
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.02);
-}
-.no-print-header {
+
+/* --------------------------------------------------------------------------
+   Screen Control Toolbar (Hidden in Print)
+   -------------------------------------------------------------------------- */
+.no-print-toolbar {
+    width: 80mm;
+    max-width: 95%;
+    margin: 16px auto 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 1px dashed #ddd;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
+
+.toolbar-info {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 500;
-    font-size: 13px;
-    padding: 8px 16px;
-    border-radius: 5px;
+    gap: 5px;
+    font-weight: 600;
+    font-size: 11.5px;
+    padding: 6px 12px;
+    border-radius: 6px;
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.2s;
-    border: none;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid transparent;
 }
+
 .btn-primary {
-    background-color: #1E2753;
-    color: white;
+    background-color: #1e293b;
+    color: #ffffff;
+    border-color: #1e293b;
 }
+
 .btn-primary:hover {
-    background-color: #161c3c;
+    background-color: #0f172a;
+    border-color: #0f172a;
 }
+
 .btn-light {
-    background-color: #f1f2f6;
-    color: #4b5563;
+    background-color: #f8fafc;
+    color: #334155;
+    border-color: #cbd5e1;
 }
+
 .btn-light:hover {
-    background-color: #e5e7eb;
+    background-color: #e2e8f0;
 }
-.invoice-header {
+
+/* --------------------------------------------------------------------------
+   Receipt Container (Thermal 80mm Simulation)
+   -------------------------------------------------------------------------- */
+.invoice-container,
+.receipt-container {
+    width: 80mm;
+    max-width: 95%;
+    margin: 14px auto 40px auto;
+    padding: 6mm 4.5mm 8mm 4.5mm;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    font-size: 11px;
+    line-height: 1.35;
+    color: #000000;
+}
+
+/* --------------------------------------------------------------------------
+   Store Header
+   -------------------------------------------------------------------------- */
+.store-header {
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.store-logo {
+    font-size: 16px;
+    font-weight: 800;
+    color: #000000;
+    margin: 0 0 2px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.store-tagline {
+    font-size: 10px;
+    font-weight: 600;
+    color: #111111;
+    margin: 0 0 3px 0;
+    letter-spacing: 0.2px;
+}
+
+.store-address {
+    font-size: 9.5px;
+    line-height: 1.3;
+    color: #222222;
+    margin: 0 0 3px 0;
+}
+
+.store-contacts {
+    font-size: 9.5px;
+    font-weight: 500;
+    color: #222222;
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Dashed & Solid Dividers (High Contrast Monochrome)
+   -------------------------------------------------------------------------- */
+.divider-dashed {
+    border: none;
+    border-top: 1px dashed #000000;
+    margin: 6px 0;
+    width: 100%;
+}
+
+.divider-solid {
+    border: none;
+    border-top: 1px solid #000000;
+    margin: 6px 0;
+    width: 100%;
+}
+
+.divider-double {
+    border: none;
+    border-top: 2px solid #000000;
+    margin: 6px 0;
+    width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Receipt Meta Section (Key-Value Grid)
+   -------------------------------------------------------------------------- */
+.receipt-meta {
+    font-size: 10.5px;
+    line-height: 1.4;
+}
+
+.meta-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 40px;
+    margin-bottom: 2px;
 }
-.store-logo {
-    font-size: 26px;
-    font-weight: 700;
-    color: #1E2753;
-    margin: 0 0 5px 0;
-}
-.store-info {
-    font-size: 13px;
-    color: #666;
-    line-height: 1.5;
-}
-.invoice-title {
-    font-size: 32px;
-    font-weight: 700;
-    color: #111;
-    text-align: right;
-    margin: 0 0 5px 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.invoice-meta {
-    text-align: right;
-    font-size: 13px;
-    color: #555;
-    line-height: 1.6;
-}
-.invoice-meta-label {
+
+.meta-label {
     font-weight: 600;
-    color: #111;
+    color: #111111;
+    flex-shrink: 0;
 }
-.invoice-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 40px;
-    border-top: 1px solid #f0f0f0;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 20px 0;
-}
-.details-box h3 {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1E2753;
-    text-transform: uppercase;
-    margin: 0 0 10px 0;
-    letter-spacing: 0.5px;
-}
-.details-box p {
-    margin: 0 0 6px 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #555;
-}
-.details-box .label {
+
+.meta-value {
+    text-align: right;
     font-weight: 500;
-    color: #111;
-    display: inline-block;
-    width: 130px;
+    color: #000000;
+    word-break: break-word;
 }
-.table-items {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-}
-.table-items th {
-    background-color: #fcfcfc;
-    color: #111;
-    font-weight: 600;
+
+.meta-order-number {
     font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.channel-tag {
+    display: inline-block;
+    padding: 1px 4px;
+    font-size: 9px;
+    font-weight: 700;
+    border: 1px solid #000000;
+    border-radius: 3px;
+    margin-left: 4px;
     text-transform: uppercase;
-    text-align: left;
-    padding: 12px 15px;
-    border-bottom: 2px solid #eaeaea;
 }
-.table-items td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 13px;
-    color: #444;
+
+/* Status Pill */
+.status-pill {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
-.table-items td.num {
+
+/* --------------------------------------------------------------------------
+   Customer & Delivery Information Section
+   -------------------------------------------------------------------------- */
+.receipt-customer {
+    font-size: 10px;
+    line-height: 1.35;
+    padding: 2px 0;
+}
+
+.section-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 0 0 3px 0;
+    color: #000000;
+}
+
+.customer-detail-row {
+    margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.address-card {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dotted #cccccc;
+}
+
+.address-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.address-label-badge {
+    display: inline-block;
+    padding: 1px 4px;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid #000000;
+    border-radius: 3px;
+    letter-spacing: 0.3px;
+}
+
+.address-pickup-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #f8fafc;
+    border: 1px dashed #000000;
+    border-radius: 3px;
+    margin-top: 3px;
+    color: #111111;
+}
+
+.customer-address-block,
+.address-street {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #000000;
+    word-break: break-word;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.address-sub-area {
+    font-size: 9px;
+    color: #222222;
+    line-height: 1.3;
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+.customer-notes-block,
+.address-landmark {
+    font-size: 8.5px;
+    font-style: italic;
+    color: #111111;
+    border-left: 2px solid #000000;
+    padding: 2px 5px;
+    margin-top: 3px;
+    margin-bottom: 2px;
+    word-break: break-word;
+    background-color: #fafafa;
+}
+.address-geo-place {
+    font-size: 8.5px;
+    font-weight: 600;
+    color: #111111;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+
+.address-gps {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 8.5px;
+    font-weight: 600;
+    color: #111111;
+    margin-top: 2px;
+    word-break: break-word;
+}
+
+/* --------------------------------------------------------------------------
+   Items List (2-Line Responsive Layout for 80mm Thermal Paper)
+   -------------------------------------------------------------------------- */
+.items-list {
+    margin: 4px 0;
+}
+
+.item-entry {
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px dotted #cccccc;
+}
+
+.item-entry:last-child {
+    border-bottom: none;
+    margin-bottom: 2px;
+    padding-bottom: 0;
+}
+
+/* Line 1: Item Name & Custom Cake Text */
+.item-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1px;
+}
+
+.item-name {
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.item-custom-text {
+    font-size: 9.5px;
+    font-style: italic;
+    color: #111111;
+    margin-top: 1px;
+    padding-left: 8px;
+    border-left: 1.5px solid #000000;
+    word-break: break-word;
+}
+
+/* Line 2: Qty x Unit Price (Left) vs Subtotal (Right) */
+.item-calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10.5px;
+    margin-top: 1px;
+}
+
+.item-qty-price {
+    font-weight: 500;
+    color: #222222;
+}
+
+.item-subtotal {
+    font-weight: 700;
+    color: #000000;
+    font-variant-numeric: tabular-nums;
     text-align: right;
 }
-.table-items td.center {
-    text-align: center;
+
+/* --------------------------------------------------------------------------
+   Summary & Totals
+   -------------------------------------------------------------------------- */
+.receipt-summary {
+    font-size: 10.5px;
+    margin: 4px 0;
 }
-.invoice-summary {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 50px;
-}
-.summary-box {
-    width: 300px;
-}
+
 .summary-row {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
-    font-size: 13px;
-    color: #555;
-}
-.summary-row.total {
-    border-top: 2px solid #eaeaea;
-    padding-top: 12px;
-    font-weight: 700;
-    font-size: 16px;
-    color: #111;
-}
-.summary-row.total .val {
-    color: #1E2753;
-}
-.invoice-footer {
-    text-align: center;
-    font-size: 12px;
-    color: #888;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 25px;
-}
-.badge {
-    display: inline-block;
-    padding: 3px 8px;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-.badge-success {
-    background-color: #e6f7ed;
-    color: #1f9254;
-}
-.badge-secondary {
-    background-color: #f1f2f6;
-    color: #6b7280;
+    align-items: center;
+    margin-bottom: 2px;
 }
 
+.summary-row .lbl {
+    font-weight: 500;
+    color: #222222;
+}
+
+.summary-row .val {
+    font-weight: 600;
+    color: #000000;
+    font-variant-numeric: tabular-nums;
+}
+
+.summary-row.total {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1.5px solid #000000;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.summary-row.total .lbl {
+    font-size: 12px;
+    font-weight: 800;
+    color: #000000;
+}
+
+.summary-row.total .val {
+    font-size: 14px;
+    font-weight: 800;
+    color: #000000;
+}
+
+/* --------------------------------------------------------------------------
+   Receipt Footer
+   -------------------------------------------------------------------------- */
+.receipt-footer {
+    text-align: center;
+    font-size: 9.5px;
+    line-height: 1.35;
+    margin-top: 6px;
+    color: #111111;
+}
+
+.footer-thanks {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.footer-note {
+    font-size: 8.5px;
+    color: #333333;
+    margin-bottom: 3px;
+}
+
+.footer-timestamp {
+    font-size: 8.5px;
+    color: #555555;
+    margin-top: 4px;
+    letter-spacing: 0.2px;
+}
+
+/* --------------------------------------------------------------------------
+   Print Media Query (Native 80mm Thermal Printer Direct)
+   -------------------------------------------------------------------------- */
 @media print {
-    body {
-        padding: 0;
-        background-color: #fff;
+    @page {
+        size: 80mm auto;
+        margin: 0;
     }
-    .invoice-container {
-        border: none;
-        padding: 0;
-        box-shadow: none;
-        max-width: 100%;
+
+    html, body {
+        width: 80mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
     }
+
     .no-print {
         display: none !important;
+    }
+
+    .invoice-container,
+    .receipt-container {
+        width: 72mm !important;
+        max-width: 72mm !important;
+        margin: 0 auto !important;
+        padding: 2mm 0 6mm 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+
+    .customer-notes-block,
+    .address-landmark,
+    .address-pickup-badge {
+        background-color: transparent !important;
+    }
+
+    .item-entry {
+        border-bottom-color: #000000 !important;
     }
 }

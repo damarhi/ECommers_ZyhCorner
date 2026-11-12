@@ -75,6 +75,233 @@ class AdminOrderTest extends TestCase
         $response->assertSee('Rp. 150.000');
         $response->assertSee('window.print()');
     }
+    public function test_invoice_renders_complete_data_for_80mm_thermal_receipt(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $customer = User::factory()->create([
+            'role' => 'pelanggan',
+            'email' => 'sarah@example.com',
+            'no_hp' => '081399887766',
+        ]);
+
+        $order = Pesanan::create([
+            'order_number' => '#THM80MM',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'Sarah Amalia',
+            'email_pembeli' => 'sarah@example.com',
+            'shipping_method' => 'JNE Reguler',
+            'alamat_pengiriman' => 'Jl. Mawar No. 45, Pelalawan',
+            'catatan_pesanan' => 'Tolong kirimkan sore hari',
+            'payment_method' => 'Transfer BCA',
+            'payment_status' => 'Paid',
+            'order_status' => 'dikemas',
+            'total' => 115000,
+            'items' => [
+                [
+                    'id' => 1,
+                    'name' => 'Kue Tart Cokelat',
+                    'price' => 100000,
+                    'qty' => 1,
+                    'custom_text' => 'Happy Sweet Seventeen',
+                ]
+            ]
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('orders.invoice', $order->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('#THM80MM');
+        $response->assertSee('Struk Thermal 80mm');
+        $response->assertSee('receipt-container');
+        $response->assertSee('Sarah Amalia');
+        $response->assertSee('081399887766');
+        $response->assertSee('JNE Reguler');
+        $response->assertSee('Jl. Mawar No. 45, Pelalawan');
+        $response->assertSee('Tolong kirimkan sore hari');
+        $response->assertSee('Kue Tart Cokelat');
+        $response->assertSee('Happy Sweet Seventeen');
+        $response->assertSee('Subtotal Produk');
+        $response->assertSee('Rp. 100.000');
+        $response->assertSee('Ongkos Kirim');
+        $response->assertSee('Rp. 15.000');
+        $response->assertSee('TOTAL BAYAR');
+        $response->assertSee('Rp. 115.000');
+        $response->assertSee('[LUNAS]');
+    }
+    public function test_invoice_renders_customer_address_details_and_fallbacks(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $customer = User::factory()->create([
+            'role' => 'pelanggan',
+            'email' => 'dian@example.com',
+            'no_hp' => '081211223344',
+        ]);
+
+        \App\Models\UserAddress::create([
+            'user_id' => $customer->user_id,
+            'label' => 'Rumah Pribadi',
+            'recipient_name' => 'Dian Permata',
+            'recipient_phone' => '081211223344',
+            'destination_area_name' => 'Kec. Pangkalan Kerinci, Pelalawan',
+            'postal_code' => '28654',
+            'street_address' => 'Jl. Melati Blok B No. 10',
+            'notes' => 'Pagar hitam samping warung',
+            'latitude' => 0.38472,
+            'longitude' => 101.85918,
+            'is_default' => true,
+        ]);
+
+        // 1. Order online without explicit alamat_pengiriman (resolves from user_addresses)
+        $orderOnline = Pesanan::create([
+            'order_number' => '#ADDR-ONL',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'Dian Permata',
+            'email_pembeli' => 'dian@example.com',
+            'shipping_method' => 'Kurir Toko',
+            'alamat_pengiriman' => null,
+            'total' => 85000,
+            'payment_status' => 'Paid',
+            'order_status' => 'dikemas',
+            'items' => [
+                ['id' => 1, 'name' => 'Choux Pastry', 'price' => 85000, 'qty' => 1]
+            ]
+        ]);
+
+        $responseOnline = $this->actingAs($admin)->get(route('orders.invoice', $orderOnline->id));
+        $responseOnline->assertStatus(200);
+        $responseOnline->assertSee('Rumah Pribadi');
+        $responseOnline->assertSee('Jl. Melati Blok B No. 10');
+        $responseOnline->assertSee('Kec. Pangkalan Kerinci, Pelalawan');
+        $responseOnline->assertSee('28654');
+        $responseOnline->assertSee('Pagar hitam samping warung');
+        $responseOnline->assertSee('0.38472, 101.85918');
+
+        // 2. Order offline POS (Takeaway)
+        $orderOffline = Pesanan::create([
+            'order_number' => '#ADDR-POS',
+            'jenis_penjualan' => 'Offline',
+            'customer_name' => 'Walk-in Customer',
+            'email_pembeli' => null,
+            'alamat_pengiriman' => null,
+            'total' => 30000,
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'items' => [
+                ['id' => 1, 'name' => 'Croissant Butter', 'price' => 30000, 'qty' => 1]
+            ]
+        ]);
+
+        $responseOffline = $this->actingAs($admin)->get(route('orders.invoice', $orderOffline->id));
+        $responseOffline->assertStatus(200);
+        $responseOffline->assertSee('Ambil di Toko / Kasir Langsung');
+    }
+    public function test_invoice_replaces_dummy_street_with_reverse_geocoded_location_and_cleans_notes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        \Illuminate\Support\Facades\Http::fake([
+            'nominatim.openstreetmap.org/*' => \Illuminate\Support\Facades\Http::response([
+                'name' => 'Simpang Harapan Raya 2',
+                'display_name' => 'Simpang Harapan Raya 2, Jalan Jenderal Sudirman, Tangkerang Tengah, Pekanbaru, Marpoyan Damai, Riau, 28288, Indonesia',
+                'address' => [
+                    'highway' => 'Simpang Harapan Raya 2',
+                    'road' => 'Jalan Jenderal Sudirman',
+                    'suburb' => 'Tangkerang Tengah',
+                    'district' => 'Marpoyan Damai',
+                    'city' => 'Pekanbaru',
+                    'state' => 'Riau',
+                    'postcode' => '28288',
+                ]
+            ], 200)
+        ]);
+
+        $order = Pesanan::create([
+            'order_number' => '#IZYJ6',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'nama_nama',
+            'email_pembeli' => 'nama@gmail.com',
+            'shipping_method' => 'Pick Up',
+            'alamat_pengiriman' => 'sdasda (Kode Pos: 1231)',
+            'catatan_pesanan' => '[Penerima: nama_nama (8123123123)] [Titik GPS: 0.498718, 101.454788 | https://maps.google.com/?q=0.498718,101.454788]',
+            'payment_method' => 'COD',
+            'payment_status' => 'Pending',
+            'order_status' => 'menunggu konfirmasi',
+            'total' => 375000,
+            'items' => [
+                ['id' => 1, 'name' => 'Black Forest Cake Classic', 'price' => 100000, 'qty' => 3]
+            ]
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('orders.invoice', $order->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('#IZYJ6');
+        $response->assertSee('0.498718, 101.454788');
+        // Verified that reverse geocoded place and street name are displayed
+        $response->assertSee('Jalan Jenderal Sudirman');
+        $response->assertSee('28288');
+        // Verified that internal bracket annotations are stripped from Catatan
+        $response->assertDontSee('Catatan:');
+    }
+    public function test_order_detail_modal_renders_reverse_geocoded_location_and_cleans_notes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        \Illuminate\Support\Facades\Http::fake([
+            'nominatim.openstreetmap.org/*' => \Illuminate\Support\Facades\Http::response([
+                'name' => 'Simpang Harapan Raya 2',
+                'display_name' => 'Simpang Harapan Raya 2, Jalan Jenderal Sudirman, Tangkerang Tengah, Pekanbaru, Marpoyan Damai, Riau, 28288, Indonesia',
+                'address' => [
+                    'highway' => 'Simpang Harapan Raya 2',
+                    'road' => 'Jalan Jenderal Sudirman',
+                    'suburb' => 'Tangkerang Tengah',
+                    'district' => 'Marpoyan Damai',
+                    'city' => 'Pekanbaru',
+                    'state' => 'Riau',
+                    'postcode' => '28288',
+                ]
+            ], 200)
+        ]);
+
+        $order = Pesanan::create([
+            'order_number' => '#MODAL-GEO',
+            'jenis_penjualan' => 'Online',
+            'customer_name' => 'Budi Santoso',
+            'email_pembeli' => 'budi@gmail.com',
+            'shipping_method' => 'Gojek Instant',
+            'alamat_pengiriman' => 'sdasda (Kode Pos: 1231)',
+            'catatan_pesanan' => '[Penerima: Budi Santoso (081298765432)] [Titik GPS: 0.498718, 101.454788 | https://maps.google.com/?q=0.498718,101.454788] Tolong jangan dibanting',
+            'payment_method' => 'COD',
+            'payment_status' => 'Pending',
+            'order_status' => 'menunggu konfirmasi',
+            'total' => 150000,
+            'items' => [
+                ['id' => 1, 'name' => 'Brownies Fudgy', 'price' => 150000, 'qty' => 1]
+            ]
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('orders.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('orderDetailModal' . $order->id);
+        // Verified reverse geocoded street and landmark
+        $response->assertSee('Jalan Jenderal Sudirman');
+        $response->assertSee('Simpang Harapan Raya 2');
+        $response->assertSee('Terverifikasi GPS');
+        $response->assertSee('Buka Google Maps');
+        $response->assertSee('https://maps.google.com/?q=0.498718,101.454788');
+        // Verified recipient phone and WhatsApp link
+        $response->assertSee('081298765432');
+        $response->assertSee('wa.me/6281298765432');
+        // Verified sanitized customer note
+        $response->assertSee('Tolong jangan dibanting');
+        $response->assertDontSee('[Penerima:');
+        $response->assertDontSee('[Titik GPS:');
+    }
+
+
+
+
 
     public function test_guest_cannot_access_invoice_page(): void
     {

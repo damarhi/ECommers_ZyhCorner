@@ -828,6 +828,213 @@ label {
     font-weight: 600 !important;
     color: #1F2937;
 }
+/* High-Contrast Modal Panels & Typography (Anti-Washout / Clean Spacing) */
+.modal-info-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+    padding: 20px 22px !important;
+}
+
+.modal-panel-header {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    color: #0f172a !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 11px !important;
+    margin-bottom: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.modal-data-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 9px 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.modal-data-label {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    margin: 0 !important;
+}
+
+.modal-data-value {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    text-align: right !important;
+}
+
+.modal-address-box {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 14px 16px !important;
+    margin-top: 8px !important;
+}
+
+.modal-address-street {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    line-height: 1.55 !important;
+}
+
+.modal-address-landmark {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: #475569 !important;
+    margin-top: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.modal-address-subarea {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: #64748b !important;
+    margin-top: 4px !important;
+}
+
+.modal-address-postcode {
+    display: inline-block !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    font-size: 10.5px !important;
+    font-weight: 500 !important;
+    padding: 1px 6px !important;
+    margin-left: 4px !important;
+}
+
+.modal-address-gps {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+}
+
+.badge-courier-pickup {
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+    border: 1px solid #86efac !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    padding: 3px 9px !important;
+    border-radius: 5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.badge-courier-delivery {
+    background-color: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #93c5fd !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    padding: 3px 9px !important;
+    border-radius: 5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.modal-notes-container {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 12px 14px !important;
+    margin-top: 8px !important;
+}
+
+.modal-notes-text {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: #334155 !important;
+    line-height: 1.55 !important;
+    font-style: italic !important;
+}
+
+/* Return Modal Actions & Proof Container */
+.btn-status-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-size: 11.5px !important;
+    font-weight: 500 !important;
+    padding: 5px 11px !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease-in-out !important;
+    cursor: pointer !important;
+    line-height: 1.4 !important;
+}
+
+.btn-status-accept {
+    background-color: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+.btn-status-accept:hover {
+    background-color: #d1fae5 !important;
+    color: #047857 !important;
+    border-color: #6ee7b7 !important;
+}
+
+.btn-status-process {
+    background-color: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #bfdbfe !important;
+}
+.btn-status-process:hover {
+    background-color: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border-color: #93c5fd !important;
+}
+
+.btn-status-reject {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+}
+.btn-status-reject:hover {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    border-color: #fca5a5 !important;
+}
+
+.btn-status-done {
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+.btn-status-done:hover {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+.modal-empty-proof {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #f8fafc !important;
+    border: 1.5px dashed #cbd5e1 !important;
+    border-radius: 10px !important;
+    padding: 24px 16px !important;
+    text-align: center !important;
+    min-height: 220px !important;
+}
 
 /* ==========================================================================
    14. DROPDOWNS

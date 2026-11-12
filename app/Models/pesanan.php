@@ -1,8 +1,11 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
+use App\Services\GeoLocationService;
+use App\Models\User;
+use App\Models\UserAddress;
+use App\Models\Customer;
 
 class Pesanan extends Model
 {
@@ -193,6 +196,135 @@ class Pesanan extends Model
         }
         return $text;
     }
+    public function getCleanNotesAttribute(): string
+    {
+        $raw = $this->catatan_pesanan ?? '';
+        $clean = preg_replace('/\[Penerima:\s*[^()]*\([^)]+\)\]/i', '', $raw);
+        $clean = preg_replace('/\[Titik GPS:\s*[^\]]+\]/i', '', $clean);
+        return trim($clean);
+    }
+
+    public function getCustomerPhoneAttribute(): ?string
+    {
+        if (!empty($this->catatan_pesanan) && preg_match('/\[Penerima:\s*[^()]*\(([^)]+)\)\]/i', $this->catatan_pesanan, $m)) {
+            return trim($m[1]);
+        }
+        if (!empty($this->email_pembeli)) {
+            $user = User::where('email', $this->email_pembeli)->first();
+            if ($user && !empty($user->no_hp)) {
+                return $user->no_hp;
+            }
+            $customer = Customer::where('email', $this->email_pembeli)->first();
+            if ($customer && !empty($customer->telepon)) {
+                return $customer->telepon;
+            }
+        }
+        return null;
+    }
+
+    public function getResolvedAddressAttribute(): array
+    {
+        $data = [
+            'street' => $this->alamat_pengiriman,
+            'label' => null,
+            'area' => null,
+            'postal_code' => null,
+            'notes' => null,
+            'gps' => null,
+            'maps_url' => null,
+            'detected_place' => null,
+            'detected_road' => null,
+            'is_dummy_replaced' => false,
+            'recipient_phone' => $this->customer_phone,
+            'clean_notes' => $this->clean_notes,
+        ];
+
+        // 1. Extract GPS from catatan_pesanan if available
+        if (!empty($this->catatan_pesanan) && preg_match('/\[Titik GPS:\s*([-\d.]+),\s*([-\d.]+)(?:\s*\|\s*([^\]]+))?\]/i', $this->catatan_pesanan, $m)) {
+            $data['gps'] = $m[1] . ', ' . $m[2];
+            if (!empty($m[3]) && str_starts_with(trim($m[3]), 'http')) {
+                $data['maps_url'] = trim($m[3]);
+            }
+        }
+
+        // 2. If user exists, inspect UserAddress
+        if (empty($data['gps']) && !empty($this->customer_name)) {
+            $matchedUser = null;
+            if (!empty($this->email_pembeli)) {
+                $matchedUser = User::where('email', $this->email_pembeli)->first();
+            }
+            if (!$matchedUser) {
+                $matchedUser = User::where('nama', $this->customer_name)->first();
+            }
+            if ($matchedUser) {
+                $userAddr = UserAddress::where('user_id', $matchedUser->user_id)->orderByDesc('is_default')->first();
+                if ($userAddr) {
+                    $data['label'] = $userAddr->label;
+                    if (empty($data['street'])) {
+                        $data['street'] = $userAddr->street_address;
+                    }
+                    $data['area'] = $userAddr->destination_area_name;
+                    $data['postal_code'] = $userAddr->postal_code;
+                    $data['notes'] = $userAddr->notes;
+                    if ($userAddr->latitude && $userAddr->longitude) {
+                        $data['gps'] = $userAddr->latitude . ', ' . $userAddr->longitude;
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback maps URL if GPS is present
+        if (!empty($data['gps']) && empty($data['maps_url'])) {
+            $data['maps_url'] = 'https://maps.google.com/?q=' . urlencode($data['gps']);
+        }
+
+        // 4. Reverse Geocode via GeoLocationService
+        if (!empty($data['gps'])) {
+            $coords = explode(',', (string) $data['gps']);
+            if (count($coords) === 2) {
+                $lat = trim($coords[0]);
+                $lng = trim($coords[1]);
+                $geoInfo = GeoLocationService::reverseGeocode($lat, $lng);
+                if ($geoInfo) {
+                    $data['detected_place'] = $geoInfo['place_name'];
+                    $data['detected_road'] = $geoInfo['road'];
+
+                    $cleanStreet = trim(preg_replace('/\(Kode Pos:.*?\)/i', '', (string)$data['street']));
+                    $isDummyStreet = false;
+                    if (empty($cleanStreet) || (strlen($cleanStreet) <= 8 && preg_match('/^[a-z0-9_-]+$/i', $cleanStreet))) {
+                        $isDummyStreet = true;
+                    }
+
+                    if ($isDummyStreet) {
+                        $resolvedParts = array_filter([$geoInfo['place_name'], $geoInfo['road']]);
+                        if (!empty($resolvedParts)) {
+                            $data['street'] = implode(', ', $resolvedParts);
+                            $data['is_dummy_replaced'] = true;
+                        } elseif (!empty($geoInfo['display_name'])) {
+                            $data['street'] = $geoInfo['display_name'];
+                            $data['is_dummy_replaced'] = true;
+                        }
+                    }
+
+                    if (empty($data['area']) && !empty($geoInfo['area'])) {
+                        $data['area'] = $geoInfo['area'];
+                    }
+                    if (empty($data['postal_code']) && !empty($geoInfo['postal_code'])) {
+                        $data['postal_code'] = $geoInfo['postal_code'];
+                    }
+                }
+            }
+        }
+
+        if (empty($data['postal_code']) && !empty($data['street'])) {
+            if (preg_match('/(?:Kode Pos:\s*|,\s*)(\d{5})/i', $data['street'], $matches)) {
+                $data['postal_code'] = $matches[1];
+            }
+        }
+
+        return $data;
+    }
+
     protected $casts = [
         'items' => 'array',
         'bukti_pembayaran_uploaded_at' => 'datetime',
