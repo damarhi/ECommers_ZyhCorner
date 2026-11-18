@@ -90,9 +90,15 @@ class ProdukController extends Controller
 
     public function create(Request $request)
     {
+        if (auth()->check() && auth()->user()->role === 'kasir' && $request->query('jenis') === 'kustom') {
+            return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman ini.');
+        }
+
         $kategoris = Kategori::all();
         $produk = new Produk();
-        if ($request->filled('jenis')) {
+        if (auth()->check() && auth()->user()->role === 'kasir') {
+            $produk->jenis_produk = 'showcase';
+        } elseif ($request->filled('jenis')) {
             $produk->jenis_produk = $request->query('jenis');
         }
         return view('Admin.kelola_produk.products_form', compact('produk', 'kategoris'));
@@ -120,7 +126,9 @@ class ProdukController extends Controller
         $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
         $validated['is_signature'] = $request->boolean('is_signature');
 
-        if (empty($validated['jenis_produk'])) {
+        if (auth()->check() && auth()->user()->role === 'kasir') {
+            $validated['jenis_produk'] = 'showcase';
+        } elseif (empty($validated['jenis_produk'])) {
             $validated['jenis_produk'] = $request->input('jenis_produk', 'showcase');
         }
 
@@ -144,12 +152,20 @@ class ProdukController extends Controller
 
     public function edit(Produk $product)
     {
+        if (auth()->check() && auth()->user()->role === 'kasir' && $product->jenis_produk === 'kustom') {
+            return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman ini.');
+        }
+
         $kategoris = Kategori::all();
         return view('Admin.kelola_produk.products_form', ['produk' => $product, 'kategoris' => $kategoris]);
     }
 
     public function update(Request $request, Produk $product)
     {
+        if (auth()->check() && auth()->user()->role === 'kasir' && $product->jenis_produk === 'kustom') {
+            return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman ini.');
+        }
+
         $validated = $request->validate([
             'nama_produk' => 'required|string|max:255',
             'id_kategori' => 'nullable|exists:kategoris,id_kategori',
@@ -170,7 +186,9 @@ class ProdukController extends Controller
         $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
         $validated['is_signature'] = $request->boolean('is_signature');
 
-        if (empty($validated['jenis_produk'])) {
+        if (auth()->check() && auth()->user()->role === 'kasir') {
+            $validated['jenis_produk'] = 'showcase';
+        } elseif (empty($validated['jenis_produk'])) {
             $validated['jenis_produk'] = $product->jenis_produk ?? 'showcase';
         }
 

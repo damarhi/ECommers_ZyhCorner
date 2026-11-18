@@ -18,12 +18,29 @@ class AdminDashboardTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_kasir_cannot_access_admin_dashboard_and_is_redirected(): void
+    public function test_kasir_sees_shift_dashboard_without_owner_weekly_omzet(): void
     {
-        $kasir = User::factory()->create(['role' => 'kasir']);
+        $kasir = User::factory()->create(['role' => 'kasir', 'nama' => 'Kasir Shift Pagi']);
+
+        Pesanan::create([
+            'order_number' => 'POS-SHIFT-01',
+            'customer_name' => 'Walk-in Buyer',
+            'total' => 85000,
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'jenis_penjualan' => 'Offline',
+            'payment_method' => 'Cash',
+            'items' => [
+                ['id' => 1, 'name' => 'Roti Keju', 'price' => 85000, 'qty' => 1],
+            ],
+        ]);
+
         $response = $this->actingAs($kasir)->get(route('admin.dashboard'));
-        $response->assertRedirect(route('orders.index'));
-        $response->assertSessionHas('error');
+        $response->assertStatus(200);
+        $response->assertSee('Dashboard Shift Kasir');
+        $response->assertSee('Setoran POS Hari Ini');
+        $response->assertSee('Rp 85.000');
+        $response->assertDontSee('Penjualan Mingguan');
     }
 
     public function test_admin_can_access_dashboard_with_dynamic_data(): void

@@ -3,12 +3,15 @@
 @section('title', 'Pengaturan Admin - Dasbor Admin')
 
 @section('content')
+    @php
+        $isAdminRole = auth()->check() && auth()->user()->role === 'admin';
+    @endphp
     <div class="content-wrapper">
         <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
             <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
                 <span class="page-title-icon bg-gradient-primary text-white me-2">
                     <i class="mdi mdi-cog-outline"></i>
-                </span> Pengaturan Admin & Toko
+                </span> {{ $isAdminRole ? 'Pengaturan Admin & Toko' : 'Pengaturan Profil Kasir' }}
             </h3>
         </div>
 
@@ -31,9 +34,15 @@
 
                         <h5 class="font-weight-bold text-dark mb-1" style="font-size: 18px;">{{ $admin->nama }}</h5>
                         <p class="text-muted mb-2" style="font-size: 13px;">{{ $admin->email }}</p>
-                        <span class="badge px-3 py-2 text-white shadow-sm" style="background: #4F46E5; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                            <i class="mdi mdi-shield-check me-1"></i> Administrator
-                        </span>
+                        @if($isAdminRole)
+                            <span class="badge px-3 py-2 text-white shadow-sm" style="background: #4F46E5; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                <i class="mdi mdi-shield-check me-1"></i> Administrator
+                            </span>
+                        @else
+                            <span class="badge px-3 py-2 text-white shadow-sm" style="background: #0d9488; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                <i class="mdi mdi-cash-register me-1"></i> Kasir Toko
+                            </span>
+                        @endif
 
                         <hr class="w-100 my-4" style="border-color: #f1f5f9;">
 
@@ -67,11 +76,13 @@
                                     <i class="mdi mdi-lock-reset me-1"></i> Keamanan & Password
                                 </button>
                             </li>
+                            @if($isAdminRole)
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link font-weight-500 py-2" id="store-tab-btn" data-bs-toggle="tab" data-bs-target="#store-tab" type="button" role="tab" aria-controls="store-tab" aria-selected="false" style="border-radius: 8px; font-size: 13.5px;">
                                     <i class="mdi mdi-storefront me-1"></i> Info Toko
                                 </button>
                             </li>
+                            @endif
                         </ul>
 
                         <div class="tab-content pt-2" id="settingsTabContent">
@@ -140,6 +151,7 @@
                                 </form>
                             </div>
 
+                            @if($isAdminRole)
                             <!-- Tab 3: Store Information -->
                             <div class="tab-pane fade" id="store-tab" role="tabpanel" aria-labelledby="store-tab-btn">
                                 <form action="{{ route('settings.store.update') }}" method="POST">
@@ -230,6 +242,7 @@
                                     </div>
                                 </form>
                             </div>
+                            @endif
                         </div>
                     </div>
                 </div>

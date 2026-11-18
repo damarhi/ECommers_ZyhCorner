@@ -186,21 +186,31 @@
             <!-- partial:../../partials/_sidebar.html -->
             <nav class="sidebar sidebar-offcanvas" id="sidebar">
                 <ul class="nav">
-                    @if (auth()->user()->role !== 'kasir')
-                        <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ url('admin/dashboard') }}">
-                                <span class="menu-title">Dashboard</span>
-                                <i class="mdi mdi-view-dashboard menu-icon"></i>
-                            </a>
-                        </li>
-                    @endif
+                    @php
+                        $isKasirSidebar = auth()->check() && auth()->user()->role === 'kasir';
+                        $sidebarUnreadCount = $sidebarUnreadCount ?? 0;
+                        $notifUnconfirmed = $notifUnconfirmed ?? 0;
+                        $notifRetur = $notifRetur ?? 0;
+                    @endphp
+
+                    <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/dashboard') }}">
+                            <span class="menu-title">{{ $isKasirSidebar ? 'Dashboard Shift' : 'Dashboard' }}</span>
+                            <i class="mdi mdi-view-dashboard menu-icon"></i>
+                        </a>
+                    </li>
 
                     <!-- Kelola Penjualan -->
                     <li class="nav-category-header">Kelola Penjualan</li>
 
                     <li class="nav-item {{ Request::is('admin/orders*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ url('admin/orders') }}">
-                            <span class="menu-title">Pesanan Online</span>
+                            <span class="menu-title d-flex align-items-center justify-content-between w-100 pe-2">
+                                <span>Pesanan Online</span>
+                                @if($notifUnconfirmed > 0)
+                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 10px;">{{ $notifUnconfirmed }}</span>
+                                @endif
+                            </span>
                             <i class="mdi mdi-shopping menu-icon"></i>
                         </a>
                     </li>
@@ -212,28 +222,34 @@
                     </li>
                     <li class="nav-item {{ Request::is('admin/returs*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ url('admin/returs') }}">
-                            <span class="menu-title">Return Produk</span>
+                            <span class="menu-title d-flex align-items-center justify-content-between w-100 pe-2">
+                                <span>Return Produk</span>
+                                @if($notifRetur > 0)
+                                    <span class="badge bg-danger rounded-pill px-2 py-1 text-white" style="font-size: 10px;">{{ $notifRetur }}</span>
+                                @endif
+                            </span>
                             <i class="mdi mdi-keyboard-backspace menu-icon"></i>
                         </a>
                     </li>
                     <li class="nav-item {{ Request::is('admin/all-sales*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ url('admin/all-sales') }}">
-                            <span class="menu-title">Data Seluruh Penjualan</span>
+                            <span class="menu-title">{{ $isKasirSidebar ? 'Riwayat Transaksi' : 'Data Seluruh Penjualan' }}</span>
                             <i class="mdi mdi-chart-line menu-icon"></i>
                         </a>
                     </li>
 
-                    @if (auth()->user()->role !== 'kasir')
-                        <!-- Kelola Data Produk -->
-                        <li class="nav-category-header">Kelola Data Produk</li>
+                    <!-- Kelola Data Produk / Operasional Etalase -->
+                    <li class="nav-category-header">{{ $isKasirSidebar ? 'Operasional Etalase' : 'Kelola Data Produk' }}</li>
 
-                        <li
-                            class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/custom-products*') && !Request::is('admin/discounts*') && !Request::is('admin/expired-products*')) ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ url('admin/products') }}">
-                                <span class="menu-title">Produk Showcase</span>
-                                <i class="mdi mdi-cube-outline menu-icon"></i>
-                            </a>
-                        </li>
+                    <li
+                        class="nav-item {{ Request::is('admin/products') || (Request::is('admin/products*') && !Request::is('admin/custom-products*') && !Request::is('admin/discounts*') && !Request::is('admin/expired-products*')) ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/products') }}">
+                            <span class="menu-title">Produk Showcase</span>
+                            <i class="mdi mdi-cube-outline menu-icon"></i>
+                        </a>
+                    </li>
+
+                    @if (!$isKasirSidebar)
                         <li class="nav-item {{ Request::is('admin/custom-products*') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('products.custom') }}">
                                 <span class="menu-title">Produk Kustom</span>
@@ -252,16 +268,34 @@
                                 <i class="mdi mdi-sale menu-icon"></i>
                             </a>
                         </li>
-                        <li class="nav-item {{ Request::is('admin/expired-products*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('products.expired.index') }}">
-                                <span class="menu-title">Produk Kadaluarsa</span>
-                                <i class="mdi mdi-calendar-remove menu-icon"></i>
-                            </a>
-                        </li>
+                    @endif
 
-                        <!-- Kelola Akun -->
-                        <li class="nav-category-header">Kelola Akun</li>
+                    <li class="nav-item {{ Request::is('admin/expired-products*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('products.expired.index') }}">
+                            <span class="menu-title">Produk Kadaluarsa</span>
+                            <i class="mdi mdi-calendar-remove menu-icon"></i>
+                        </a>
+                    </li>
 
+                    <!-- Interaksi Pelanggan -->
+                    <li class="nav-category-header">Interaksi Pelanggan</li>
+
+                    <li class="nav-item {{ Request::is('admin/messages*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('messages.index') }}">
+                            <span class="menu-title d-flex align-items-center justify-content-between w-100 pe-2">
+                                <span>Pesan Kontak</span>
+                                @if($sidebarUnreadCount > 0)
+                                    <span class="badge bg-danger rounded-pill px-2 py-1 text-white" style="font-size: 10px;">{{ $sidebarUnreadCount }}</span>
+                                @endif
+                            </span>
+                            <i class="mdi mdi-email-open-multiple-outline menu-icon"></i>
+                        </a>
+                    </li>
+
+                    <!-- Kelola Akun -->
+                    <li class="nav-category-header">Kelola Akun</li>
+
+                    @if (!$isKasirSidebar)
                         <li class="nav-item {{ Request::is('admin/customers*') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ url('admin/customers') }}">
                                 <span class="menu-title">Akun Pelanggan</span>
@@ -274,13 +308,16 @@
                                 <i class="mdi mdi-account-tie-outline menu-icon"></i>
                             </a>
                         </li>
-                        <li class="nav-item {{ Request::is('admin/settings*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('settings.index') }}">
-                                <span class="menu-title">Pengaturan</span>
-                                <i class="mdi mdi-cog-outline menu-icon"></i>
-                            </a>
-                        </li>
+                    @endif
 
+                    <li class="nav-item {{ Request::is('admin/settings*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('settings.index') }}">
+                            <span class="menu-title">{{ $isKasirSidebar ? 'Pengaturan Profil' : 'Pengaturan' }}</span>
+                            <i class="mdi mdi-cog-outline menu-icon"></i>
+                        </a>
+                    </li>
+
+                    @if (!$isKasirSidebar)
                         <!-- Kelola Carousel -->
                         <li class="nav-category-header">Kelola Carousel</li>
 
@@ -290,40 +327,15 @@
                                 <i class="mdi mdi-image-multiple-outline menu-icon"></i>
                             </a>
                         </li>
-
-                        <!-- Interaksi Pelanggan -->
-                        <li class="nav-category-header">Interaksi Pelanggan</li>
-
-                        <li class="nav-item {{ Request::is('admin/messages*') ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('messages.index') }}">
-                                <span class="menu-title d-flex align-items-center justify-content-between w-100 pe-2">
-                                    <span>Pesan Kontak</span>
-                                    @php
-                                        $sidebarUnreadCount = $sidebarUnreadCount ?? 0;
-                                    @endphp
-                                    @if($sidebarUnreadCount > 0)
-                                        <span class="badge bg-danger rounded-pill px-2 py-1 text-white" style="font-size: 10px;">{{ $sidebarUnreadCount }}</span>
-                                    @endif
-                                </span>
-                                <i class="mdi mdi-email-open-multiple-outline menu-icon"></i>
-                            </a>
-                        </li>
-                        <!-- Tombol Keluar (Logout) -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
-                                <span class="menu-title text-danger">Keluar</span>
-                                <i class="mdi mdi-logout menu-icon text-danger"></i>
-                            </a>
-                        </li>
-                    @else
-                        <!-- Tombol Keluar untuk Role Kasir -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
-                                <span class="menu-title text-danger">Keluar</span>
-                                <i class="mdi mdi-logout menu-icon text-danger"></i>
-                            </a>
-                        </li>
                     @endif
+
+                    <!-- Tombol Keluar (Logout) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="event.preventDefault(); confirmAdminLogout();">
+                            <span class="menu-title text-danger">Keluar</span>
+                            <i class="mdi mdi-logout menu-icon text-danger"></i>
+                        </a>
+                    </li>
 
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf

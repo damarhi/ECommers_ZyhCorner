@@ -128,9 +128,9 @@ class LiveInstantSearchTest extends TestCase
             'role' => 'kasir',
         ]);
 
-        // Kasir cannot access messages
-        $responseMessages = $this->actingAs($kasir)->get(route('messages.index'));
-        $this->assertTrue(in_array($responseMessages->getStatusCode(), [302, 403]));
+        // Kasir cannot access financial report or cassiers
+        $responseReport = $this->actingAs($kasir)->get(route('all-sales.report'));
+        $this->assertTrue(in_array($responseReport->getStatusCode(), [302, 403]));
 
         // Kasir cannot access customers
         $responseCustomers = $this->actingAs($kasir)->get(route('customers.index'));

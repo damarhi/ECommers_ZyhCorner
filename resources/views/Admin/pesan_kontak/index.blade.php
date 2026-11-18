@@ -3,6 +3,9 @@
 @section('title', 'Pesan Kontak Masuk - Dasbor Admin')
 
 @section('content')
+@php
+    $isAdminMessages = auth()->check() && auth()->user()->role === 'admin';
+@endphp
 <div class="content-wrapper">
     <!-- Page Header -->
     <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -111,9 +114,11 @@
                     <input type="hidden" name="status" value="{{ request('status') }}">
                 @endif
                 <div class="d-flex align-items-center gap-2">
+                    @if($isAdminMessages)
                     <button type="button" id="btnBulkDelete" class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center px-3" style="height: 38px;" onclick="confirmBulkDelete()">
                         <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                     </button>
+                    @endif
                 </div>
                 <div class="d-flex align-items-center gap-2 w-100 w-md-auto flex-wrap justify-content-end">
                     <div class="position-relative w-100 w-md-auto" style="min-width: 280px;">
@@ -130,20 +135,24 @@
                 </div>
             </form>
 
+            @if($isAdminMessages)
             <!-- Bulk Delete Hidden Form -->
             <form id="bulkDeleteForm" action="{{ route('messages.bulk-delete') }}" method="POST" class="d-none">
                 @csrf
                 <input type="hidden" name="ids" id="bulkDeleteIds">
             </form>
+            @endif
 
             <!-- Messages Table -->
             <div class="table-responsive" style="min-height: 220px;">
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
+                            @if($isAdminMessages)
                             <th style="width: 40px;" class="text-center">
                                 <input type="checkbox" id="selectAllCheckbox" class="form-check-input" style="cursor: pointer;">
                             </th>
+                            @endif
                             <th>Pengirim</th>
                             <th>Subjek & Pesan</th>
                             <th class="text-center" style="width: 130px;">Status</th>
@@ -154,9 +163,11 @@
                     <tbody>
                         @forelse($messages as $msg)
                             <tr class="{{ $msg->status === 'Belum Dibaca' ? 'table-warning bg-opacity-10 fw-bold' : '' }}" id="row-msg-{{ $msg->id }}" data-search="{{ strtolower($msg->nama . ' ' . $msg->email . ' ' . $msg->subjek . ' ' . $msg->pesan . ' ' . $msg->status) }}">
+                                @if($isAdminMessages)
                                 <td class="text-center">
                                     <input type="checkbox" class="form-check-input message-checkbox" value="{{ $msg->id }}" style="cursor: pointer;" onchange="updateBulkDeleteState()">
                                 </td>
+                                @endif
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-circle me-2 bg-light text-primary font-weight-bold d-flex align-items-center justify-content-center"
@@ -265,6 +276,7 @@
                                             </ul>
                                         </div>
 
+                                        @if($isAdminMessages)
                                         <!-- Tombol Hapus -->
                                         <form action="{{ route('messages.destroy', $msg->id) }}" method="POST" class="d-inline delete-form" id="deleteForm-{{ $msg->id }}">
                                             @csrf
@@ -275,11 +287,12 @@
                                                 <i class="mdi mdi-delete" style="font-size: 16px; margin: 0;"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
+                                <td colspan="{{ $isAdminMessages ? 6 : 5 }}" class="text-center py-5 text-muted">
                                     @if($hasActiveFilters)
                                         <i class="mdi mdi-email-search-outline d-block mb-2" style="font-size: 44px; opacity: 0.6;"></i>
                                         <h6 class="text-dark font-weight-bold mb-1">Tidak Ditemukan Pesan yang Sesuai</h6>

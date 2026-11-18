@@ -5,7 +5,10 @@
 @section('content')
     <div class="content-wrapper">
 @php
-    $currentJenis = old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase'));
+    $isAdminProductForm = auth()->check() && auth()->user()->role === 'admin';
+    $currentJenis = $isAdminProductForm
+        ? old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase'))
+        : 'showcase';
     $backRoute = ($currentJenis === 'kustom') ? route('products.custom') : route('products.index');
     $isKustom = ($currentJenis === 'kustom');
     $stokVal = old('status_produk', $produk->status_produk);
@@ -116,8 +119,10 @@
                             <div class="form-group mb-0">
                                 <label>Pilih Jenis Produk</label>
                                 <select name="jenis_produk" class="form-select" required>
-                                    <option value="showcase" {{ old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase')) == 'showcase' ? 'selected' : '' }}>Produk Showcase</option>
-                                    <option value="kustom" {{ old('jenis_produk', $produk->jenis_produk ?? request('jenis', 'showcase')) == 'kustom' ? 'selected' : '' }}>Produk Kustom</option>
+                                    <option value="showcase" {{ $currentJenis == 'showcase' ? 'selected' : '' }}>Produk Showcase</option>
+                                    @if($isAdminProductForm)
+                                        <option value="kustom" {{ $currentJenis == 'kustom' ? 'selected' : '' }}>Produk Kustom</option>
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -137,10 +142,12 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @if($isAdminProductForm)
                                 <div class="text-end mt-2">
-                                    <a href="#" class="text-primary text-decoration-none"
+                                    <a href="{{ route('categories.index') }}" class="text-primary text-decoration-none"
                                         style="font-size: 13px;">Buat Baru</a>
                                 </div>
+                                @endif
                             </div>
                         </div>
                     </div>

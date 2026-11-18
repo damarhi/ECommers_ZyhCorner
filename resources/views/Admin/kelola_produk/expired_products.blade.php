@@ -3,6 +3,9 @@
 @section('title', 'Produk Kadaluarsa - Dasbor Admin')
 
 @section('content')
+    @php
+        $isAdminExpired = auth()->check() && auth()->user()->role === 'admin';
+    @endphp
     <div class="content-wrapper">
         <div class="page-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
             <h3 class="page-title d-inline-flex align-items-center m-0">
@@ -12,7 +15,8 @@
                 <span class="text-nowrap">Produk Kadaluarsa</span>
             </h3>
             <span class="badge bg-soft-primary text-primary px-3 py-2 font-weight-500" style="font-size: 13px; border-radius: 20px;">
-                <i class="mdi mdi-sync me-1"></i> Terdeteksi Otomatis dari Produk Showcase
+                <i class="mdi {{ $isAdminExpired ? 'mdi-sync' : 'mdi-eye-outline' }} me-1"></i>
+                {{ $isAdminExpired ? 'Terdeteksi Otomatis dari Produk Showcase' : 'Mode Cek Etalase (Lihat Saja)' }}
             </span>
         </div>
 
@@ -136,22 +140,27 @@
                                         <i class="mdi mdi-refresh me-1"></i> Reset
                                     </a>
                                 @endif
+                                @if($isAdminExpired)
                                 <button type="button" id="btnBulkDelete" class="btn btn-gradient-danger btn-sm d-none align-items-center justify-content-center ms-auto" style="height: 38px;">
                                     <i class="mdi mdi-delete me-1"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                                 </button>
+                                @endif
                             </div>
                         </form>
 
+                        @if($isAdminExpired)
                         <!-- Table Bulk Delete Form (Outside Table to prevent form nesting) -->
                         <form action="{{ route('products.expired.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
                             @csrf
                             <div id="bulkDeleteInputs"></div>
                         </form>
+                        @endif
 
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                     <thead>
                                         <tr>
+                                            @if($isAdminExpired)
                                             <th width="40">
                                                 <div class="form-check m-0">
                                                     <label class="form-check-label" style="cursor: pointer;">
@@ -159,17 +168,21 @@
                                                     </label>
                                                 </div>
                                             </th>
+                                            @endif
                                             <th>Produk</th>
                                             <th>Tanggal Kadaluarsa</th>
                                             <th>Stok Terakhir</th>
                                             <th>Status Tindakan</th>
                                             <th>Catatan</th>
+                                            @if($isAdminExpired)
                                             <th class="text-center" style="width: 100px;">Aksi</th>
+                                            @endif
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($expiredItems as $item)
                                             <tr data-search="{{ strtolower(($item->produk->nama_produk ?? '') . ' ' . $item->status_tindakan . ' ' . $item->catatan) }}">
+                                                @if($isAdminExpired)
                                                 <td>
                                                     <div class="form-check m-0">
                                                         <label class="form-check-label" style="cursor: pointer;">
@@ -177,6 +190,7 @@
                                                         </label>
                                                     </div>
                                                 </td>
+                                                @endif
                                                 <td>
                                                     @if($item->produk)
                                                         <div class="d-flex align-items-center">
@@ -221,6 +235,7 @@
                                                 <td>
                                                     <small class="text-muted" style="font-size: 12px;">{{ $item->catatan ?? '-' }}</small>
                                                 </td>
+                                                @if($isAdminExpired)
                                                 <td class="text-center">
                                                     <!-- Edit Status Modal Trigger -->
                                                     <button type="button" class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1"
@@ -239,8 +254,10 @@
                                                         </button>
                                                     </form>
                                                 </td>
+                                                @endif
                                             </tr>
 
+                                            @if($isAdminExpired)
                                             <!-- Modal Edit Status Tindakan #{{ $item->id_expired }} -->
                                             <div class="modal fade" id="editExpiredModal{{ $item->id_expired }}" tabindex="-1" aria-labelledby="editExpiredModalLabel{{ $item->id_expired }}" aria-hidden="true">
                                                 <div class="modal-dialog modal-dialog-centered" style="max-width: 480px; margin: 1.75rem auto; width: 95%;">
@@ -319,9 +336,10 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            @endif
                                         @empty
                                             <tr>
-                                                <td colspan="7" class="text-center py-5">
+                                                <td colspan="{{ $isAdminExpired ? 7 : 5 }}" class="text-center py-5">
                                                     <div class="d-flex flex-column align-items-center justify-content-center">
                                                         @if($hasActiveFilters)
                                                             <i class="mdi mdi-clock-alert-outline text-muted mb-2" style="font-size: 64px;"></i>

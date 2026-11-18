@@ -115,7 +115,6 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
     // Operational Sales, Orders, Returns & POS (Admin & Active Kasir)
-    Route::get('admin/all-sales/export', [EksporController::class, 'exportAllSales'])->name('export.all-sales');
     Route::get('admin/orders/export', [EksporController::class, 'exportOrders'])->name('export.orders');
     Route::get('admin/returs/export', [ReturController::class, 'exportReturs'])->name('export.returs');
 
@@ -125,13 +124,23 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
 
     Route::resource('admin/orders', PesananController::class)->names('orders')->except(['create', 'edit', 'show', 'destroy']);
     Route::get('admin/all-sales', [LaporanController::class, 'allSales'])->name('all-sales.index');
-    Route::get('admin/all-sales/report', [LaporanController::class, 'salesReport'])->name('all-sales.report');
     Route::get('admin/orders/{id}/invoice', [PesananController::class, 'printInvoice'])->name('orders.invoice');
     Route::post('admin/orders/{id}/quick-confirm', [PesananController::class, 'quickConfirm'])->name('orders.quickConfirm');
     Route::post('admin/orders/{id}/confirm-proof', [BuktiBayarController::class, 'confirmProof'])->name('orders.confirm-proof');
     Route::post('admin/orders/{id}/reject-proof', [BuktiBayarController::class, 'rejectProof'])->name('orders.reject-proof');
     Route::post('admin/orders/{id}/confirmProof', [BuktiBayarController::class, 'confirmProof'])->name('orders.confirmProof');
     Route::post('admin/orders/{id}/rejectProof', [BuktiBayarController::class, 'rejectProof'])->name('orders.rejectProof');
+
+    // Operational Showcase Products (Create & Edit Showcase for Admin & Kasir; Delete & Custom Products guarded below)
+    Route::resource('admin/products', ProdukController::class)->names('products')->except(['show', 'destroy']);
+
+    // Operational Showcase Expiry Check (Read-Only for Kasir; Write/Delete guarded below)
+    Route::get('admin/expired-products', [ExpiredProductController::class, 'index'])->name('products.expired.index');
+
+    // Customer Contact Messages CS Access (Read & Update Status for Admin & Kasir; Delete guarded below)
+    Route::get('admin/messages', [ContactMessageController::class, 'index'])->name('messages.index');
+    Route::get('admin/messages/{message}', [ContactMessageController::class, 'show'])->name('messages.show');
+    Route::patch('admin/messages/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('messages.update-status');
 
     Route::get('admin/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
     Route::post('admin/settings/profile', [AdminSettingsController::class, 'updateProfile'])->name('settings.profile.update');
@@ -144,12 +153,14 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
 
     // Strictly Admin-Only Management Routes
     Route::middleware('blockKasir')->group(function () {
+        Route::get('admin/all-sales/report', [LaporanController::class, 'salesReport'])->name('all-sales.report');
+        Route::get('admin/all-sales/export', [EksporController::class, 'exportAllSales'])->name('export.all-sales');
+
         Route::get('admin/custom-products', [ProdukController::class, 'customIndex'])->name('products.custom');
         Route::get('admin/products/export', [ProdukController::class, 'exportProducts'])->name('export.products');
         Route::post('admin/products/bulk-delete', [ProdukController::class, 'bulkDelete'])->name('products.bulk-delete');
-        Route::resource('admin/products', ProdukController::class)->names('products')->except(['show']);
+        Route::delete('admin/products/{product}', [ProdukController::class, 'destroy'])->name('products.destroy');
 
-        Route::get('admin/expired-products', [ExpiredProductController::class, 'index'])->name('products.expired.index');
         Route::put('admin/expired-products/{id}', [ExpiredProductController::class, 'update'])->name('products.expired.update');
         Route::delete('admin/expired-products/{id}', [ExpiredProductController::class, 'destroy'])->name('products.expired.destroy');
         Route::post('admin/expired-products/bulk-delete', [ExpiredProductController::class, 'bulkDelete'])->name('products.expired.bulk-delete');
@@ -169,8 +180,7 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
         Route::resource('admin/customers', CustomerController::class)->names('customers')->except(['create', 'edit', 'show']);
 
         Route::post('admin/messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('messages.bulk-delete');
-        Route::resource('admin/messages', ContactMessageController::class)->names('messages')->only(['index', 'show', 'destroy']);
-        Route::patch('admin/messages/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('messages.update-status');
+        Route::delete('admin/messages/{message}', [ContactMessageController::class, 'destroy'])->name('messages.destroy');
 
         Route::post('admin/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');
         Route::post('admin/banners/{banner}/toggle', [BannerController::class, 'toggleStatus'])->name('banners.toggle');

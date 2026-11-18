@@ -3,22 +3,28 @@
 @section('title', 'Data Seluruh Penjualan - Dasbor Admin')
 
 @section('content')
+@php
+    $isAdminSales = auth()->check() && auth()->user()->role === 'admin';
+@endphp
 <div class="content-wrapper">
     <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
             <span class="page-title-icon bg-gradient-primary text-white me-2">
                 <i class="mdi mdi-format-list-bulleted"></i>
-            </span> Data Seluruh Penjualan
+            </span> {{ $isAdminSales ? 'Data Seluruh Penjualan' : 'Riwayat Transaksi Toko' }}
         </h3>
+        @if($isAdminSales)
         <div class="d-flex justify-content-center justify-content-md-end w-100 w-md-auto">
             <a href="{{ route('all-sales.report', request()->query()) }}" target="_blank" class="btn btn-gradient-primary btn-sm px-4 d-inline-flex align-items-center">
                 <i class="mdi mdi-printer me-1"></i> Cetak Laporan Penjualan
             </a>
         </div>
+        @endif
     </div>
 
     <!-- Summary KPI Cards -->
     <div class="row mb-4">
+        @if($isAdminSales)
         <div class="col-md-4 stretch-card grid-margin">
             <div class="card stat-card stat-card-coral border-0 text-white">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -33,8 +39,9 @@
                 </div>
             </div>
         </div>
+        @endif
 
-        <div class="col-md-4 stretch-card grid-margin">
+        <div class="{{ $isAdminSales ? 'col-md-4' : 'col-md-6' }} stretch-card grid-margin">
             <div class="card stat-card stat-card-indigo border-0 text-white">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="stat-icon">
@@ -49,7 +56,7 @@
             </div>
         </div>
 
-        <div class="col-md-4 stretch-card grid-margin">
+        <div class="{{ $isAdminSales ? 'col-md-4' : 'col-md-6' }} stretch-card grid-margin">
             <div class="card stat-card stat-card-teal border-0 text-white">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="stat-icon">

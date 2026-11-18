@@ -3,6 +3,9 @@
 @section('title', 'Produk - Dasbor Admin')
 
 @section('content')
+    @php
+        $isAdminProducts = auth()->check() && auth()->user()->role === 'admin';
+    @endphp
     <div class="content-wrapper">
         <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
             <h3 class="page-title m-0 d-flex align-items-center justify-content-center justify-content-md-start">
@@ -117,22 +120,27 @@
                                     </a>
                                 @endif
                             </div>
+                            @if($isAdminProducts)
                             <button type="button" id="btnBulkDelete"
                                 class="btn btn-sm btn-gradient-danger d-none align-items-center justify-content-center align-self-end align-self-md-center px-3"
                                 style="height: 38px;" title="Hapus Terpilih">
                                 <i class="mdi mdi-delete me-1" style="font-size: 16px;"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
                             </button>
+                            @endif
                         </form>
 
+                        @if($isAdminProducts)
                         <form action="{{ route('products.bulk-delete') }}" method="POST" id="bulkDeleteForm" style="display: none;">
                             @csrf
                             <div id="bulkDeleteInputs"></div>
                         </form>
+                        @endif
 
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead>
                                     <tr>
+                                        @if($isAdminProducts)
                                         <th style="width: 40px;">
                                             <div class="form-check m-0">
                                                 <label class="form-check-label">
@@ -140,6 +148,7 @@
                                                 <i class="input-helper"></i></label>
                                             </div>
                                         </th>
+                                        @endif
                                         <th>Produk</th>
                                         <th>Stok Produk</th>
                                         <th>Diskon</th>
@@ -150,6 +159,7 @@
                                 <tbody>
                                     @forelse($produks as $p)
                                         <tr data-search="{{ strtolower($p->nama_produk . ' ' . ($p->kategori->nama_kategori ?? '') . ' ' . $p->id_produk) }}">
+                                            @if($isAdminProducts)
                                             <td>
                                                 <div class="form-check">
                                                     <label class="form-check-label">
@@ -157,6 +167,7 @@
                                                     </label>
                                                 </div>
                                             </td>
+                                            @endif
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     @if ($p->foto_1)
@@ -220,10 +231,11 @@
                                             </td>
                                             <td class="text-center">
                                                 <a href="{{ route('products.edit', $p->id_produk) }}"
-                                                    class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center me-1"
+                                                    class="btn btn-sm btn-inverse-info d-inline-flex align-items-center justify-content-center {{ $isAdminProducts ? 'me-1' : '' }}"
                                                     style="width: 32px; height: 32px; padding: 0;" title="Edit">
                                                     <i class="mdi mdi-pencil" style="margin: 0; font-size: 16px;"></i>
                                                 </a>
+                                                @if($isAdminProducts)
                                                 <form action="{{ route('products.destroy', $p->id_produk) }}"
                                                     method="POST" class="d-inline delete-form">
                                                     @csrf
@@ -234,11 +246,12 @@
                                                         <i class="mdi mdi-delete" style="margin: 0; font-size: 16px;"></i>
                                                     </button>
                                                 </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center py-5">
+                                            <td colspan="{{ $isAdminProducts ? 6 : 5 }}" class="text-center py-5">
                                                 <div class="d-flex flex-column align-items-center justify-content-center">
                                                     <i class="mdi mdi-cube-outline text-muted mb-2"
                                                         style="font-size: 64px;"></i>

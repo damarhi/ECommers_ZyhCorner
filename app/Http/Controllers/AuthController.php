@@ -612,12 +612,18 @@ class AuthController extends Controller
                 '/admin/dashboard',
                 '/admin/pos',
                 '/admin/orders',
-                '/admin/returns',
-                '/admin/payment-proofs',
+                '/admin/returs',
+                '/admin/all-sales',
+                '/admin/products',
+                '/admin/expired-products',
+                '/admin/messages',
                 '/admin/settings',
             ];
 
-            if ($isSameHost) {
+            if ($isSameHost
+                && !str_starts_with($intendedPath, '/admin/all-sales/report')
+                && !str_starts_with($intendedPath, '/admin/all-sales/export')
+                && !str_starts_with($intendedPath, '/admin/products/export')) {
                 foreach ($kasirAllowedPrefixes as $prefix) {
                     if ($intendedPath === $prefix || str_starts_with($intendedPath, $prefix . '/')) {
                         return redirect()->to($intended)->with('success', $welcomeMessage);

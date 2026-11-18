@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactMessage;
 use App\Models\Pesanan;
 use App\Models\Produk;
+use App\Models\ProdukKadaluarsa;
 use App\Models\Retur;
 use App\Models\User;
 use Carbon\Carbon;
@@ -16,11 +18,12 @@ class AdminDashboardController extends Controller
 {
     public function index()
     {
+        $now = Carbon::now();
+
         if (Auth::check() && Auth::user()->role === 'kasir') {
-            return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman dashboard.');
+            return $this->kasirDashboard($now);
         }
 
-        $now = Carbon::now();
         $startOfWeek = $now->copy()->startOfWeek();
 
         // 1. KPI Cards
@@ -67,6 +70,60 @@ class AdminDashboardController extends Controller
             'chartData',
             'onlineCount',
             'offlineCount',
+            'recentOrders'
+        ));
+    }
+
+    private function kasirDashboard(Carbon $now)
+    {
+        Produk::checkAndEmptyExpiredProducts();
+
+        $startOfDay = $now->copy()->startOfDay();
+
+        $perluKonfirmasi = Pesanan::whereIn('order_status', [
+            'menunggu konfirmasi',
+            'Menunggu Konfirmasi',
+            'unconfirmed',
+            'Unconfirmed',
+        ])->count();
+
+        $pesananPerluDikemas = Pesanan::whereIn('order_status', ['dikemas', 'Dikemas'])->count();
+
+        $transaksiPosHariIni = Pesanan::where('jenis_penjualan', 'Offline')
+            ->where('created_at', '>=', $startOfDay)
+            ->count();
+
+        $setoranPosHariIni = Pesanan::where('jenis_penjualan', 'Offline')
+            ->where('payment_status', 'Paid')
+            ->where('created_at', '>=', $startOfDay)
+            ->sum('total');
+
+        $returBaruCount = Retur::where('status', 'New')->count();
+        $expiredPerluTindakan = ProdukKadaluarsa::where('status_tindakan', 'Perlu Tindakan')->count();
+        $unreadMessagesCount = ContactMessage::where('status', 'Belum Dibaca')->count();
+
+        $lowStockProducts = Produk::with('kategori')
+            ->where(function ($q) {
+                $q->where('jenis_produk', 'showcase')
+                  ->orWhereNull('jenis_produk');
+            })
+            ->get()
+            ->filter(fn (Produk $p) => $p->stok <= 3)
+            ->sortBy('stok')
+            ->take(6)
+            ->values();
+
+        $recentOrders = Pesanan::latest('created_at')->take(5)->get();
+
+        return view('Admin.dashboard.kasir_dashboard', compact(
+            'perluKonfirmasi',
+            'pesananPerluDikemas',
+            'transaksiPosHariIni',
+            'setoranPosHariIni',
+            'returBaruCount',
+            'expiredPerluTindakan',
+            'unreadMessagesCount',
+            'lowStockProducts',
             'recentOrders'
         ));
     }

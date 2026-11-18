@@ -55,7 +55,8 @@ class LaporanController extends Controller
             });
         }
 
-        $totalPendapatan = (clone $query)->sum('total');
+        $isAdmin = auth()->check() && auth()->user()->role === 'admin';
+        $totalPendapatan = $isAdmin ? (clone $query)->sum('total') : null;
         $totalOnlineCount = (clone $query)->where('jenis_penjualan', 'Online')->count();
         $totalOfflineCount = (clone $query)->where('jenis_penjualan', 'Offline')->count();
 
@@ -70,7 +71,7 @@ class LaporanController extends Controller
                     'total' => $sales->total(),
                     'firstItem' => $sales->firstItem() ?? 0,
                     'lastItem' => $sales->lastItem() ?? 0,
-                    'totalPendapatan' => 'Rp. ' . number_format($totalPendapatan, 0, ',', '.'),
+                    'totalPendapatan' => $isAdmin ? ('Rp. ' . number_format((float) $totalPendapatan, 0, ',', '.')) : null,
                     'totalOnlineCount' => $totalOnlineCount,
                     'totalOfflineCount' => $totalOfflineCount,
                 ]);
