@@ -52,7 +52,9 @@
                     </li>
                     <li class="nav-item dropdown">
                         @php
-                            $recentNavbarMessages = $recentNavbarMessages ?? collect();
+                            $recentNavbarMessages = ($recentNavbarMessages ?? collect()) instanceof \Illuminate\Support\Collection
+                                ? $recentNavbarMessages->filter(fn ($m) => is_object($m))
+                                : collect();
                             $navbarUnreadMsgCount = $navbarUnreadMsgCount ?? 0;
                         @endphp
                         <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#"

@@ -127,4 +127,54 @@ class Wave4XssPerformanceAndCleanupTest extends TestCase
             'jumlah_stok' => '6',
         ]);
     }
+
+    public function test_database_cache_with_serializable_classes_false_handles_admin_layout_and_best_sellers(): void
+    {
+        config([
+            'cache.default' => 'database',
+            'cache.serializable_classes' => false,
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        \App\Models\ContactMessage::create([
+            'nama' => 'Rina Pelanggan',
+            'email' => 'rina.pesan@zyhcorner.com',
+            'subjek' => 'Tanya Stok',
+            'pesan' => 'Apakah kue tart ready?',
+            'status' => 'Belum Dibaca',
+        ]);
+
+        $produk = Produk::create([
+            'nama_produk' => 'Cheesecake Lumer',
+            'harga' => 65000,
+            'status_produk' => '12',
+            'jenis_produk' => 'showcase',
+        ]);
+
+        Pesanan::create([
+            'order_number' => '#CACHE1',
+            'jenis_penjualan' => 'Online',
+            'payment_method' => 'COD',
+            'customer_name' => 'Rina Pelanggan',
+            'email_pembeli' => 'rina.pesan@zyhcorner.com',
+            'payment_status' => 'Paid',
+            'order_status' => 'selesai',
+            'total' => 130000,
+            'items' => [
+                ['id' => $produk->id_produk, 'name' => 'Cheesecake Lumer', 'price' => 65000, 'qty' => 2],
+            ],
+        ]);
+
+        // 1st request populates database cache; 2nd request unserializes with serializable_classes = false
+        $this->actingAs($admin)->get('/admin/dashboard')->assertStatus(200);
+        $ordersResp = $this->actingAs($admin)->get(route('orders.index'));
+        $ordersResp->assertStatus(200);
+        $ordersResp->assertSee('Rina Pelanggan');
+        $ordersResp->assertSee('rina.pesan@zyhcorner.com');
+
+        // Storefront best-sellers cache miss -> cache hit with serializable_classes = false
+        $this->get(route('home'))->assertStatus(200)->assertSee('Cheesecake Lumer');
+        $this->get(route('home'))->assertStatus(200)->assertSee('Cheesecake Lumer');
+    }
 }

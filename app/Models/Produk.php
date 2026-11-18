@@ -252,7 +252,7 @@ class Produk extends Model
 
     public static function getBestSellers(int $limit = 3)
     {
-        return Cache::remember("produk_best_sellers_{$limit}", 300, function () use ($limit) {
+        $computeBestSellerIds = static function () use ($limit): array {
             $productSales = [];
             $orders = Pesanan::where('payment_status', 'Paid')
                 ->whereNotNull('items')
@@ -264,42 +264,72 @@ class Produk extends Model
                         $pid = $item['id'] ?? $item['id_produk'] ?? null;
                         $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
                         if ($pid) {
-                            $productSales[$pid] = ($productSales[$pid] ?? 0) + $qty;
+                            $productSales[(int) $pid] = ($productSales[(int) $pid] ?? 0) + $qty;
                         }
                     }
                 }
             }
 
-            $topProducts = collect();
+            $orderedIds = [];
             if (!empty($productSales)) {
                 arsort($productSales);
-                $topIds = array_slice(array_keys($productSales), 0, $limit);
-                $topProducts = self::with(['kategori', 'diskonAktif'])
-                    ->whereIn('id_produk', $topIds)
-                    ->get()
-                    ->sortBy(function ($p) use ($productSales) {
-                        return -($productSales[$p->id_produk] ?? 0);
-                    })
-                    ->values();
+                $candidateIds = array_slice(array_keys($productSales), 0, $limit);
+                $existingIds = self::whereIn('id_produk', $candidateIds)
+                    ->pluck('id_produk')
+                    ->map(fn ($id) => (int) $id)
+                    ->all();
+                $existingLookup = array_flip($existingIds);
 
-                if ($topProducts->count() >= $limit) {
-                    return $topProducts;
+                foreach ($candidateIds as $cid) {
+                    if (isset($existingLookup[(int) $cid])) {
+                        $orderedIds[] = (int) $cid;
+                    }
+                }
+
+                if (count($orderedIds) >= $limit) {
+                    return array_slice($orderedIds, 0, $limit);
                 }
             }
 
-            $excludeIds = $topProducts->pluck('id_produk')->toArray();
-            $fallback = self::with(['kategori', 'diskonAktif'])
-                ->whereNotIn('id_produk', $excludeIds)
+            $fallbackIds = self::whereNotIn('id_produk', $orderedIds)
                 ->where(function ($q) {
                     $q->where('jenis_produk', 'showcase')
                       ->orWhereNull('jenis_produk');
                 })
                 ->orderBy('id_produk', 'asc')
-                ->limit($limit - $topProducts->count())
-                ->get();
+                ->limit($limit - count($orderedIds))
+                ->pluck('id_produk')
+                ->map(fn ($id) => (int) $id)
+                ->all();
 
-            return $topProducts->concat($fallback);
-        });
+            return array_values(array_merge($orderedIds, $fallbackIds));
+        };
+
+        $cacheKey = "produk_best_sellers_{$limit}";
+        $orderedIds = Cache::remember($cacheKey, 300, $computeBestSellerIds);
+
+        if (!is_array($orderedIds)) {
+            Cache::forget($cacheKey);
+            $orderedIds = Cache::remember($cacheKey, 300, $computeBestSellerIds);
+        }
+
+        if (empty($orderedIds)) {
+            return collect();
+        }
+
+        $productsById = self::with(['kategori', 'diskonAktif'])
+            ->whereIn('id_produk', $orderedIds)
+            ->get()
+            ->keyBy('id_produk');
+
+        $orderedProducts = collect();
+        foreach ($orderedIds as $id) {
+            if ($productsById->has($id)) {
+                $orderedProducts->push($productsById->get($id));
+            }
+        }
+
+        return $orderedProducts;
     }
 
     public static function checkAndEmptyExpiredProducts()

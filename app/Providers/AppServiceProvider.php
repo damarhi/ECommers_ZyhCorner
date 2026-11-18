@@ -84,11 +84,22 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Precompute & cache Admin/Kasir topbar and sidebar notification counters once per page
+        // Store only plain arrays/scalars in Cache (Laravel 13 sets cache.serializable_classes = false)
         View::composer('Layout.layout_pAdmin', function ($view) {
             try {
-                $badges = Cache::remember('admin_layout_badges', 30, function () {
+                $computeBadges = static function (): array {
                     $unreadMessages = ContactMessage::where('status', 'Belum Dibaca')->count();
-                    $recentMessages = ContactMessage::latest()->take(3)->get();
+                    $recentMessages = ContactMessage::latest()
+                        ->take(3)
+                        ->get(['id', 'nama', 'email', 'created_at'])
+                        ->map(fn (ContactMessage $msg) => [
+                            'id' => $msg->id,
+                            'nama' => (string) $msg->nama,
+                            'email' => (string) $msg->email,
+                            'created_at' => $msg->getRawOriginal('created_at') ?: ($msg->created_at ? $msg->created_at->format('Y-m-d H:i:s') : now()->format('Y-m-d H:i:s')),
+                        ])
+                        ->all();
+
                     $unconfirmedOrders = Pesanan::whereIn('order_status', [
                         'menunggu konfirmasi',
                         'Menunggu Konfirmasi',
@@ -98,16 +109,32 @@ class AppServiceProvider extends ServiceProvider
                     $newReturs = Retur::where('status', 'New')->count();
 
                     return [
-                        'recentNavbarMessages' => $recentMessages,
+                        'recentNavbarMessagesRaw' => $recentMessages,
                         'navbarUnreadMsgCount' => $unreadMessages,
                         'sidebarUnreadCount' => $unreadMessages,
                         'notifUnconfirmed' => $unconfirmedOrders,
                         'notifRetur' => $newReturs,
                         'totalNotif' => $unconfirmedOrders + $newReturs,
                     ];
-                });
+                };
 
-                $view->with($badges);
+                $badges = Cache::remember('admin_layout_badges', 30, $computeBadges);
+
+                if (!is_array($badges) || !isset($badges['recentNavbarMessagesRaw']) || !is_array($badges['recentNavbarMessagesRaw'])) {
+                    Cache::forget('admin_layout_badges');
+                    $badges = Cache::remember('admin_layout_badges', 30, $computeBadges);
+                }
+
+                $hydratedMessages = ContactMessage::hydrate($badges['recentNavbarMessagesRaw']);
+
+                $view->with([
+                    'recentNavbarMessages' => $hydratedMessages,
+                    'navbarUnreadMsgCount' => (int) ($badges['navbarUnreadMsgCount'] ?? 0),
+                    'sidebarUnreadCount' => (int) ($badges['sidebarUnreadCount'] ?? 0),
+                    'notifUnconfirmed' => (int) ($badges['notifUnconfirmed'] ?? 0),
+                    'notifRetur' => (int) ($badges['notifRetur'] ?? 0),
+                    'totalNotif' => (int) ($badges['totalNotif'] ?? 0),
+                ]);
             } catch (\Throwable $e) {
                 $view->with([
                     'recentNavbarMessages' => collect(),
