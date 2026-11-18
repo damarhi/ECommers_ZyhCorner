@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\User;
+use App\Services\SalesReportService;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -28,10 +29,15 @@ class CustomerController extends Controller
         }
 
         $customers = $query->latest()->paginate(10)->withQueryString();
+        $statusGroups = Customer::selectRaw('status, COUNT(*) as cnt')
+            ->groupBy('status')
+            ->pluck('cnt', 'status');
+        $activeCount = (int) ($statusGroups['Active'] ?? 0);
+        $blockedCount = (int) ($statusGroups['Blocked'] ?? 0);
         $customerCounts = [
-            'All' => Customer::count(),
-            'Active' => Customer::where('status', 'Active')->count(),
-            'Blocked' => Customer::where('status', 'Blocked')->count(),
+            'All' => (int) $statusGroups->sum(),
+            'Active' => $activeCount,
+            'Blocked' => $blockedCount,
         ];
         return view('Admin.kelola_akun.customers', compact('customers', 'customerCounts'));
     }
@@ -49,19 +55,12 @@ class CustomerController extends Controller
 
         $userId = null;
         if ($request->filled('contact')) {
-            $rawPhone = ltrim($request->contact, '0');
-            $rawPhone = preg_replace('/^\+?62/', '', $rawPhone);
-            $matchedUser = User::where('no_hp', $rawPhone)
-                ->orWhere('no_hp', '8' . ltrim($rawPhone, '8'))
-                ->first();
-            if ($matchedUser) {
-                $userId = $matchedUser->user_id;
-            }
-        }
-        if (!$userId && $request->filled('name')) {
-            $matchedUser = User::where('nama', $request->name)->first();
-            if ($matchedUser) {
-                $userId = $matchedUser->user_id;
+            $variants = Customer::phoneVariants($request->contact);
+            if (!empty($variants)) {
+                $matchedUser = User::whereIn('no_hp', $variants)->first();
+                if ($matchedUser) {
+                    $userId = $matchedUser->user_id;
+                }
             }
         }
 
@@ -92,19 +91,10 @@ class CustomerController extends Controller
         ]);
 
         $userId = $customer->user_id;
-        if (!$userId) {
-            if ($request->filled('contact')) {
-                $rawPhone = ltrim($request->contact, '0');
-                $rawPhone = preg_replace('/^\+?62/', '', $rawPhone);
-                $matchedUser = User::where('no_hp', $rawPhone)
-                    ->orWhere('no_hp', '8' . ltrim($rawPhone, '8'))
-                    ->first();
-                if ($matchedUser) {
-                    $userId = $matchedUser->user_id;
-                }
-            }
-            if (!$userId && $request->filled('name')) {
-                $matchedUser = User::where('nama', $request->name)->first();
+        if (!$userId && $request->filled('contact')) {
+            $variants = Customer::phoneVariants($request->contact);
+            if (!empty($variants)) {
+                $matchedUser = User::whereIn('no_hp', $variants)->first();
                 if ($matchedUser) {
                     $userId = $matchedUser->user_id;
                 }
@@ -135,7 +125,7 @@ class CustomerController extends Controller
     public function exportCustomers()
     {
         $fileName = 'data-pelanggan-' . date('Y-m-d-His') . '.csv';
-        $customers = Customer::latest()->get();
+        $customers = Customer::with('user')->latest()->get();
 
         $headers = [
             "Content-type" => "text/csv; charset=UTF-8",
@@ -154,13 +144,13 @@ class CustomerController extends Controller
             foreach ($customers as $c) {
                 fputcsv($file, [
                     $c->id,
-                    $c->name,
-                    $c->email ?? '-',
-                    $c->contact ?? '-',
-                    $c->location ?? '-',
+                    SalesReportService::sanitizeSpreadsheetCell($c->name),
+                    SalesReportService::sanitizeSpreadsheetCell($c->user?->email ?? '-'),
+                    SalesReportService::sanitizeSpreadsheetCell($c->contact ?? '-'),
+                    SalesReportService::sanitizeSpreadsheetCell($c->location ?? '-'),
                     $c->orders_count ?? 0,
                     'Rp ' . number_format($c->spent ?? 0, 0, ',', '.'),
-                    $c->status ?? 'Active'
+                    SalesReportService::sanitizeSpreadsheetCell($c->status ?? 'Active')
                 ], ';');
             }
             fclose($file);

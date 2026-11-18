@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Pelanggan;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Pesanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerSettingsController extends Controller
 {
@@ -23,10 +25,13 @@ class CustomerSettingsController extends Controller
                 $user->alamat = $defaultAddress->street_address;
             }
         } elseif (!$user->alamat) {
-            $customer = Customer::where('user_id', $user->user_id)
-                ->orWhere('contact', $user->no_hp)
-                ->orWhere('name', $user->nama)
-                ->first();
+            $customer = Customer::where('user_id', $user->user_id)->first();
+            if (!$customer && !empty($user->no_hp)) {
+                $variants = Customer::phoneVariants($user->no_hp);
+                if (!empty($variants)) {
+                    $customer = Customer::whereNull('user_id')->whereIn('contact', $variants)->first();
+                }
+            }
             if ($customer) {
                 if (!$customer->user_id) {
                     $customer->update(['user_id' => $user->user_id]);
@@ -59,6 +64,8 @@ class CustomerSettingsController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        $oldEmail = $user->email;
+
         $request->validate([
             'nama' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->user_id . ',user_id',
@@ -69,6 +76,24 @@ class CustomerSettingsController extends Controller
             'nama' => $request->nama,
             'email' => $request->email,
             'no_hp' => $request->no_hp,
+        ]);
+
+        // Keep legacy orders & customer profile synchronized across email/phone/name changes
+        if ($oldEmail && $oldEmail !== $request->email) {
+            Pesanan::where(function ($q) use ($user, $oldEmail) {
+                $q->where('user_id', $user->user_id)
+                  ->orWhere(function ($sub) use ($oldEmail) {
+                      $sub->whereNull('user_id')->where('email_pembeli', $oldEmail);
+                  });
+            })->update([
+                'user_id' => $user->user_id,
+                'email_pembeli' => $request->email,
+            ]);
+        }
+
+        Customer::where('user_id', $user->user_id)->update([
+            'name' => $request->nama,
+            'contact' => $request->no_hp,
         ]);
 
         return response()->json([
@@ -152,27 +177,29 @@ class CustomerSettingsController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            
-            // Create directory if not exists
-            $path = public_path('uploads/avatars');
-            if (!file_exists($path)) {
-                mkdir($path, 0777, true);
-            }
-            
-            $file->move($path, $filename);
 
-            // Delete old avatar if exists and not default
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                @unlink(public_path($user->avatar));
+            // Delete old avatar safely if exists and not default static asset
+            if (!empty($user->avatar)) {
+                if (str_starts_with($user->avatar, 'storage/')) {
+                    $oldDiskPath = substr($user->avatar, 8);
+                    if ($oldDiskPath !== '' && Storage::disk('public')->exists($oldDiskPath)) {
+                        Storage::disk('public')->delete($oldDiskPath);
+                    }
+                } elseif (str_starts_with($user->avatar, 'uploads/avatars/') && !str_contains($user->avatar, '..')) {
+                    $oldFullPath = public_path($user->avatar);
+                    if (is_file($oldFullPath)) {
+                        @unlink($oldFullPath);
+                    }
+                }
             }
 
-            $avatarPath = 'uploads/avatars/' . $filename;
+            $storedPath = Storage::disk('public')->putFile('uploads/avatars', $file);
+            $avatarPath = 'storage/' . $storedPath;
             $user->update([
                 'avatar' => $avatarPath,
             ]);

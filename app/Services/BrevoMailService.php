@@ -26,7 +26,7 @@ class BrevoMailService
             throw new \Exception('Brevo API Key belum dikonfigurasi. Tambahkan BREVO_API_KEY di file .env');
         }
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(10)->withHeaders([
             'api-key' => $apiKey,
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
@@ -87,7 +87,7 @@ class BrevoMailService
             return false;
         }
 
-        $response = Http::withHeaders([
+        $response = Http::timeout(10)->withHeaders([
             'api-key' => $apiKey,
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',

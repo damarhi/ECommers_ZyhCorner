@@ -8,6 +8,7 @@ use App\Models\Produk;
 use App\Models\Kategori;
 use App\Models\Pesanan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PosController extends Controller
@@ -56,25 +57,50 @@ class PosController extends Controller
     public function checkout(Request $request)
     {
         $items = $request->input('items');
-        if (empty($items)) {
+        if (empty($items) || !is_array($items)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Keranjang belanja kosong!'
             ], 400);
         }
 
+        $aggregatedQty = [];
+        $rawList = [];
+        foreach ($items as $key => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $productId = $item['id'] ?? $item['id_produk'] ?? $key;
+            $quantity = (int) ($item['quantity'] ?? $item['qty'] ?? 1);
+            if ($quantity <= 0 || !$productId) {
+                continue;
+            }
+            $pid = (int) $productId;
+            $aggregatedQty[$pid] = ($aggregatedQty[$pid] ?? 0) + $quantity;
+            $rawList[] = [
+                'id' => $pid,
+                'quantity' => $quantity,
+                'image' => $item['image'] ?? null,
+            ];
+        }
+
+        if (empty($rawList)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada produk valid dalam keranjang!'
+            ], 400);
+        }
+
+        $productsById = Produk::with('diskonAktif')
+            ->whereIn('id_produk', array_keys($aggregatedQty))
+            ->get()
+            ->keyBy('id_produk');
+
         $normalizedItems = [];
         $total = 0;
 
-        foreach ($items as $key => $item) {
-            $productId = $item['id'] ?? $item['id_produk'] ?? $key;
-            $quantity = (int) ($item['quantity'] ?? $item['qty'] ?? 1);
-
-            if ($quantity <= 0) {
-                continue;
-            }
-
-            $product = Produk::with('diskonAktif')->find($productId);
+        foreach ($rawList as $entry) {
+            $product = $productsById->get($entry['id']);
             if (!$product) {
                 return response()->json([
                     'success' => false,
@@ -89,14 +115,16 @@ class PosController extends Controller
                 ], 400);
             }
 
-            if ($product->stok < $quantity) {
+            if ($product->stok < $aggregatedQty[$product->id_produk]) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Stok produk "' . $product->nama_produk . '" tidak mencukupi (tersisa ' . $product->stok . ' item).'
                 ], 400);
             }
 
-            $unitPrice = $product->harga_diskon ?? $product->harga;
+            $quantity = $entry['quantity'];
+            $unitPrice = (float) ($product->harga_diskon ?? $product->harga);
+            $originalPrice = (float) $product->harga;
             $subtotal = $unitPrice * $quantity;
             $total += $subtotal;
 
@@ -104,23 +132,18 @@ class PosController extends Controller
                 'id' => $product->id_produk,
                 'id_produk' => $product->id_produk,
                 'name' => $product->nama_produk,
+                'nama_produk' => $product->nama_produk,
                 'price' => $unitPrice,
+                'original_price' => $originalPrice,
                 'quantity' => $quantity,
                 'qty' => $quantity,
                 'subtotal' => $subtotal,
-                'image' => $product->foto_1 ? asset('storage/' . $product->foto_1) : ($item['image'] ?? null)
+                'image' => $product->foto_1 ? asset('storage/' . $product->foto_1) : $entry['image'],
             ];
         }
 
-        if (empty($normalizedItems)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tidak ada produk valid dalam keranjang!'
-            ], 400);
-        }
-
-        $customerName = $request->input('customer_name') ?: 'Walk-in Customer';
-        $paymentMethod = $request->input('payment_method', 'Cash');
+        $customerName = trim((string) ($request->input('customer_name') ?: 'Walk-in Customer'));
+        $paymentMethod = trim((string) $request->input('payment_method', 'Cash'));
 
         // Generate a unique order number
         do {
@@ -138,6 +161,7 @@ class PosController extends Controller
                     'payment_status' => 'Paid',
                     'order_status' => 'selesai',
                     'total' => $total,
+                    'shipping_cost' => 0,
                     'items' => $normalizedItems,
                 ]);
 
@@ -151,10 +175,16 @@ class PosController extends Controller
                 'message' => 'Checkout berhasil dengan nomor order ' . $orderNumber,
                 'order' => $pesanan
             ]);
-        } catch (\Exception $e) {
+        } catch (\DomainException $de) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat memproses checkout: ' . $e->getMessage()
+                'message' => $de->getMessage()
+            ], 400);
+        } catch (\Exception $e) {
+            Log::error('POS checkout failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses checkout POS.'
             ], 500);
         }
     }
@@ -166,19 +196,20 @@ class PosController extends Controller
             'tanggal_expired' => 'nullable|date',
         ]);
 
-        $product = Produk::findOrFail($id);
-
-        $currentStock = $product->stok;
         $additional = (int) $request->input('additional_stock');
-        $newStock = $currentStock + $additional;
+        $newStock = 0;
+        $product = DB::transaction(function () use ($request, $id, $additional, &$newStock) {
+            $locked = Produk::where('id_produk', $id)->lockForUpdate()->firstOrFail();
+            $newStock = $locked->stok + $additional;
+            $locked->status_produk = (string) $newStock;
 
-        $product->status_produk = (string) $newStock;
+            if ($request->filled('tanggal_expired')) {
+                $locked->tanggal_expired = $request->input('tanggal_expired');
+            }
 
-        if ($request->filled('tanggal_expired')) {
-            $product->tanggal_expired = $request->input('tanggal_expired');
-        }
-
-        $product->save();
+            $locked->save();
+            return $locked;
+        });
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

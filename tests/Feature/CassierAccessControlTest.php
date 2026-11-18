@@ -19,8 +19,8 @@ class CassierAccessControlTest extends TestCase
         $response = $this->get(route('orders.index'));
         $response->assertStatus(200);
 
-        // Access products
-        $response = $this->get(route('products.index'));
+        // Access POS
+        $response = $this->get(route('pos.index'));
         $response->assertStatus(200);
 
         // Access returs
@@ -38,15 +38,25 @@ class CassierAccessControlTest extends TestCase
         $response->assertRedirect(route('orders.index'));
         $response->assertSessionHas('error', 'Anda tidak memiliki hak akses ke halaman dashboard.');
 
+        // Try to access products
+        $response = $this->get(route('products.index'));
+        $response->assertRedirect(route('orders.index'));
+        $response->assertSessionHas('error', 'Anda tidak memiliki hak akses ke halaman ini.');
+
         // Try to access categories
         $response = $this->get(route('categories.index'));
         $response->assertRedirect(route('orders.index'));
         $response->assertSessionHas('error', 'Anda tidak memiliki hak akses ke halaman ini.');
 
-        // Try to access customers
+        // Try to access discounts & banners
+        $this->get(route('discounts.index'))->assertRedirect(route('orders.index'));
+        $this->get(route('banners.index'))->assertRedirect(route('orders.index'));
+
+        // Try to access customers & customer export
         $response = $this->get(route('customers.index'));
         $response->assertRedirect(route('orders.index'));
         $response->assertSessionHas('error', 'Anda tidak memiliki hak akses ke halaman ini.');
+        $this->get(route('export.customers'))->assertRedirect(route('orders.index'));
 
         // Try to access cassiers
         $response = $this->get(route('cassiers.index'));

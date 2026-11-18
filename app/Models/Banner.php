@@ -32,4 +32,19 @@ class Banner extends Model
 
         return $labels[$this->posisi_banner] ?? ucfirst($this->posisi_banner);
     }
+
+    public function getLinkUrlAttribute($value): ?string
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return null;
+        }
+
+        $trimmed = trim((string) $value);
+        if ((str_starts_with($trimmed, '/') && !str_starts_with($trimmed, '//'))
+            || preg_match('#^https?://#i', $trimmed)) {
+            return $trimmed;
+        }
+
+        return null;
+    }
 }

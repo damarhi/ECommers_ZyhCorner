@@ -15,7 +15,14 @@ class CheckKasirRole
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->role === 'kasir') {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki hak akses ke halaman ini.',
+                ], 403);
+            }
+
             return redirect()->route('orders.index')->with('error', 'Anda tidak memiliki hak akses ke halaman ini.');
         }
 

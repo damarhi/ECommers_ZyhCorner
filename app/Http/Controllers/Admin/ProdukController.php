@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Produk;
 use App\Models\Kategori;
+use App\Services\SalesReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -110,10 +111,10 @@ class ProdukController extends Controller
             'tanggal_expired' => 'nullable|date',
             'bisa_custom_teks' => 'nullable|boolean',
             'is_signature' => 'nullable|boolean',
-            'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
-            'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
-            'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
-            'foto_4' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
+            'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
+            'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
+            'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
+            'foto_4' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
         ]);
 
         $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
@@ -160,10 +161,10 @@ class ProdukController extends Controller
             'tanggal_expired' => 'nullable|date',
             'bisa_custom_teks' => 'nullable|boolean',
             'is_signature' => 'nullable|boolean',
-            'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
-            'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
-            'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
-            'foto_4' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
+            'foto_1' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
+            'foto_2' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
+            'foto_3' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
+            'foto_4' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
         ]);
 
         $validated['bisa_custom_teks'] = $request->boolean('bisa_custom_teks');
@@ -240,10 +241,10 @@ class ProdukController extends Controller
                 foreach ($products as $p) {
                     fputcsv($file, [
                         $p->id_produk,
-                        $p->nama_produk,
-                        $p->kategori ? $p->kategori->nama_kategori : 'Tanpa Kategori',
+                        SalesReportService::sanitizeSpreadsheetCell($p->nama_produk),
+                        SalesReportService::sanitizeSpreadsheetCell($p->kategori ? $p->kategori->nama_kategori : 'Tanpa Kategori'),
                         'Kustom',
-                        $p->status_produk,
+                        SalesReportService::sanitizeSpreadsheetCell($p->status_produk),
                         'Rp ' . number_format($p->harga ?? 0, 0, ',', '.'),
                         'Rp ' . number_format($p->harga_max ?? $p->harga ?? 0, 0, ',', '.')
                     ], ';');
@@ -253,10 +254,10 @@ class ProdukController extends Controller
                 foreach ($products as $p) {
                     fputcsv($file, [
                         $p->id_produk,
-                        $p->nama_produk,
-                        $p->kategori ? $p->kategori->nama_kategori : 'Tanpa Kategori',
+                        SalesReportService::sanitizeSpreadsheetCell($p->nama_produk),
+                        SalesReportService::sanitizeSpreadsheetCell($p->kategori ? $p->kategori->nama_kategori : 'Tanpa Kategori'),
                         'Showcase',
-                        $p->status_produk,
+                        SalesReportService::sanitizeSpreadsheetCell($p->status_produk),
                         'Rp ' . number_format($p->harga ?? 0, 0, ',', '.'),
                         $p->tanggal_expired ? date('d-m-Y', strtotime($p->tanggal_expired)) : '-'
                     ], ';');
@@ -277,14 +278,10 @@ class ProdukController extends Controller
 
         $products = Produk::whereIn('id_produk', $validated['ids'])->get();
         foreach ($products as $product) {
-            if ($product->foto_1 && Storage::disk('public')->exists($product->foto_1)) {
-                Storage::disk('public')->delete($product->foto_1);
-            }
-            if ($product->foto_2 && Storage::disk('public')->exists($product->foto_2)) {
-                Storage::disk('public')->delete($product->foto_2);
-            }
-            if ($product->foto_3 && Storage::disk('public')->exists($product->foto_3)) {
-                Storage::disk('public')->delete($product->foto_3);
+            foreach (['foto_1', 'foto_2', 'foto_3', 'foto_4'] as $foto) {
+                if ($product->$foto && Storage::disk('public')->exists($product->$foto)) {
+                    Storage::disk('public')->delete($product->$foto);
+                }
             }
             $product->delete();
         }

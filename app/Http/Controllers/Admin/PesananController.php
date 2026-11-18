@@ -10,6 +10,7 @@ use App\Models\UserAddress;
 use App\Models\Customer;
 use App\Services\GeoLocationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PesananController extends Controller
 {
@@ -44,7 +45,8 @@ class PesananController extends Controller
         }
 
         $orders = $query->latest()->paginate(10)->withQueryString();
-        return view('Admin.kelola_penjualan.orders', compact('orders'));
+        $preloadedProducts = Pesanan::preloadModalContext($orders->items());
+        return view('Admin.kelola_penjualan.orders', compact('orders', 'preloadedProducts'));
     }
 
     /**
@@ -68,6 +70,7 @@ class PesananController extends Controller
     public function update(Request $request, $id)
     {
         $pesanan = Pesanan::findOrFail($id);
+        $wasCanceled = $pesanan->is_canceled;
 
         $request->validate([
             'customer_name' => 'nullable|string|max:255',
@@ -85,6 +88,13 @@ class PesananController extends Controller
         }
 
         $pesanan->update($updateData);
+        $pesanan->refresh();
+
+        if (!$wasCanceled && $pesanan->is_canceled) {
+            Produk::restoreStockForOrder($pesanan);
+        }
+
+        Customer::syncMetricsForOrder($pesanan);
 
         return redirect()->route('orders.index')->with('success', 'Status pesanan berhasil diperbarui.');
     }
@@ -98,6 +108,9 @@ class PesananController extends Controller
     public function destroy($id)
     {
         $pesanan = Pesanan::findOrFail($id);
+        if ($pesanan->bukti_pembayaran && !str_starts_with($pesanan->bukti_pembayaran, 'http') && Storage::disk('public')->exists($pesanan->bukti_pembayaran)) {
+            Storage::disk('public')->delete($pesanan->bukti_pembayaran);
+        }
         $pesanan->delete();
 
         return redirect()->route('orders.index')->with('success', 'Order deleted successfully.');
@@ -327,9 +340,15 @@ class PesananController extends Controller
             'ids.*' => 'exists:pesanans,id',
         ]);
 
-        $count = count($validated['ids']);
-        Pesanan::whereIn('id', $validated['ids'])->delete();
+        $orders = Pesanan::whereIn('id', $validated['ids'])->get();
+        foreach ($orders as $pesanan) {
+            if ($pesanan->bukti_pembayaran && !str_starts_with($pesanan->bukti_pembayaran, 'http') && Storage::disk('public')->exists($pesanan->bukti_pembayaran)) {
+                Storage::disk('public')->delete($pesanan->bukti_pembayaran);
+            }
+            $pesanan->delete();
+        }
 
+        $count = count($validated['ids']);
         return redirect()->route('orders.index')->with('success', "{$count} data pesanan berhasil dihapus.");
     }
 }

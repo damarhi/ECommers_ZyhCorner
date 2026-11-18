@@ -5568,6 +5568,18 @@ footer.footer a:hover {
 /* ==========================================================================
    RESPONSIVE OVERRIDES
    ========================================================================== */
+.mobile-menu-btn {
+    display: none;
+}
+
+@media (min-width: 992px) {
+    .mobile-menu-btn,
+    .mobile-nav-overlay,
+    .mobile-nav-drawer {
+        display: none !important;
+    }
+}
+
 @media (max-width: 991px) {
     .mobile-menu-btn {
         display: inline-flex !important;

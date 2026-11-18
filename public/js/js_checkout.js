@@ -398,6 +398,16 @@ window.currentShippingCost = 12000;
 
         let areaDebounceTimer = null;
 
+        function escapeCheckoutHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function renderAreaResults(items, query) {
             if (!items || items.length === 0) {
                 resultsContainer.innerHTML = `
@@ -411,12 +421,20 @@ window.currentShippingCost = 12000;
             }
 
             resultsContainer.innerHTML = items.map(area => `
-                <div class="area-dropdown-item" onclick="selectArea('${area.id}', '${area.name}, ${area.city}', '${area.postal}')">
-                    <strong>${area.name}</strong>
-                    <div class="area-detail">${area.city} &bull; Kode Pos: ${area.postal}</div>
+                <div class="area-dropdown-item" data-area-id="${escapeCheckoutHtml(area.id)}" data-area-full="${escapeCheckoutHtml(area.name + ', ' + area.city)}" data-area-postal="${escapeCheckoutHtml(area.postal)}">
+                    <strong>${escapeCheckoutHtml(area.name)}</strong>
+                    <div class="area-detail">${escapeCheckoutHtml(area.city)} &bull; Kode Pos: ${escapeCheckoutHtml(area.postal)}</div>
                 </div>
             `).join('');
             resultsContainer.style.display = 'block';
+
+            resultsContainer.querySelectorAll('.area-dropdown-item[data-area-id]').forEach(el => {
+                el.addEventListener('click', function() {
+                    if (typeof window.selectArea === 'function') {
+                        window.selectArea(this.dataset.areaId, this.dataset.areaFull, this.dataset.areaPostal);
+                    }
+                });
+            });
         }
 
         areaInput.addEventListener('input', function() {
@@ -505,16 +523,17 @@ window.currentShippingCost = 12000;
             return;
         }
 
+        const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         card.style.display = 'block';
         container.innerHTML = customItems.map(item => `
             <div class="form-group-custom" style="margin-bottom: 15px;">
-                <label for="custom_text_${item.id}" style="font-weight: 600; color: #1a1a1a; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-cake-candles" style="color: #00b207;"></i> Tulisan di Atas Kue: <span style="color: #00b207;">${item.name}</span>
+                <label for="custom_text_${esc(item.id)}" style="font-weight: 600; color: #1a1a1a; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-cake-candles" style="color: #00b207;"></i> Tulisan di Atas Kue: <span style="color: #00b207;">${esc(item.name)}</span>
                 </label>
-                <input type="text" id="custom_text_${item.id}" class="form-input-custom custom-text-field"
+                <input type="text" id="custom_text_${esc(item.id)}" class="form-input-custom custom-text-field"
                     placeholder="Contoh: Selamat Wisuda / Sukses Selalu / Terima Kasih"
-                    value="${item.custom_text || ''}"
-                    onchange="saveCustomTextToCart('${item.id}', this.value)">
+                    value="${esc(item.custom_text || '')}"
+                    onchange="saveCustomTextToCart('${esc(item.id)}', this.value)">
             </div>
         `).join('');
     }

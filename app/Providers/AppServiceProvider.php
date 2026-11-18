@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\ContactMessage;
+use App\Models\Pesanan;
+use App\Models\Retur;
 use App\Models\StoreSetting;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,17 +28,95 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Share store settings to all views
+        RateLimiter::for('auth-login', function (Request $request) {
+            $email = strtolower(trim((string) $request->input('email', '')));
+            return Limit::perMinute(10)->by($email . '|' . $request->ip());
+        });
+
+        RateLimiter::for('auth-register', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
+        RateLimiter::for('otp-verify', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
+        RateLimiter::for('otp-resend', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('contact-form', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('public-api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
+
+        // Invalidate admin layout badge cache when Retur or ContactMessage changes
+        $clearAdminBadges = static fn () => Cache::forget('admin_layout_badges');
+        Retur::saved($clearAdminBadges);
+        Retur::deleted($clearAdminBadges);
+        ContactMessage::saved($clearAdminBadges);
+        ContactMessage::deleted($clearAdminBadges);
+
+        // Share store settings to all views (memoized per HTTP request via request attributes + Cache, zero Schema::hasTable queries)
         View::composer('*', function ($view) {
             try {
-                if (Schema::hasTable('store_settings')) {
-                    $settings = StoreSetting::getAllAsArray();
-                    $settings['wa_number'] = StoreSetting::getWaNumber($settings['store_phone'] ?? null);
-                    $settings['social_instagram'] = StoreSetting::getInstagramUrl($settings['social_instagram'] ?? null);
-                    $view->with('storeSettings', $settings);
+                $req = app()->bound('request') ? request() : null;
+                if ($req && $req->attributes->has('_zyh_store_settings')) {
+                    $view->with('storeSettings', $req->attributes->get('_zyh_store_settings'));
+                    return;
                 }
+
+                $settings = StoreSetting::getAllAsArray();
+                $settings['wa_number'] = StoreSetting::getWaNumber($settings['store_phone'] ?? null);
+                $settings['social_instagram'] = StoreSetting::getInstagramUrl($settings['social_instagram'] ?? null);
+
+                if ($req) {
+                    $req->attributes->set('_zyh_store_settings', $settings);
+                }
+
+                $view->with('storeSettings', $settings);
             } catch (\Throwable $e) {
-                // Fail-safe fallback if database is not reachable
+                // Fail-safe fallback if database is not migrated yet
+            }
+        });
+
+        // Precompute & cache Admin/Kasir topbar and sidebar notification counters once per page
+        View::composer('Layout.layout_pAdmin', function ($view) {
+            try {
+                $badges = Cache::remember('admin_layout_badges', 30, function () {
+                    $unreadMessages = ContactMessage::where('status', 'Belum Dibaca')->count();
+                    $recentMessages = ContactMessage::latest()->take(3)->get();
+                    $unconfirmedOrders = Pesanan::whereIn('order_status', [
+                        'menunggu konfirmasi',
+                        'Menunggu Konfirmasi',
+                        'unconfirmed',
+                        'Unconfirmed',
+                    ])->count();
+                    $newReturs = Retur::where('status', 'New')->count();
+
+                    return [
+                        'recentNavbarMessages' => $recentMessages,
+                        'navbarUnreadMsgCount' => $unreadMessages,
+                        'sidebarUnreadCount' => $unreadMessages,
+                        'notifUnconfirmed' => $unconfirmedOrders,
+                        'notifRetur' => $newReturs,
+                        'totalNotif' => $unconfirmedOrders + $newReturs,
+                    ];
+                });
+
+                $view->with($badges);
+            } catch (\Throwable $e) {
+                $view->with([
+                    'recentNavbarMessages' => collect(),
+                    'navbarUnreadMsgCount' => 0,
+                    'sidebarUnreadCount' => 0,
+                    'notifUnconfirmed' => 0,
+                    'notifRetur' => 0,
+                    'totalNotif' => 0,
+                ]);
             }
         });
     }

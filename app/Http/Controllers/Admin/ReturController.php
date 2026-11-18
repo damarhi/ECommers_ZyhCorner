@@ -9,6 +9,8 @@ use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use App\Services\NotificationService;
 use App\Mail\ReturProdukKasirMail;
 
@@ -75,34 +77,51 @@ class ReturController extends Controller
         return view('Admin.kelola_penjualan.returs', compact('returs', 'statusCounts', 'completedOrders', 'allProducts'));
     }
 
+    private function deleteReturPhoto(?string $fotoPath): void
+    {
+        if (empty($fotoPath)) {
+            return;
+        }
+
+        if (str_starts_with($fotoPath, 'storage/')) {
+            $diskPath = substr($fotoPath, 8);
+            if ($diskPath !== '' && Storage::disk('public')->exists($diskPath)) {
+                Storage::disk('public')->delete($diskPath);
+            }
+        } elseif (str_starts_with($fotoPath, 'uploads/returs/') && !str_contains($fotoPath, '..')) {
+            $fullPath = public_path($fotoPath);
+            if (is_file($fullPath)) {
+                @unlink($fullPath);
+            }
+        }
+    }
+
     public function store(Request $request)
     {
+        $unexpectedFileKeys = array_diff(array_keys($request->allFiles()), ['foto_retur', 'photo']);
+        if (!empty($unexpectedFileKeys)) {
+            throw ValidationException::withMessages([
+                'foto_retur' => 'Field berkas unggahan tidak valid.',
+            ]);
+        }
+
         $request->validate([
             'customer_name' => 'required|string|max:255',
             'order_id' => 'required|string|max:255',
-            'reason' => 'required|string',
+            'reason' => 'required|string|max:255',
             'return_date' => 'required|date',
             'product_name' => 'required|string|max:255',
             'status' => 'required|string|in:New,Processed,Accepted,Rejected,Done,rejected',
-            'foto_retur' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'foto_retur' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:5120',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
-        $data = $request->except(['foto_retur', '_token', '_method']);
+        $data = $request->only(['customer_name', 'order_id', 'reason', 'return_date', 'product_name', 'status']);
         $file = $request->file('foto_retur') ?? $request->file('photo');
-        if (!$file && !empty($request->allFiles())) {
-            $files = $request->allFiles();
-            $file = reset($files);
-        }
 
         if ($file) {
-            $extension = $file->getClientOriginalExtension() ?: 'jpg';
-            $filename = time() . '_' . uniqid() . '.' . $extension;
-            $path = public_path('uploads/returs');
-            if (!file_exists($path)) {
-                mkdir($path, 0777, true);
-            }
-            $file->move($path, $filename);
-            $data['foto_retur'] = 'uploads/returs/' . $filename;
+            $storedPath = Storage::disk('public')->putFile('uploads/returs', $file);
+            $data['foto_retur'] = 'storage/' . $storedPath;
         }
 
         // Simpan retur ke database - gunakan cara eksplisit
@@ -115,13 +134,6 @@ class ReturController extends Controller
         $retur->status = $data['status'];
         $retur->foto_retur = $data['foto_retur'] ?? null;
         $retur->save();
-
-        // Failsafe: selalu paksa update foto_retur lewat DB::table agar pasti tersimpan
-        if (!empty($data['foto_retur'])) {
-            DB::table('returs')
-                ->where('id', $retur->id)
-                ->update(['foto_retur' => $data['foto_retur']]);
-        }
 
         $returSaved = Retur::findOrFail($retur->id);
 
@@ -144,15 +156,23 @@ class ReturController extends Controller
     {
         $retur = Retur::findOrFail($id);
 
+        $unexpectedFileKeys = array_diff(array_keys($request->allFiles()), ['foto_retur', 'photo']);
+        if (!empty($unexpectedFileKeys)) {
+            throw ValidationException::withMessages([
+                'foto_retur' => 'Field berkas unggahan tidak valid.',
+            ]);
+        }
+
         $request->validate([
             'status' => 'required|string|in:New,Processed,Accepted,Rejected,Done,rejected',
             'catatan_admin' => 'nullable|string|max:2000',
             'customer_name' => 'nullable|string|max:255',
             'order_id' => 'nullable|string|max:255',
-            'reason' => 'nullable|string',
+            'reason' => 'nullable|string|max:255',
             'return_date' => 'nullable|date',
             'product_name' => 'nullable|string|max:255',
-            'foto_retur' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'foto_retur' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:5120',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         $data = [
@@ -177,15 +197,11 @@ class ReturController extends Controller
             $data['product_name'] = $request->product_name;
         }
 
-        if ($request->hasFile('foto_retur')) {
-            $file = $request->file('foto_retur');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path = public_path('uploads/returs');
-            if (!file_exists($path)) {
-                mkdir($path, 0777, true);
-            }
-            $file->move($path, $filename);
-            $data['foto_retur'] = 'uploads/returs/' . $filename;
+        $file = $request->file('foto_retur') ?? $request->file('photo');
+        if ($file) {
+            $this->deleteReturPhoto($retur->foto_retur);
+            $storedPath = Storage::disk('public')->putFile('uploads/returs', $file);
+            $data['foto_retur'] = 'storage/' . $storedPath;
         }
 
         $retur->update($data);
@@ -221,6 +237,7 @@ class ReturController extends Controller
     public function destroy($id)
     {
         $retur = Retur::findOrFail($id);
+        $this->deleteReturPhoto($retur->foto_retur);
         $retur->delete();
 
         return redirect()->route('returs.index')->with('success', 'Return deleted successfully!');
@@ -248,12 +265,12 @@ class ReturController extends Controller
             foreach ($returs as $r) {
                 fputcsv($file, [
                     $r->id,
-                    $r->order_id ?? '-',
+                    \App\Services\SalesReportService::sanitizeSpreadsheetCell($r->order_id ?? '-'),
                     $r->return_date ? date('d-m-Y', strtotime($r->return_date)) : '-',
-                    $r->customer_name ?? '-',
-                    $r->product_name ?? '-',
-                    $r->reason ?? '-',
-                    $r->status ?? 'New'
+                    \App\Services\SalesReportService::sanitizeSpreadsheetCell($r->customer_name ?? '-'),
+                    \App\Services\SalesReportService::sanitizeSpreadsheetCell($r->product_name ?? '-'),
+                    \App\Services\SalesReportService::sanitizeSpreadsheetCell($r->reason ?? '-'),
+                    \App\Services\SalesReportService::sanitizeSpreadsheetCell($r->status ?? 'New')
                 ], ';');
             }
             fclose($file);
@@ -271,9 +288,7 @@ class ReturController extends Controller
 
         $returs = Retur::whereIn('id', $validated['ids'])->get();
         foreach ($returs as $retur) {
-            if ($retur->foto_retur && file_exists(public_path('uploads/returs/' . $retur->foto_retur))) {
-                @unlink(public_path('uploads/returs/' . $retur->foto_retur));
-            }
+            $this->deleteReturPhoto($retur->foto_retur);
             $retur->delete();
         }
 

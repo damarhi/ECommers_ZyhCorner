@@ -22,7 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->validateCsrfTokens(except: [
             '/midtrans-callback',
-            '/biteship/rates',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

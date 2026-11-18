@@ -571,25 +571,25 @@ window.renderCart = function() {
     list.innerHTML = window.cart.map(item => `
         <div class="cart-item">
             <div class="cart-item-img">
-                <img src="${item.img}" alt="${item.name}">
+                <img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.name)}">
             </div>
             <div class="cart-item-info">
-                <span class="cart-item-name">${item.name}</span>
+                <span class="cart-item-name">${escapeHtml(item.name)}</span>
                 <div class="cart-item-price">
-                    ${item.qty} x Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}
+                    ${parseInt(item.qty) || 1} x Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}
                 </div>
                 <div class="cart-item-qty-container" style="display: flex; flex-direction: column; align-items: flex-start;">
                     <div class="cart-item-qty-wrap">
-                        <button class="cart-qty-btn" onclick="window.updateQty('${item.id}', -1)"><i class="fa-solid fa-minus"></i></button>
-                        <span>${item.qty}</span>
-                        <button class="cart-qty-btn" onclick="window.updateQty('${item.id}', 1)"><i class="fa-solid fa-plus"></i></button>
+                        <button class="cart-qty-btn" onclick="window.updateQty('${escapeHtml(String(item.id))}', -1)"><i class="fa-solid fa-minus"></i></button>
+                        <span>${parseInt(item.qty) || 1}</span>
+                        <button class="cart-qty-btn" onclick="window.updateQty('${escapeHtml(String(item.id))}', 1)"><i class="fa-solid fa-plus"></i></button>
                     </div>
-                    <span id="drawerQtyWarning_${item.id}" class="drawer-stock-warning" style="display: none; color: #dc2626; font-size: 10.5px; font-weight: 500; margin-top: 3px; line-height: 1.2;">
+                    <span id="drawerQtyWarning_${escapeHtml(String(item.id))}" class="drawer-stock-warning" style="display: none; color: #dc2626; font-size: 10.5px; font-weight: 500; margin-top: 3px; line-height: 1.2;">
                         <i class="fa-solid fa-circle-exclamation" style="margin-right: 2px;"></i> Maks. stok
                     </span>
                 </div>
             </div>
-            <div class="cart-item-remove" onclick="window.removeFromCart('${item.id}')">
+            <div class="cart-item-remove" onclick="window.removeFromCart('${escapeHtml(String(item.id))}')">
                 <i class="fa-solid fa-xmark"></i>
             </div>
         </div>
@@ -636,6 +636,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (['admin', 'kasir'].includes(window.layoutConfig?.userRole)) {
+        window.cart = [];
+        try {
+            localStorage.removeItem('zyh_cart');
+            localStorage.removeItem('zyh_last_order');
+        } catch (e) {}
+    }
+
     // Run header cart update on page load
     window.updateHeaderCart();
 });
@@ -661,6 +669,9 @@ window.confirmLogout = function() {
                 localStorage.removeItem('zyh_cust_address');
                 localStorage.removeItem('zyh_cust_email');
                 localStorage.removeItem('zyh_cust_phone');
+                localStorage.removeItem('zyh_cart');
+                localStorage.removeItem('zyh_last_order');
+                localStorage.removeItem('zyh_pos_cart');
             } catch (e) {}
             const logoutForm = document.getElementById('logoutForm');
             if (logoutForm) logoutForm.submit();
@@ -1950,7 +1961,7 @@ window.buyCustomNow = function() {
         const sName = window.storeName || "Zyh Corner";
         const sPhone = window.storePhone || "628123456789";
         const message = encodeURIComponent("Halo " + sName + ", saya tertarik untuk memesan Custom Product: " + conf.productName + " (Harga: Rp. " + formattedPrice + ") sebanyak " + qty + " pcs. Mohon info lebih lanjut.");
-        window.open("https://wa.me/" + sPhone + "?text=" + message, "_blank");
+        window.open("https://wa.me/" + sPhone + "?text=" + message, "_blank", "noopener,noreferrer");
     }
 };
 
@@ -1994,11 +2005,11 @@ function renderCartPage(container, cartItems, subtotal) {
                                     <td class="cart-td-product" style="padding: 18px 20px;">
                                         <div class="cart-product-cell" style="display: flex; align-items: center; gap: 14px;">
                                             <div class="cart-product-img" style="width: 72px; height: 72px; border-radius: 8px; overflow: hidden; background: #fdfdfd; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; flex-shrink: 0;">
-                                                <img src="${item.img}" alt="${item.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                                <img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.name)}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                                             </div>
                                             <div class="cart-product-info" style="display: flex; flex-direction: column;">
-                                                <span class="cart-product-name" style="font-size: 14.5px; font-weight: 600; color: #1a1a1a;">${item.name}</span>
-                                                ${item.custom_text ? `<small class="cart-product-custom-text" style="color: #00b207; font-size: 12px; margin-top: 3px;">Custom Teks: "${item.custom_text}"</small>` : ''}
+                                                <span class="cart-product-name" style="font-size: 14.5px; font-weight: 600; color: #1a1a1a;">${escapeHtml(item.name)}</span>
+                                                ${item.custom_text ? `<small class="cart-product-custom-text" style="color: #00b207; font-size: 12px; margin-top: 3px;">Custom Teks: "${escapeHtml(item.custom_text)}"</small>` : ''}
                                                 <span class="cart-mobile-unit-price">Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}</span>
                                             </div>
                                         </div>
@@ -2076,9 +2087,9 @@ function renderOrderSummary(container, cartItems, subtotal) {
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f2;">
             <div style="display: flex; align-items: center; gap: 10px; width: 70%;">
                 <div style="width: 45px; height: 45px; border-radius: 4px; overflow: hidden; border: 1px solid #e6e6e6; background: #f9f9f9; display: flex; align-items: center; justify-content: center; padding: 2px; flex-shrink: 0;">
-                    <img src="${item.img}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    <img src="${escapeHtml(item.img)}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                 </div>
-                <span style="font-size: 13.5px; font-weight: 500; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name} x ${item.qty}</span>
+                <span style="font-size: 13.5px; font-weight: 500; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(item.name)} x ${parseInt(item.qty) || 1}</span>
             </div>
             <span style="font-size: 13.5px; font-weight: 600; color: #1a1a1a;">Rp. ${new Intl.NumberFormat('id-ID').format(item.price * item.qty)}</span>
         </div>

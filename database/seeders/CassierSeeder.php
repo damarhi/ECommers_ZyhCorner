@@ -58,16 +58,18 @@ class CassierSeeder extends Seeder
             );
 
             // Also ensure corresponding User record with role kasir exists
-            User::updateOrCreate(
-                ['email' => $c['email']],
-                [
-                    'nama'     => $c['name'],
-                    'email'    => $c['email'],
-                    'password' => Hash::make($c['password']),
-                    'role'     => 'kasir',
-                    'no_hp'    => $c['no_hp'],
-                ]
-            );
+            User::unguarded(function () use ($c) {
+                User::updateOrCreate(
+                    ['email' => $c['email']],
+                    [
+                        'nama'     => $c['name'],
+                        'email'    => $c['email'],
+                        'password' => Hash::make($c['password']),
+                        'role'     => 'kasir',
+                        'no_hp'    => $c['no_hp'],
+                    ]
+                );
+            });
         }
     }
 }

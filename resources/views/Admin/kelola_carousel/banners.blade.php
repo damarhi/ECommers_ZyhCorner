@@ -184,7 +184,7 @@
                                     @if($b->link_url)
                                         <div class="mt-3 pt-2 border-top">
                                             <small class="text-muted d-block mb-1" style="font-size: 11px;">Target URL:</small>
-                                            <a href="{{ $b->link_url }}" target="_blank" class="text-primary text-decoration-none font-weight-500 d-inline-flex align-items-center" style="font-size: 12.5px;">
+                                            <a href="{{ $b->link_url }}" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none font-weight-500 d-inline-flex align-items-center" style="font-size: 12.5px;">
                                                 <i class="mdi mdi-link-variant me-1"></i> {{ Str::limit($b->link_url, 35) }}
                                             </a>
                                         </div>

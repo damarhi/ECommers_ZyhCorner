@@ -2,122 +2,126 @@
 
 namespace App\Services;
 
+use App\Models\Cassier;
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
     /**
-     * Send email notification to active cashiers and designated test email.
+     * Send email notification to active cashiers (dispatched asynchronously after HTTP response in production).
      *
-     * @param \Illuminate\Mail\Mailable $mailable
+     * @param  \Illuminate\Mail\Mailable  $mailable
      * @return void
      */
-    public static function sendToKasir($mailable)
+    public static function sendToKasir($mailable): void
     {
         try {
-            // Test target email explicitly requested by user
-            $testEmail = env('KASIR_NOTIFICATION_EMAIL', 'qwertyuiopxaw@gmail.com');
-            
-            // Get active cashier emails from DB
-            $activeKasirEmails = User::where('role', 'kasir')
+            $configuredEmail = config('services.notifications.kasir_email');
+
+            $deactiveKasirEmails = Cassier::where('status', 'Deactive')
                 ->pluck('email')
                 ->filter()
                 ->toArray();
 
-            // Merge emails and remove duplicates
-            $recipients = array_values(array_unique(array_filter(array_merge([$testEmail], $activeKasirEmails))));
+            $activeKasirEmails = User::where('role', 'kasir')
+                ->when(!empty($deactiveKasirEmails), function ($query) use ($deactiveKasirEmails) {
+                    $query->whereNotIn('email', $deactiveKasirEmails);
+                })
+                ->pluck('email')
+                ->filter()
+                ->toArray();
 
-            if (!empty($recipients)) {
-                // If in testing or Mail fake is active, invoke Mail::to directly for test isolation
-                if (app()->runningUnitTests() || app()->environment('testing')) {
-                    Mail::to($recipients)->send($mailable);
-                    return;
-                }
+            $recipients = array_values(array_unique(array_filter(array_merge(
+                $configuredEmail ? [$configuredEmail] : [],
+                $activeKasirEmails
+            ))));
 
-                // Build mailable to extract subject and HTML view content
-                $mailable->build();
-                $subject = $mailable->subject;
-                $view = $mailable->view;
-                $data = $mailable->buildViewData();
-                $htmlContent = view($view, $data)->render();
-
-                // Send via Brevo API
-                BrevoMailService::sendRecipients($recipients, $subject, $htmlContent);
-                Log::info('Kasir email notification sent via Brevo API to: ' . implode(', ', $recipients));
+            if (empty($recipients)) {
+                return;
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to send Kasir email notification via Brevo: ' . $e->getMessage());
 
-            // Fallback to standard Laravel Mail
-            try {
-                if (!empty($recipients)) {
-                    Mail::to($recipients)->send($mailable);
-                }
-            } catch (\Exception $fallbackEx) {
-                Log::error('Fallback Laravel Mail also failed: ' . $fallbackEx->getMessage());
+            if (app()->runningUnitTests() || app()->environment('testing')) {
+                Mail::to($recipients)->send($mailable);
+                return;
             }
+
+            $mailable->build();
+            $subject = (string) $mailable->subject;
+            $view = $mailable->view;
+            $data = $mailable->buildViewData();
+            $htmlContent = view($view, $data)->render();
+
+            dispatch(static function () use ($recipients, $subject, $htmlContent, $mailable): void {
+                try {
+                    BrevoMailService::sendRecipients($recipients, $subject, $htmlContent);
+                    Log::info('Kasir email notification sent via Brevo API to: ' . implode(', ', $recipients));
+                } catch (\Throwable $e) {
+                    Log::error('Failed to send Kasir email notification via Brevo: ' . $e->getMessage());
+                    try {
+                        Mail::to($recipients)->send($mailable);
+                    } catch (\Throwable $fallbackEx) {
+                        Log::error('Fallback Laravel Mail also failed: ' . $fallbackEx->getMessage());
+                    }
+                }
+            })->afterResponse();
+        } catch (\Throwable $e) {
+            Log::error('Failed to prepare Kasir email notification: ' . $e->getMessage());
         }
     }
 
     /**
-     * Send email notification to active admins and designated admin email.
+     * Send email notification to active admins (dispatched asynchronously after HTTP response in production).
      *
-     * @param \Illuminate\Mail\Mailable $mailable
+     * @param  \Illuminate\Mail\Mailable  $mailable
      * @return void
      */
-    public static function sendToAdmin($mailable)
+    public static function sendToAdmin($mailable): void
     {
         try {
-            // Test / custom target admin email from env if set
-            $testEmail = env('ADMIN_NOTIFICATION_EMAIL');
-            
-            // Get active admin emails from DB
+            $configuredEmail = config('services.notifications.admin_email');
+
             $activeAdminEmails = User::where('role', 'admin')
                 ->pluck('email')
                 ->filter()
                 ->toArray();
 
-            // Merge emails and remove duplicates
             $recipients = array_values(array_unique(array_filter(array_merge(
-                $testEmail ? [$testEmail] : [],
+                $configuredEmail ? [$configuredEmail] : [],
                 $activeAdminEmails
             ))));
 
-            // Fallback if no admin email exists in DB or env
             if (empty($recipients)) {
                 $recipients = ['admin@zyhcorner.com'];
             }
-            if (!empty($recipients)) {
-                // If in testing or Mail fake is active, invoke Mail::to directly for test isolation
-                if (app()->runningUnitTests() || app()->environment('testing')) {
-                    Mail::to($recipients)->send($mailable);
-                    return;
-                }
 
-                // Build mailable to extract subject and HTML view content
-                $mailable->build();
-                $subject = $mailable->subject;
-                $view = $mailable->view;
-                $data = $mailable->buildViewData();
-                $htmlContent = view($view, $data)->render();
-
-                // Send via Brevo API
-                BrevoMailService::sendRecipients($recipients, $subject, $htmlContent);
-                Log::info('Admin email notification sent via Brevo API to: ' . implode(', ', $recipients));
+            if (app()->runningUnitTests() || app()->environment('testing')) {
+                Mail::to($recipients)->send($mailable);
+                return;
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to send Admin email notification via Brevo: ' . $e->getMessage());
 
-            // Fallback to standard Laravel Mail
-            try {
-                if (!empty($recipients)) {
-                    Mail::to($recipients)->send($mailable);
+            $mailable->build();
+            $subject = (string) $mailable->subject;
+            $view = $mailable->view;
+            $data = $mailable->buildViewData();
+            $htmlContent = view($view, $data)->render();
+
+            dispatch(static function () use ($recipients, $subject, $htmlContent, $mailable): void {
+                try {
+                    BrevoMailService::sendRecipients($recipients, $subject, $htmlContent);
+                    Log::info('Admin email notification sent via Brevo API to: ' . implode(', ', $recipients));
+                } catch (\Throwable $e) {
+                    Log::error('Failed to send Admin email notification via Brevo: ' . $e->getMessage());
+                    try {
+                        Mail::to($recipients)->send($mailable);
+                    } catch (\Throwable $fallbackEx) {
+                        Log::error('Fallback Laravel Mail also failed: ' . $fallbackEx->getMessage());
+                    }
                 }
-            } catch (\Exception $fallbackEx) {
-                Log::error('Fallback Laravel Mail also failed: ' . $fallbackEx->getMessage());
-            }
+            })->afterResponse();
+        } catch (\Throwable $e) {
+            Log::error('Failed to prepare Admin email notification: ' . $e->getMessage());
         }
     }
 }

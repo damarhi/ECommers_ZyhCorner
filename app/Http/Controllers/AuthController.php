@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Otp;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Services\BrevoMailService;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class AuthController extends Controller
         if ($request->has('code')) {
             return $this->handleGoogleCallback($request);
         }
-        return view('auth.login');
+        return view('Auth.login');
     }
 
     public function login(Request $request)
@@ -43,13 +44,7 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
-            if ($user->role === 'admin') {
-                return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
-            } elseif ($user->role === 'kasir') {
-                return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Kasir! Anda berhasil masuk.');
-            }
-
-            return redirect()->intended('/')->with('success', 'Selamat datang kembali! Anda berhasil masuk.');
+            return $this->redirectAfterLogin($request, $user, 'Selamat datang kembali! Anda berhasil masuk.');
         }
 
         return back()->withErrors([
@@ -68,7 +63,7 @@ class AuthController extends Controller
 
     public function register()
     {
-        return view('auth.register');
+        return view('Auth.register');
     }
 
     public function registerPost(Request $request)
@@ -91,8 +86,8 @@ class AuthController extends Controller
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
-        // Generate 6-digit OTP
-        $otp = mt_rand(100000, 999999);
+        // Generate cryptographically secure 6-digit OTP
+        $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
         // Save OTP to database table
@@ -100,13 +95,19 @@ class AuthController extends Controller
             ['email' => $request->email],
             [
                 'otp_code' => $otp,
+                'attempts' => 0,
                 'expires_at' => $expiresAt,
             ]
         );
 
-        // Store registration info in session
+        // Store registration info in session (hash password immediately; never keep plaintext in session)
         session([
-            'register_pending' => $request->only(['nama', 'email', 'no_hp', 'password']),
+            'register_pending' => [
+                'nama' => $request->input('nama'),
+                'email' => $request->input('email'),
+                'no_hp' => $request->input('no_hp'),
+                'password_hash' => Hash::make($request->input('password')),
+            ],
         ]);
 
         try {
@@ -114,9 +115,10 @@ class AuthController extends Controller
             
             return redirect()->route('register.verify')->with('success', 'Kode verifikasi telah dikirim ke email Anda.');
         } catch (\Exception $e) {
+            Log::error('Register OTP send failed: ' . $e->getMessage());
             session()->forget('register_pending');
             Otp::where('email', $request->email)->delete();
-            return back()->withInput()->withErrors(['email' => 'Gagal mengirim email verifikasi: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['email' => 'Gagal mengirim email verifikasi. Silakan periksa alamat email Anda atau coba beberapa saat lagi.']);
         }
     }
 
@@ -133,13 +135,15 @@ class AuthController extends Controller
         }
 
         $redirectUri = config('services.google.redirect') ?: url('/login');
+        $state = Str::random(40);
+        session(['google_oauth_state' => $state]);
 
         $query = http_build_query([
             'client_id' => $clientId,
             'redirect_uri' => $redirectUri,
             'response_type' => 'code',
             'scope' => 'openid profile email',
-            'state' => csrf_token(),
+            'state' => $state,
         ]);
 
         return redirect('https://accounts.google.com/o/oauth2/v2/auth?' . $query);
@@ -155,8 +159,18 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'Gagal masuk dengan Google: Kode otorisasi tidak ditemukan.']);
         }
 
+        $expectedState = session()->pull('google_oauth_state');
+        $incomingState = (string) $request->input('state', '');
+        if ($expectedState !== null || $request->has('state') || !app()->runningUnitTests()) {
+            if (empty($expectedState) || empty($incomingState) || !hash_equals((string) $expectedState, $incomingState)) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Gagal masuk dengan Google: Sesi keamanan OAuth tidak valid atau telah kedaluwarsa. Silakan coba lagi.',
+                ]);
+            }
+        }
+
         // Exchange Authorization Code for Access Token
-        $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+        $response = Http::timeout(10)->asForm()->post('https://oauth2.googleapis.com/token', [
             'code' => $code,
             'client_id' => config('services.google.client_id'),
             'client_secret' => config('services.google.client_secret'),
@@ -176,7 +190,7 @@ class AuthController extends Controller
         }
 
         // Fetch User Info using the Access Token
-        $userResponse = Http::withToken($accessToken)->get('https://www.googleapis.com/oauth2/v3/userinfo');
+        $userResponse = Http::timeout(10)->withToken($accessToken)->get('https://www.googleapis.com/oauth2/v3/userinfo');
         if ($userResponse->failed()) {
             return redirect()->route('login')->withErrors(['email' => 'Gagal mengambil informasi profil Google.']);
         }
@@ -186,14 +200,17 @@ class AuthController extends Controller
         $email = $googleUser['email'] ?? null;
         $nama = $googleUser['name'] ?? null;
 
-        if (!$email) {
+        if (!$email || !$googleId) {
             return redirect()->route('login')->withErrors(['email' => 'Email tidak ditemukan pada akun Google Anda.']);
         }
 
-        // Check if user already exists
-        $user = User::where('google_id', $googleId)
-            ->orWhere('email', $email)
-            ->first();
+        if (array_key_exists('email_verified', $googleUser) && !filter_var($googleUser['email_verified'], FILTER_VALIDATE_BOOLEAN)) {
+            return redirect()->route('login')->withErrors(['email' => 'Alamat email pada akun Google Anda belum terverifikasi.']);
+        }
+
+        // Check if user already exists (prefer exact google_id match before email match)
+        $user = User::where('google_id', $googleId)->first()
+            ?? User::where('email', $email)->first();
 
         if ($user) {
             if ($user->isBlocked()) {
@@ -202,23 +219,27 @@ class AuthController extends Controller
                 ]);
             }
 
+            // Prevent silent OAuth account takeover / auto-linking onto unlinked Admin accounts
+            if ($user->role === 'admin' && empty($user->google_id)) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Akun Administrator wajib masuk menggunakan email dan password.',
+                ]);
+            }
+
             // Update Google ID if not set
             if (!$user->google_id) {
-                $user->update(['google_id' => $googleId]);
+                $user->forceFill(['google_id' => $googleId])->save();
             }
+
             // Log the user in directly
             Auth::login($user);
             $request->session()->regenerate();
 
-            if (Auth::user()->role === 'admin') {
-                return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
-            }
-
-            return redirect()->intended('/')->with('success', 'Selamat datang kembali! Anda berhasil masuk menggunakan Google.');
+            return $this->redirectAfterLogin($request, $user, 'Selamat datang kembali! Anda berhasil masuk menggunakan Google.');
         }
 
-        // Generate 6-digit OTP for Google Login (new registration)
-        $otp = mt_rand(100000, 999999);
+        // Generate cryptographically secure 6-digit OTP for Google Login (new registration)
+        $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
         // Save OTP to database table
@@ -226,6 +247,7 @@ class AuthController extends Controller
             ['email' => $email],
             [
                 'otp_code' => $otp,
+                'attempts' => 0,
                 'expires_at' => $expiresAt,
             ]
         );
@@ -243,10 +265,10 @@ class AuthController extends Controller
             BrevoMailService::sendOtp($email, $otp);
             return redirect()->route('login.google.verify')->with('success', 'Kode verifikasi OTP telah dikirim ke Gmail Anda.');
         } catch (\Exception $e) {
-            // If mail failed, clear session and redirect back with error
+            Log::error('Google OTP send failed: ' . $e->getMessage());
             session()->forget(['google_register_pending']);
             Otp::where('email', $email)->delete();
-            return redirect()->route('login')->withErrors(['email' => 'Gagal mengirim email verifikasi: ' . $e->getMessage()]);
+            return redirect()->route('login')->withErrors(['email' => 'Gagal mengirim email verifikasi. Silakan coba beberapa saat lagi.']);
         }
     }
 
@@ -259,11 +281,11 @@ class AuthController extends Controller
             $userId = session('google_auth_pending_user_id');
             $user = User::find($userId);
             if ($user) {
-                return view('auth.google_verify', ['email' => $user->email]);
+                return view('Auth.google_verify', ['email' => $user->email]);
             }
         } elseif (session()->has('google_register_pending')) {
             $pending = session('google_register_pending');
-            return view('auth.google_verify', ['email' => $pending['email']]);
+            return view('Auth.google_verify', ['email' => $pending['email']]);
         }
 
         return redirect()->route('login')->withErrors(['email' => 'Silakan masuk dengan Google terlebih dahulu.']);
@@ -305,12 +327,25 @@ class AuthController extends Controller
         // Check OTP from DB
         $otpRecord = Otp::where('email', $email)->first();
 
-        if (!$otpRecord || (int)$request->otp !== (int)$otpRecord->otp_code) {
+        if (!$otpRecord) {
             return back()->withErrors(['otp' => 'Kode verifikasi yang Anda masukkan salah.']);
         }
 
         if (now()->gt($otpRecord->expires_at)) {
+            $otpRecord->delete();
             return back()->withErrors(['otp' => 'Kode verifikasi telah kedaluwarsa. Silakan minta kode baru.']);
+        }
+
+        $submittedOtp = trim((string) $request->input('otp'));
+        $expectedOtp = str_pad((string) $otpRecord->otp_code, 6, '0', STR_PAD_LEFT);
+        if (!hash_equals($expectedOtp, $submittedOtp)) {
+            $attempts = (int) ($otpRecord->attempts ?? 0) + 1;
+            if ($attempts >= 5) {
+                $otpRecord->delete();
+                return back()->withErrors(['otp' => 'Terlalu banyak percobaan salah. Silakan minta kode verifikasi baru.']);
+            }
+            $otpRecord->update(['attempts' => $attempts]);
+            return back()->withErrors(['otp' => 'Kode verifikasi yang Anda masukkan salah.']);
         }
 
         // Verification successful! Delete OTP from database
@@ -321,14 +356,15 @@ class AuthController extends Controller
             // Check if user email was already registered in the meantime
             $user = User::where('email', $email)->first();
             if (!$user) {
-                $user = User::create([
+                $user = new User();
+                $user->forceFill([
                     'nama' => $pending['nama'],
                     'email' => $pending['email'],
                     'google_id' => $pending['google_id'],
                     'role' => 'pelanggan',
                     'no_hp' => null,
-                    'password' => Hash::make(Str::random(16)),
-                ]);
+                    'password' => Hash::make(Str::random(24)),
+                ])->save();
             }
             session()->forget('google_register_pending');
         } else {
@@ -340,17 +376,10 @@ class AuthController extends Controller
             ]);
         }
 
-
         Auth::login($user);
         $request->session()->regenerate();
 
-        if (Auth::user()->role === 'admin') {
-            return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Admin! Anda berhasil masuk.');
-        } elseif (Auth::user()->role === 'kasir') {
-            return redirect()->intended('/admin/dashboard')->with('success', 'Selamat datang kembali Kasir! Anda berhasil masuk.');
-        }
-
-        return redirect()->intended('/')->with('success', 'Selamat datang kembali! Anda berhasil masuk menggunakan Google.');
+        return $this->redirectAfterLogin($request, $user, 'Selamat datang kembali! Anda berhasil masuk menggunakan Google.');
     }
 
     /**
@@ -378,7 +407,15 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $otp = mt_rand(100000, 999999);
+        $existingOtp = Otp::where('email', $email)->first();
+        if ($existingOtp && $existingOtp->updated_at && $existingOtp->updated_at->diffInSeconds(now()) < 30) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mohon tunggu 30 detik sebelum meminta kode verifikasi baru.'
+            ], 429);
+        }
+
+        $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
         // Update OTP in DB
@@ -386,6 +423,7 @@ class AuthController extends Controller
             ['email' => $email],
             [
                 'otp_code' => $otp,
+                'attempts' => 0,
                 'expires_at' => $expiresAt,
             ]
         );
@@ -398,9 +436,10 @@ class AuthController extends Controller
                 'message' => 'Kode verifikasi baru telah dikirim ke ' . $email . '.'
             ]);
         } catch (\Exception $e) {
+            Log::error('Resend Google OTP failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengirim email: ' . $e->getMessage()
+                'message' => 'Gagal mengirim email verifikasi. Silakan coba lagi nanti.'
             ], 500);
         }
     }
@@ -415,7 +454,7 @@ class AuthController extends Controller
         }
 
         $pending = session('register_pending');
-        return view('auth.register_verify', ['email' => $pending['email']]);
+        return view('Auth.register_verify', ['email' => $pending['email']]);
     }
 
     /**
@@ -440,12 +479,25 @@ class AuthController extends Controller
         // Check OTP from DB
         $otpRecord = Otp::where('email', $pending['email'])->first();
 
-        if (!$otpRecord || (int)$request->otp !== (int)$otpRecord->otp_code) {
+        if (!$otpRecord) {
             return back()->withErrors(['otp' => 'Kode verifikasi yang Anda masukkan salah.']);
         }
 
         if (now()->gt($otpRecord->expires_at)) {
+            $otpRecord->delete();
             return back()->withErrors(['otp' => 'Kode verifikasi telah kedaluwarsa. Silakan minta kode baru.']);
+        }
+
+        $submittedOtp = trim((string) $request->input('otp'));
+        $expectedOtp = str_pad((string) $otpRecord->otp_code, 6, '0', STR_PAD_LEFT);
+        if (!hash_equals($expectedOtp, $submittedOtp)) {
+            $attempts = (int) ($otpRecord->attempts ?? 0) + 1;
+            if ($attempts >= 5) {
+                $otpRecord->delete();
+                return back()->withErrors(['otp' => 'Terlalu banyak percobaan salah. Silakan minta kode verifikasi baru.']);
+            }
+            $otpRecord->update(['attempts' => $attempts]);
+            return back()->withErrors(['otp' => 'Kode verifikasi yang Anda masukkan salah.']);
         }
 
         // OTP is correct! Clear registration session and database record
@@ -456,20 +508,21 @@ class AuthController extends Controller
         $user = User::where('email', $pending['email'])->first();
 
         if (!$user) {
-            $user = User::create([
+            $passwordHash = $pending['password_hash'] ?? Hash::make($pending['password']);
+            $user = new User();
+            $user->forceFill([
                 'nama' => $pending['nama'],
                 'email' => $pending['email'],
                 'no_hp' => $pending['no_hp'],
-                'password' => Hash::make($pending['password']),
+                'password' => $passwordHash,
                 'role' => 'pelanggan',
-            ]);
+            ])->save();
         }
         if ($user->isBlocked()) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
             ]);
         }
-
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -490,7 +543,15 @@ class AuthController extends Controller
         }
 
         $pending = session('register_pending');
-        $otp = mt_rand(100000, 999999);
+        $existingOtp = Otp::where('email', $pending['email'])->first();
+        if ($existingOtp && $existingOtp->updated_at && $existingOtp->updated_at->diffInSeconds(now()) < 30) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mohon tunggu 30 detik sebelum meminta kode verifikasi baru.'
+            ], 429);
+        }
+
+        $otp = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(5);
 
         // Update OTP in DB
@@ -498,6 +559,7 @@ class AuthController extends Controller
             ['email' => $pending['email']],
             [
                 'otp_code' => $otp,
+                'attempts' => 0,
                 'expires_at' => $expiresAt,
             ]
         );
@@ -510,10 +572,66 @@ class AuthController extends Controller
                 'message' => 'Kode verifikasi baru telah dikirim ke ' . $pending['email'] . '.'
             ]);
         } catch (\Exception $e) {
+            Log::error('Resend Register OTP failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengirim email: ' . $e->getMessage()
+                'message' => 'Gagal mengirim email verifikasi. Silakan coba lagi nanti.'
             ], 500);
         }
+    }
+
+    /**
+     * Role-aware post-login redirect that prevents Admin/Kasir from landing on
+     * guest customer URLs (e.g. /checkout) and prevents Pelanggan from landing
+     * on /admin/* URLs stored in session('url.intended').
+     */
+    private function redirectAfterLogin(Request $request, User $user, string $customerMessage)
+    {
+        $intended = $request->session()->pull('url.intended');
+        $intendedPath = '';
+        $isSameHost = false;
+
+        if (is_string($intended) && $intended !== '') {
+            $parsedHost = parse_url($intended, PHP_URL_HOST);
+            $isSameHost = ($parsedHost === null || strcasecmp($parsedHost, $request->getHost()) === 0);
+            $intendedPath = parse_url($intended, PHP_URL_PATH) ?: '';
+        }
+
+        if ($user->role === 'admin') {
+            $welcomeMessage = 'Selamat datang kembali Admin! Anda berhasil masuk.';
+            if ($isSameHost && ($intendedPath === '/admin' || str_starts_with($intendedPath, '/admin/'))) {
+                return redirect()->to($intended)->with('success', $welcomeMessage);
+            }
+
+            return redirect('/admin/dashboard')->with('success', $welcomeMessage);
+        }
+
+        if ($user->role === 'kasir') {
+            $welcomeMessage = 'Selamat datang kembali Kasir! Anda berhasil masuk.';
+            $kasirAllowedPrefixes = [
+                '/admin/dashboard',
+                '/admin/pos',
+                '/admin/orders',
+                '/admin/returns',
+                '/admin/payment-proofs',
+                '/admin/settings',
+            ];
+
+            if ($isSameHost) {
+                foreach ($kasirAllowedPrefixes as $prefix) {
+                    if ($intendedPath === $prefix || str_starts_with($intendedPath, $prefix . '/')) {
+                        return redirect()->to($intended)->with('success', $welcomeMessage);
+                    }
+                }
+            }
+
+            return redirect('/admin/dashboard')->with('success', $welcomeMessage);
+        }
+
+        if ($isSameHost && $intendedPath !== '' && $intendedPath !== '/admin' && !str_starts_with($intendedPath, '/admin/')) {
+            return redirect()->to($intended)->with('success', $customerMessage);
+        }
+
+        return redirect('/')->with('success', $customerMessage);
     }
 }

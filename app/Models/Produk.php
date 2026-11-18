@@ -4,12 +4,38 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class Produk extends Model
 {
     use HasFactory;
 
     protected $primaryKey = 'id_produk';
+
+    protected static function booted(): void
+    {
+        $invalidate = static function (): void {
+            Cache::forget('produk_stock_map');
+            Cache::forget('produk_expired_sync_lock');
+            foreach ([3, 4, 6, 8, 12] as $lim) {
+                Cache::forget("produk_best_sellers_{$lim}");
+            }
+        };
+
+        static::saved($invalidate);
+        static::deleted($invalidate);
+    }
+
+    public static function getCachedStockMap(): array
+    {
+        return Cache::remember('produk_stock_map', 60, function () {
+            return self::select(['id_produk', 'status_produk'])
+                ->get()
+                ->pluck('stok', 'id_produk')
+                ->toArray();
+        });
+    }
 
     protected $fillable = [
         'id_kategori',
@@ -46,6 +72,9 @@ class Produk extends Model
         if ($val && strtolower($val) === 'tersedia') {
             return 99;
         }
+        if (is_string($val) && preg_match('/^\s*(\d+)/', $val, $m)) {
+            return (int) $m[1];
+        }
         return 0;
     }
 
@@ -64,7 +93,7 @@ class Produk extends Model
     }
 
     /**
-     * Reduce stock for all items in an order.
+     * Reduce stock atomically (with row-level lock) for all items in an order.
      *
      * @param \App\Models\Pesanan $pesanan
      * @return void
@@ -75,18 +104,34 @@ class Produk extends Model
             return;
         }
 
+        $aggregated = [];
         foreach ($pesanan->items as $item) {
             $productId = $item['id'] ?? $item['id_produk'] ?? null;
             $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
-
             if ($productId && $qty > 0) {
-                $produk = self::find($productId);
-                if ($produk) {
-                    $produk->reduceStock($qty);
-                }
+                $aggregated[(int) $productId] = ($aggregated[(int) $productId] ?? 0) + $qty;
             }
         }
+
+        if (empty($aggregated)) {
+            return;
+        }
+
+        DB::transaction(function () use ($aggregated) {
+            ksort($aggregated);
+            foreach ($aggregated as $productId => $qty) {
+                $produk = self::where('id_produk', $productId)->lockForUpdate()->first();
+                if (!$produk) {
+                    throw new \DomainException('Produk tidak ditemukan!');
+                }
+                if ($produk->stok < $qty) {
+                    throw new \DomainException('Stok produk "' . $produk->nama_produk . '" tidak mencukupi (tersisa ' . $produk->stok . ').');
+                }
+                $produk->reduceStock($qty);
+            }
+        });
     }
+
     /**
      * Add stock back to the product.
      *
@@ -102,7 +147,7 @@ class Produk extends Model
     }
 
     /**
-     * Restore stock for all items in an order.
+     * Idempotently restore stock for all items in an order (guarded by stock_restored_at + row lock).
      *
      * @param \App\Models\Pesanan $pesanan
      * @return void
@@ -113,17 +158,40 @@ class Produk extends Model
             return;
         }
 
-        foreach ($pesanan->items as $item) {
-            $productId = $item['id'] ?? $item['id_produk'] ?? null;
-            $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
+        DB::transaction(function () use ($pesanan) {
+            $lockedOrder = null;
+            if (!empty($pesanan->id)) {
+                $lockedOrder = Pesanan::where('id', $pesanan->id)->lockForUpdate()->first();
+                if (!$lockedOrder || $lockedOrder->stock_restored_at !== null) {
+                    return;
+                }
+            } elseif ($pesanan->stock_restored_at !== null) {
+                return;
+            }
 
-            if ($productId && $qty > 0) {
-                $produk = self::find($productId);
+            $aggregated = [];
+            foreach ($pesanan->items as $item) {
+                $productId = $item['id'] ?? $item['id_produk'] ?? null;
+                $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
+                if ($productId && $qty > 0) {
+                    $aggregated[(int) $productId] = ($aggregated[(int) $productId] ?? 0) + $qty;
+                }
+            }
+
+            ksort($aggregated);
+            foreach ($aggregated as $productId => $qty) {
+                $produk = self::where('id_produk', $productId)->lockForUpdate()->first();
                 if ($produk) {
                     $produk->addStock($qty);
                 }
             }
-        }
+
+            $now = now();
+            if ($lockedOrder) {
+                $lockedOrder->forceFill(['stock_restored_at' => $now])->save();
+            }
+            $pesanan->stock_restored_at = $now;
+        });
     }
 
     public function kategori()
@@ -153,7 +221,8 @@ class Produk extends Model
             ->where(function ($q) use ($today) {
                 $q->whereNull('tanggal_selesai')
                   ->orWhere('tanggal_selesai', '>=', $today);
-            });
+            })
+            ->orderByDesc('id_diskon');
     }
 
     public function getHargaDiskonAttribute()
@@ -183,56 +252,63 @@ class Produk extends Model
 
     public static function getBestSellers(int $limit = 3)
     {
-        $productSales = [];
-        $orders = Pesanan::where('payment_status', 'Paid')
-            ->whereNotNull('items')
-            ->get(['items']);
+        return Cache::remember("produk_best_sellers_{$limit}", 300, function () use ($limit) {
+            $productSales = [];
+            $orders = Pesanan::where('payment_status', 'Paid')
+                ->whereNotNull('items')
+                ->get(['items']);
 
-        foreach ($orders as $order) {
-            if (is_array($order->items)) {
-                foreach ($order->items as $item) {
-                    $pid = $item['id'] ?? $item['id_produk'] ?? null;
-                    $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
-                    if ($pid) {
-                        $productSales[$pid] = ($productSales[$pid] ?? 0) + $qty;
+            foreach ($orders as $order) {
+                if (is_array($order->items)) {
+                    foreach ($order->items as $item) {
+                        $pid = $item['id'] ?? $item['id_produk'] ?? null;
+                        $qty = (int) ($item['qty'] ?? $item['quantity'] ?? 1);
+                        if ($pid) {
+                            $productSales[$pid] = ($productSales[$pid] ?? 0) + $qty;
+                        }
                     }
                 }
             }
-        }
 
-        $topProducts = collect();
-        if (!empty($productSales)) {
-            arsort($productSales);
-            $topIds = array_slice(array_keys($productSales), 0, $limit);
-            $topProducts = self::with(['kategori', 'diskonAktif'])
-                ->whereIn('id_produk', $topIds)
-                ->get()
-                ->sortBy(function ($p) use ($productSales) {
-                    return -($productSales[$p->id_produk] ?? 0);
-                })
-                ->values();
+            $topProducts = collect();
+            if (!empty($productSales)) {
+                arsort($productSales);
+                $topIds = array_slice(array_keys($productSales), 0, $limit);
+                $topProducts = self::with(['kategori', 'diskonAktif'])
+                    ->whereIn('id_produk', $topIds)
+                    ->get()
+                    ->sortBy(function ($p) use ($productSales) {
+                        return -($productSales[$p->id_produk] ?? 0);
+                    })
+                    ->values();
 
-            if ($topProducts->count() >= $limit) {
-                return $topProducts;
+                if ($topProducts->count() >= $limit) {
+                    return $topProducts;
+                }
             }
-        }
 
-        $excludeIds = $topProducts->pluck('id_produk')->toArray();
-        $fallback = self::with(['kategori', 'diskonAktif'])
-            ->whereNotIn('id_produk', $excludeIds)
-            ->where(function($q) {
-                $q->where('jenis_produk', 'showcase')
-                  ->orWhereNull('jenis_produk');
-            })
-            ->orderBy('id_produk', 'asc')
-            ->limit($limit - $topProducts->count())
-            ->get();
+            $excludeIds = $topProducts->pluck('id_produk')->toArray();
+            $fallback = self::with(['kategori', 'diskonAktif'])
+                ->whereNotIn('id_produk', $excludeIds)
+                ->where(function ($q) {
+                    $q->where('jenis_produk', 'showcase')
+                      ->orWhereNull('jenis_produk');
+                })
+                ->orderBy('id_produk', 'asc')
+                ->limit($limit - $topProducts->count())
+                ->get();
 
-        return $topProducts->concat($fallback);
+            return $topProducts->concat($fallback);
+        });
     }
 
     public static function checkAndEmptyExpiredProducts()
     {
+        if (Cache::has('produk_expired_sync_lock')) {
+            return;
+        }
+        Cache::put('produk_expired_sync_lock', true, 60);
+
         $today = \Carbon\Carbon::today()->toDateString();
 
         $expiredProducts = self::where(function($q) {
@@ -246,7 +322,7 @@ class Produk extends Model
         foreach ($expiredProducts as $produk) {
             // Check if showcase product stock is not already emptied to '0' or 'habis'
             if ($produk->status_produk !== '0' && strtolower((string)$produk->status_produk) !== 'habis') {
-                $stokAwal = $produk->status_produk ?? 'Tersedia';
+                $stokAwal = (string) $produk->stok;
 
                 // Create a BRAND NEW record in produk_kadaluarsas table (distinct id_expired)
                 $expiredRecord = ProdukKadaluarsa::create([

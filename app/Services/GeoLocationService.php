@@ -25,53 +25,60 @@ class GeoLocationService
             return null;
         }
 
-        // Cache key with 5 decimals precision (~1 meter resolution)
+        // Cache key with 5 decimals precision (~1 meter resolution), including negative caching to avoid repeated timeouts
         $cacheKey = sprintf('geo_rev_%.5f_%.5f', $lat, $lng);
 
-        return Cache::remember($cacheKey, now()->addHours(24), function () use ($lat, $lng) {
-            try {
-                $response = Http::withHeaders([
-                    'User-Agent' => 'ZyhCorner-BakeryApp/1.0 (contact@zyhcorner.com)',
-                    'Accept-Language' => 'id,en;q=0.9',
-                ])->timeout(3)->get('https://nominatim.openstreetmap.org/reverse', [
-                    'format' => 'json',
-                    'lat' => $lat,
-                    'lon' => $lng,
-                    'zoom' => 18,
-                    'addressdetails' => 1,
-                ]);
+        if (Cache::has($cacheKey)) {
+            $cached = Cache::get($cacheKey);
+            return (is_array($cached) && isset($cached['__empty'])) ? null : $cached;
+        }
 
-                if ($response->successful()) {
-                    $data = $response->json();
-                    if (!empty($data) && !empty($data['address'])) {
-                        $addr = $data['address'];
-                        $road = $addr['road'] ?? $addr['highway'] ?? $addr['pedestrian'] ?? null;
-                        $place = $data['name'] ?? null;
-                        if ($place === $road) {
-                            $place = null;
-                        }
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'ZyhCorner-BakeryApp/1.0 (contact@zyhcorner.com)',
+                'Accept-Language' => 'id,en;q=0.9',
+            ])->timeout(3)->get('https://nominatim.openstreetmap.org/reverse', [
+                'format' => 'json',
+                'lat' => $lat,
+                'lon' => $lng,
+                'zoom' => 18,
+                'addressdetails' => 1,
+            ]);
 
-                        $areaParts = array_filter([
-                            $addr['suburb'] ?? $addr['village'] ?? $addr['neighbourhood'] ?? null,
-                            $addr['district'] ?? $addr['city_district'] ?? null,
-                            $addr['city'] ?? $addr['county'] ?? $addr['town'] ?? null,
-                            $addr['state'] ?? null,
-                        ]);
-
-                        return [
-                            'place_name' => $place,
-                            'road' => $road,
-                            'area' => implode(', ', array_unique($areaParts)),
-                            'postal_code' => $addr['postcode'] ?? null,
-                            'display_name' => $data['display_name'] ?? null,
-                        ];
+            if ($response->successful()) {
+                $data = $response->json();
+                if (!empty($data) && !empty($data['address'])) {
+                    $addr = $data['address'];
+                    $road = $addr['road'] ?? $addr['highway'] ?? $addr['pedestrian'] ?? null;
+                    $place = $data['name'] ?? null;
+                    if ($place === $road) {
+                        $place = null;
                     }
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Nominatim reverse geocode lookup failed: ' . $e->getMessage());
-            }
 
-            return null;
-        });
+                    $areaParts = array_filter([
+                        $addr['suburb'] ?? $addr['village'] ?? $addr['neighbourhood'] ?? null,
+                        $addr['district'] ?? $addr['city_district'] ?? null,
+                        $addr['city'] ?? $addr['county'] ?? $addr['town'] ?? null,
+                        $addr['state'] ?? null,
+                    ]);
+
+                    $resolved = [
+                        'place_name' => $place,
+                        'road' => $road,
+                        'area' => implode(', ', array_unique($areaParts)),
+                        'postal_code' => $addr['postcode'] ?? null,
+                        'display_name' => $data['display_name'] ?? null,
+                    ];
+
+                    Cache::put($cacheKey, $resolved, now()->addHours(24));
+                    return $resolved;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Nominatim reverse geocode lookup failed: ' . $e->getMessage());
+        }
+
+        Cache::put($cacheKey, ['__empty' => true], now()->addMinutes(15));
+        return null;
     }
 }

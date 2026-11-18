@@ -10,9 +10,12 @@ use App\Models\Produk;
 use App\Models\Retur;
 use App\Models\UserAddress;
 use App\Models\StoreSetting;
+use App\Mail\PesananBaruKasirMail;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CustomerOrderController extends Controller
@@ -24,18 +27,22 @@ class CustomerOrderController extends Controller
     {
         if (Auth::check()) {
             $user = Auth::user();
-            $expiredOrders = Pesanan::where('email_pembeli', $user->email)
+            $expiredOrders = Pesanan::ownedBy($user)
                 ->whereIn('order_status', ['menunggu pembayaran', 'menunggu', 'pending'])
                 ->where('payment_status', '!=', 'Paid')
                 ->where('created_at', '<', now()->subHours(24))
                 ->get();
-                
+
             foreach ($expiredOrders as $order) {
+                if ($order->is_payment_proof_rejected && $order->updated_at && $order->updated_at->gt(now()->subHours(24))) {
+                    continue;
+                }
                 $order->update([
                     'order_status' => 'batal',
                     'payment_status' => 'Cancelled'
                 ]);
                 Produk::restoreStockForOrder($order);
+                Customer::syncMetricsForOrder($order);
             }
         }
     }
@@ -45,20 +52,15 @@ class CustomerOrderController extends Controller
         $this->cancelExpiredOrders();
         $user = Auth::user();
 
-        // Fallback to customer table location if user's alamat is null
+        // Fallback to customer table location ONLY when explicitly linked by user_id or exact normalized phone (never loose name / null contact)
         if (!$user->alamat) {
-            $customer = Customer::where(function($q) use ($user) {
-                if ($user->user_id) {
-                    $q->where('user_id', $user->user_id);
+            $customer = Customer::where('user_id', $user->user_id)->first();
+            if (!$customer && !empty($user->no_hp)) {
+                $variants = Customer::phoneVariants($user->no_hp);
+                if (!empty($variants)) {
+                    $customer = Customer::whereNull('user_id')->whereIn('contact', $variants)->first();
                 }
-                if ($user->nama) {
-                    $q->orWhere('name', $user->nama);
-                }
-                if ($user->no_hp) {
-                    $rawPhone = ltrim((string)$user->no_hp, '0');
-                    $q->orWhere('contact', 'like', '%' . $rawPhone . '%');
-                }
-            })->first();
+            }
 
             if ($customer && $customer->location) {
                 User::where('user_id', $user->user_id)->update(['alamat' => $customer->location]);
@@ -84,7 +86,7 @@ class CustomerOrderController extends Controller
 
         $addresses = $user->addresses()->get();
 
-        $recentOrders = Pesanan::where('email_pembeli', $user->email)
+        $recentOrders = Pesanan::ownedBy($user)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
@@ -98,7 +100,7 @@ class CustomerOrderController extends Controller
         $user = Auth::user();
         $statusFilter = $request->query('status');
 
-        $query = Pesanan::where('email_pembeli', $user->email);
+        $query = Pesanan::ownedBy($user);
 
         if ($statusFilter) {
             if ($statusFilter === 'processing') {
@@ -114,10 +116,10 @@ class CustomerOrderController extends Controller
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(5);
 
-        // Fetch returns for the customer
+        // Fetch returns strictly owned by the authenticated customer (anti-IDOR)
         $returs = collect();
         if ($statusFilter === 'return' || is_null($statusFilter)) {
-            $returs = Retur::where('customer_name', $user->nama)
+            $returs = Retur::ownedBy($user)
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
@@ -140,7 +142,7 @@ class CustomerOrderController extends Controller
     {
         $this->cancelExpiredOrders();
         $user = Auth::user();
-        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+        $order = Pesanan::ownedBy($user)->findOrFail($id);
 
         if ($order->payment_status !== 'Paid' && strtoupper((string)$order->payment_method) !== 'COD' && !$order->is_bank_transfer) {
             app(\App\Http\Controllers\Pelanggan\PembayaranController::class)->verifyAndSyncOrderPayment($order);
@@ -159,10 +161,10 @@ class CustomerOrderController extends Controller
                     $product->harga = $item['price'] ?? 0;
                     $product->foto_1 = null;
                 }
-                
+
                 $qty = isset($item['qty']) ? intval($item['qty']) : 1;
                 $price = isset($item['price']) ? floatval($item['price']) : floatval($product->harga);
-                
+
                 $items[] = [
                     'product' => $product,
                     'qty' => $qty,
@@ -211,20 +213,27 @@ class CustomerOrderController extends Controller
     public function cancelOrder(Request $request, $id)
     {
         $user = Auth::user();
-        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+        $order = Pesanan::ownedBy($user)->findOrFail($id);
+
         if ($order->can_be_canceled) {
             $cancelReason = $request->input('cancel_reason');
+            $wasPaid = strtoupper((string) $order->payment_status) === 'PAID';
 
             $updateData = [
                 'order_status' => 'batal',
-                'payment_status' => 'Cancelled'
             ];
+            // Preserve 'Paid' payment_status for audit/refund tracking; only mark unpaid orders as 'Cancelled'
+            if (!$wasPaid) {
+                $updateData['payment_status'] = 'Cancelled';
+            }
             if (!empty($cancelReason)) {
-                $updateData['cancel_reason'] = $cancelReason;
+                $updateData['cancel_reason'] = mb_substr(strip_tags(trim((string) $cancelReason)), 0, 255);
             }
 
             $order->update($updateData);
             Produk::restoreStockForOrder($order);
+            Customer::syncMetricsForOrder($order->fresh());
+
             return response()->json([
                 'success' => true,
                 'message' => 'Pesanan berhasil dibatalkan!'
@@ -247,7 +256,17 @@ class CustomerOrderController extends Controller
     public function uploadPaymentProof(Request $request, $id)
     {
         $user = Auth::user();
-        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+        $order = Pesanan::ownedBy($user)->findOrFail($id);
+
+        if (!$order->is_bank_transfer) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unggah bukti pembayaran hanya berlaku untuk metode Transfer Bank manual.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Unggah bukti pembayaran hanya berlaku untuk metode Transfer Bank manual.');
+        }
 
         if ($order->payment_status === 'Paid') {
             if ($request->ajax() || $request->wantsJson()) {
@@ -279,11 +298,12 @@ class CustomerOrderController extends Controller
         }
 
         $request->validate([
-            'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg,webp|extensions:jpeg,png,jpg,webp|max:2048',
         ], [
             'bukti_pembayaran.required' => 'Pilih file gambar bukti pembayaran terlebih dahulu.',
             'bukti_pembayaran.image' => 'File bukti harus berupa gambar.',
             'bukti_pembayaran.mimes' => 'Format file yang didukung: JPG, PNG, WEBP.',
+            'bukti_pembayaran.extensions' => 'Ekstensi berkas bukti pembayaran tidak valid.',
             'bukti_pembayaran.max' => 'Ukuran file maksimal adalah 2MB.',
         ]);
 
@@ -298,7 +318,14 @@ class CustomerOrderController extends Controller
                 'bukti_pembayaran' => $path,
                 'bukti_pembayaran_uploaded_at' => now(),
                 'order_status' => 'menunggu konfirmasi',
+                'catatan_verifikasi_pembayaran' => null,
             ]);
+
+            try {
+                NotificationService::sendToKasir(new PesananBaruKasirMail($order->fresh()));
+            } catch (\Exception $e) {
+                Log::error('Failed to notify kasir after payment proof upload: ' . $e->getMessage());
+            }
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([

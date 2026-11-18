@@ -86,11 +86,13 @@ class UserPelangganSeeder extends Seeder
             ],
         ];
 
-        foreach ($pelangganAccounts as $account) {
-            User::firstOrCreate(
-                ['email' => $account['email']],
-                $account
-            );
-        }
+        User::unguarded(function () use ($pelangganAccounts) {
+            foreach ($pelangganAccounts as $account) {
+                User::firstOrCreate(
+                    ['email' => $account['email']],
+                    $account
+                );
+            }
+        });
     }
 }

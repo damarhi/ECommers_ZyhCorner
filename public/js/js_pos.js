@@ -186,6 +186,22 @@ let currentStockModalValue = 0;
         }
     }
 
+    function escapePosHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function incrementPosCartItem(id) {
+        if (!cart[id]) return;
+        let item = cart[id];
+        addToCart(id, item.name, item.price, item.image, item.maxStock || 999, item.originalPrice || item.price);
+    }
+
     function updateCartUI() {
         let totalItems = 0;
         let totalPrice = 0;
@@ -193,24 +209,25 @@ let currentStockModalValue = 0;
         
         for (let id in cart) {
             let item = cart[id];
+            let safeId = parseInt(id) || 0;
             totalItems += item.quantity;
             totalPrice += (item.price * item.quantity);
             
             html += `
                 <div class="d-flex mb-4 position-relative">
-                    <img src="${item.image}" alt="${item.name}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                    <img src="${escapePosHtml(item.image)}" alt="${escapePosHtml(item.name)}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
                     <div class="ms-3 flex-grow-1">
-                        <h6 class="mb-1 text-muted" style="font-size:13px;">${item.name}</h6>
+                        <h6 class="mb-1 text-muted" style="font-size:13px;">${escapePosHtml(item.name)}</h6>
                         <div class="d-flex align-items-center">
-                            <span class="text-muted" style="font-size: 12px;">${item.quantity} x</span> 
-                            <strong class="ms-1" style="font-size: 13px;">Rp. ${item.price.toLocaleString('id-ID')}</strong>
+                            <span class="text-muted" style="font-size: 12px;">${parseInt(item.quantity) || 1} x</span> 
+                            <strong class="ms-1" style="font-size: 13px;">Rp. ${Number(item.price).toLocaleString('id-ID')}</strong>
                         </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <button class="btn-qty" onclick="removeFromCart(${id})"><i class="mdi mdi-minus"></i></button>
-                        <span class="mx-2" style="font-size: 14px;">${item.quantity}</span>
-                        <button class="btn-qty" onclick="addToCart(${id}, '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${item.image}', ${item.maxStock || 999}, ${item.originalPrice || item.price})"><i class="mdi mdi-plus"></i></button>
-                        <button class="btn btn-sm text-muted p-1 ms-2" onclick="delete cart[${id}]; saveCartToStorage(); updateCartUI();" style="background:transparent; border:none;">
+                        <button class="btn-qty" onclick="removeFromCart(${safeId})"><i class="mdi mdi-minus"></i></button>
+                        <span class="mx-2" style="font-size: 14px;">${parseInt(item.quantity) || 1}</span>
+                        <button class="btn-qty" onclick="incrementPosCartItem(${safeId})"><i class="mdi mdi-plus"></i></button>
+                        <button class="btn btn-sm text-muted p-1 ms-2" onclick="delete cart[${safeId}]; saveCartToStorage(); updateCartUI();" style="background:transparent; border:none;">
                             <i class="mdi mdi-close-circle-outline" style="font-size: 18px;"></i>
                         </button>
                     </div>

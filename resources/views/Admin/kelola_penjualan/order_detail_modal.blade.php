@@ -270,7 +270,10 @@
                                     $orderItems = $order->items;
                                     if (is_array($orderItems) && count($orderItems) > 0) {
                                         foreach ($orderItems as $item) {
-                                            $product = \App\Models\Produk::find($item['id'] ?? null);
+                                            $lookupPid = $item['id'] ?? $item['id_produk'] ?? null;
+                                            $product = ($lookupPid && isset($preloadedProducts) && $preloadedProducts instanceof \Illuminate\Support\Collection)
+                                                ? $preloadedProducts->get((int) $lookupPid)
+                                                : ($lookupPid ? \App\Models\Produk::find($lookupPid) : null);
                                             if (!$product) {
                                                 $product = new \App\Models\Produk();
                                                 $product->id_produk = $item['id'] ?? 0;

@@ -345,34 +345,60 @@
 </div>
 
 <script>
-    // Variables populated from backend
-    const remainingSeconds = parseInt("{{ $remainingSeconds }}") || 0;
-    const snapToken = "{{ $order->snap_token }}";
-    const orderNumber = "{{ $order->order_number }}";
+    // Variables populated safely from backend
+    const remainingSeconds = {{ (int) $remainingSeconds }};
+    const snapToken = @json($order->snap_token ?? '');
+    const orderNumber = @json($order->order_number ?? '');
+    const serverOrderItems = @json(is_array($order->items) ? $order->items : []);
+    const fallbackItemImg = @json(asset('image/logo_circle.png'));
+
+    function escapeSuccessHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Load items from localStorage
         const itemsList = document.getElementById('successOrderItemsList');
         if (itemsList) {
-            const lastOrder = JSON.parse(localStorage.getItem('zyh_last_order')) || [];
-            if (lastOrder.length > 0) {
-                itemsList.innerHTML = lastOrder.map(item => `
+            let orderItemsToRender = Array.isArray(serverOrderItems) && serverOrderItems.length > 0
+                ? serverOrderItems
+                : [];
+            if (orderItemsToRender.length === 0) {
+                try {
+                    orderItemsToRender = JSON.parse(localStorage.getItem('zyh_last_order')) || [];
+                } catch (e) {
+                    orderItemsToRender = [];
+                }
+            }
+            if (orderItemsToRender.length > 0) {
+                itemsList.innerHTML = orderItemsToRender.map(item => {
+                    const name = escapeSuccessHtml(item.name || item.nama_produk || 'Produk');
+                    const img = escapeSuccessHtml(item.image || item.img || fallbackItemImg);
+                    const qty = parseInt(item.qty || item.quantity || 1) || 1;
+                    const price = parseFloat(item.price || 0) || 0;
+                    return `
                     <div class="success-order-item">
                         <div class="success-item-img-wrapper">
-                            <img src="${item.img}" alt="${item.name}">
+                            <img src="${img}" alt="${name}">
                         </div>
                         <div class="success-item-info">
-                            <h4 class="success-item-name">${item.name}</h4>
+                            <h4 class="success-item-name">${name}</h4>
                             <div class="success-item-meta">
-                                <span>Quantity: ${item.qty}</span>
-                                <span>Price: Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}</span>
+                                <span>Quantity: ${qty}</span>
+                                <span>Price: Rp. ${new Intl.NumberFormat('id-ID').format(price)}</span>
                             </div>
                         </div>
                         <div class="success-item-subtotal">
-                            Rp. ${new Intl.NumberFormat('id-ID').format(item.price * item.qty)}
+                            Rp. ${new Intl.NumberFormat('id-ID').format(price * qty)}
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
             } else {
                 itemsList.innerHTML = `
                     <div class="empty-items-placeholder">

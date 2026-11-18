@@ -1774,8 +1774,13 @@
             color: #dc2626;
         }
 
-        /* Desktop Safety: completely hide mobile drawer from desktop layout */
+        /* Desktop Safety: completely hide mobile menu button & drawer from desktop layout */
+        .mobile-menu-btn {
+            display: none;
+        }
+
         @media (min-width: 992px) {
+            .mobile-menu-btn,
             .mobile-nav-overlay,
             .mobile-nav-drawer {
                 display: none !important;

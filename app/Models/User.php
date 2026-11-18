@@ -12,13 +12,15 @@ class User extends Authenticatable
 
     protected $primaryKey = 'user_id';
 
+    protected $attributes = [
+        'role' => 'pelanggan',
+    ];
+
     protected $fillable = [
         'nama',
         'email',
         'no_hp',
         'password',
-        'role',
-        'google_id',
         'alamat',
         'avatar',
     ];
@@ -50,8 +52,23 @@ class User extends Authenticatable
         return $this->hasOne(UserAddress::class, 'user_id', 'user_id')->where('is_default', true);
     }
 
+    public function getFotoAttribute(): ?string
+    {
+        if (empty($this->avatar)) {
+            return null;
+        }
+
+        return preg_replace('#^storage/#', '', (string) $this->avatar);
+    }
+
     public function isBlocked(): bool
     {
+        if ($this->role === 'kasir') {
+            return Cassier::where('email', $this->email)
+                ->where('status', 'Deactive')
+                ->exists();
+        }
+
         if ($this->role !== 'pelanggan') {
             return false;
         }
@@ -62,16 +79,16 @@ class User extends Authenticatable
         }
 
         if (!empty($this->no_hp)) {
-            $rawPhone = ltrim((string) $this->no_hp, '0');
-            $customerByPhone = Customer::where(function ($q) use ($rawPhone) {
-                $q->where('contact', (string) $this->no_hp)
-                  ->orWhere('contact', '0' . $rawPhone)
-                  ->orWhere('contact', '62' . $rawPhone)
-                  ->orWhere('contact', 'like', '%' . $rawPhone . '%');
-            })->first();
+            $variants = Customer::phoneVariants($this->no_hp);
+            if (!empty($variants)) {
+                $isBlockedByPhone = Customer::whereNull('user_id')
+                    ->whereIn('contact', $variants)
+                    ->where('status', 'Blocked')
+                    ->exists();
 
-            if ($customerByPhone && $customerByPhone->status === 'Blocked') {
-                return true;
+                if ($isBlockedByPhone) {
+                    return true;
+                }
             }
         }
 

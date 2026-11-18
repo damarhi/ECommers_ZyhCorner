@@ -35,15 +35,23 @@ Route::get('/shop', [PelangganController::class, 'shop'])->name('shop');
 Route::get('/custom-products', [PelangganController::class, 'customProducts'])->name('custom-products');
 Route::get('/about', [PelangganController::class, 'about'])->name('about');
 Route::get('/contact', [PelangganController::class, 'contact'])->name('contact');
-Route::post('/contact/send', [PelangganController::class, 'sendContactMessage'])->name('contact.send');
+Route::post('/contact/send', [PelangganController::class, 'sendContactMessage'])
+    ->middleware('throttle:contact-form')
+    ->name('contact.send');
 Route::get('/faq', [PelangganController::class, 'faq'])->name('faq');
 Route::get('/product/{id}', [PelangganController::class, 'detail'])->name('product.detail');
-Route::get('/search-suggestions', [PelangganController::class, 'searchSuggestions'])->name('search.suggestions');
+Route::get('/search-suggestions', [PelangganController::class, 'searchSuggestions'])
+    ->middleware('throttle:public-api')
+    ->name('search.suggestions');
 Route::get('/cart', [CartCheckoutController::class, 'userChart'])->name('userChart');
-Route::get('/biteship/areas', [CartCheckoutController::class, 'biteshipAreas'])->name('biteship.areas');
-Route::post('/biteship/rates', [CartCheckoutController::class, 'biteshipRates'])->name('biteship.rates');
+Route::get('/biteship/areas', [CartCheckoutController::class, 'biteshipAreas'])
+    ->middleware('throttle:public-api')
+    ->name('biteship.areas');
+Route::post('/biteship/rates', [CartCheckoutController::class, 'biteshipRates'])
+    ->middleware('throttle:public-api')
+    ->name('biteship.rates');
 
-Route::middleware(['auth', 'preventBackHistory'])->group(function () {
+Route::middleware(['auth', 'role:pelanggan', 'preventBackHistory'])->group(function () {
     Route::get('/checkout', [CartCheckoutController::class, 'checkout'])->name('checkout');
     Route::post('/checkout', [CartCheckoutController::class, 'processCheckout'])->name('checkout.post');
     Route::get('/order-success', [CartCheckoutController::class, 'orderSuccess'])->name('order.success');
@@ -74,64 +82,48 @@ Route::post('/midtrans-callback', [PembayaranController::class, 'midtransCallbac
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:auth-login')
+    ->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Google Authentication Routes
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
 Route::get('/auth/google/verify', [AuthController::class, 'showGoogleVerifyForm'])->name('login.google.verify');
-Route::post('/auth/google/verify', [AuthController::class, 'verifyGoogleOtp'])->name('login.google.verify.post');
-Route::post('/auth/google/verify/resend', [AuthController::class, 'resendGoogleOtp'])->name('login.google.verify.resend');
+Route::post('/auth/google/verify', [AuthController::class, 'verifyGoogleOtp'])
+    ->middleware('throttle:otp-verify')
+    ->name('login.google.verify.post');
+Route::post('/auth/google/verify/resend', [AuthController::class, 'resendGoogleOtp'])
+    ->middleware('throttle:otp-resend')
+    ->name('login.google.verify.resend');
 // Registration OTP Email Verification Routes
 Route::get('/register/verify', [AuthController::class, 'showRegisterVerifyForm'])->name('register.verify');
-Route::post('/register/verify', [AuthController::class, 'verifyRegisterOtp'])->name('register.verify.post');
-Route::post('/register/verify/resend', [AuthController::class, 'resendRegisterOtp'])->name('register.verify.resend');
+Route::post('/register/verify', [AuthController::class, 'verifyRegisterOtp'])
+    ->middleware('throttle:otp-verify')
+    ->name('register.verify.post');
+Route::post('/register/verify/resend', [AuthController::class, 'resendRegisterOtp'])
+    ->middleware('throttle:otp-resend')
+    ->name('register.verify.resend');
 
 Route::get('/register', [AuthController::class, 'register'])->name('register');
-Route::post('/register', [AuthController::class, 'registerPost'])->name('register.post');
-
-use Illuminate\Support\Facades\Auth;
+Route::post('/register', [AuthController::class, 'registerPost'])
+    ->middleware('throttle:auth-register')
+    ->name('register.post');
 
 Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
-    Route::get('admin/custom-products', [ProdukController::class, 'customIndex'])->name('products.custom');
-    Route::get('admin/expired-products', [ExpiredProductController::class, 'index'])->name('products.expired.index');
-    Route::put('admin/expired-products/{id}', [ExpiredProductController::class, 'update'])->name('products.expired.update');
-    Route::delete('admin/expired-products/{id}', [ExpiredProductController::class, 'destroy'])->name('products.expired.destroy');
-    Route::post('admin/expired-products/bulk-delete', [ExpiredProductController::class, 'bulkDelete'])->name('products.expired.bulk-delete');
-
-    // Export Routes
+    // Operational Sales, Orders, Returns & POS (Admin & Active Kasir)
     Route::get('admin/all-sales/export', [EksporController::class, 'exportAllSales'])->name('export.all-sales');
     Route::get('admin/orders/export', [EksporController::class, 'exportOrders'])->name('export.orders');
-    Route::get('admin/products/export', [ProdukController::class, 'exportProducts'])->name('export.products');
-    Route::get('admin/customers/export', [CustomerController::class, 'exportCustomers'])->name('export.customers');
     Route::get('admin/returs/export', [ReturController::class, 'exportReturs'])->name('export.returs');
 
-    Route::post('admin/products/bulk-delete', [ProdukController::class, 'bulkDelete'])->name('products.bulk-delete');
-    Route::resource('admin/products', ProdukController::class)->names('products');
-    Route::resource('admin/discounts', DiskonController::class)->names('discounts');
-    Route::post('admin/discounts/bulk-delete', [DiskonController::class, 'bulkDelete'])->name('discounts.bulk-delete');
-    Route::post('admin/discounts/{discount}/toggle', [DiskonController::class, 'toggleStatus'])->name('discounts.toggle');
     Route::post('admin/returs/bulk-delete', [ReturController::class, 'bulkDelete'])->name('returs.bulk-delete');
     Route::patch('admin/returs/{retur}/status', [ReturController::class, 'updateStatus'])->name('returs.update-status');
-    Route::resource('admin/returs', ReturController::class)->names('returs');
+    Route::resource('admin/returs', ReturController::class)->names('returs')->except(['create', 'edit', 'show']);
 
-    Route::middleware('blockKasir')->group(function () {
-        Route::post('admin/categories/bulk-delete', [KategoriController::class, 'bulkDelete'])->name('categories.bulk-delete');
-        Route::resource('admin/categories', KategoriController::class)->names('categories');
-        Route::post('admin/cassiers/bulk-delete', [CassierController::class, 'bulkDelete'])->name('cassiers.bulk-delete');
-        Route::resource('admin/cassiers', CassierController::class)->names('cassiers');
-        Route::post('admin/customers/bulk-delete', [CustomerController::class, 'bulkDelete'])->name('customers.bulk-delete');
-        Route::resource('admin/customers', CustomerController::class)->names('customers');
-        Route::post('admin/messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('messages.bulk-delete');
-        Route::resource('admin/messages', ContactMessageController::class)->names('messages')->only(['index', 'show', 'destroy']);
-        Route::patch('admin/messages/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('messages.update-status');
-    });
-
-    Route::post('admin/orders/bulk-delete', [PesananController::class, 'bulkDelete'])->name('orders.bulk-delete');
-    Route::resource('admin/orders', PesananController::class)->names('orders');
+    Route::resource('admin/orders', PesananController::class)->names('orders')->except(['create', 'edit', 'show', 'destroy']);
     Route::get('admin/all-sales', [LaporanController::class, 'allSales'])->name('all-sales.index');
     Route::get('admin/all-sales/report', [LaporanController::class, 'salesReport'])->name('all-sales.report');
     Route::get('admin/orders/{id}/invoice', [PesananController::class, 'printInvoice'])->name('orders.invoice');
@@ -140,17 +132,53 @@ Route::middleware(['auth', 'role:admin,kasir', 'preventBackHistory'])->group(fun
     Route::post('admin/orders/{id}/reject-proof', [BuktiBayarController::class, 'rejectProof'])->name('orders.reject-proof');
     Route::post('admin/orders/{id}/confirmProof', [BuktiBayarController::class, 'confirmProof'])->name('orders.confirmProof');
     Route::post('admin/orders/{id}/rejectProof', [BuktiBayarController::class, 'rejectProof'])->name('orders.rejectProof');
-    Route::resource('admin/banners', BannerController::class)->names('banners');
-    Route::post('admin/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');
-    Route::post('admin/banners/{banner}/toggle', [BannerController::class, 'toggleStatus'])->name('banners.toggle');
+
     Route::get('admin/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
     Route::post('admin/settings/profile', [AdminSettingsController::class, 'updateProfile'])->name('settings.profile.update');
     Route::post('admin/settings/password', [AdminSettingsController::class, 'updatePassword'])->name('settings.password.update');
-    Route::post('admin/settings/store', [AdminSettingsController::class, 'updateStoreInfo'])->name('settings.store.update');
-
 
     Route::get('admin/pos', [PosController::class, 'index'])->name('pos.index');
     Route::get('admin/pos/checkout', [PosController::class, 'checkoutPage'])->name('pos.checkout.page');
     Route::post('admin/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
     Route::post('admin/pos/products/{id}/add-stock', [PosController::class, 'addStock'])->name('pos.add-stock');
+
+    // Strictly Admin-Only Management Routes
+    Route::middleware('blockKasir')->group(function () {
+        Route::get('admin/custom-products', [ProdukController::class, 'customIndex'])->name('products.custom');
+        Route::get('admin/products/export', [ProdukController::class, 'exportProducts'])->name('export.products');
+        Route::post('admin/products/bulk-delete', [ProdukController::class, 'bulkDelete'])->name('products.bulk-delete');
+        Route::resource('admin/products', ProdukController::class)->names('products')->except(['show']);
+
+        Route::get('admin/expired-products', [ExpiredProductController::class, 'index'])->name('products.expired.index');
+        Route::put('admin/expired-products/{id}', [ExpiredProductController::class, 'update'])->name('products.expired.update');
+        Route::delete('admin/expired-products/{id}', [ExpiredProductController::class, 'destroy'])->name('products.expired.destroy');
+        Route::post('admin/expired-products/bulk-delete', [ExpiredProductController::class, 'bulkDelete'])->name('products.expired.bulk-delete');
+
+        Route::post('admin/discounts/bulk-delete', [DiskonController::class, 'bulkDelete'])->name('discounts.bulk-delete');
+        Route::post('admin/discounts/{discount}/toggle', [DiskonController::class, 'toggleStatus'])->name('discounts.toggle');
+        Route::resource('admin/discounts', DiskonController::class)->names('discounts')->except(['create', 'edit', 'show']);
+
+        Route::post('admin/categories/bulk-delete', [KategoriController::class, 'bulkDelete'])->name('categories.bulk-delete');
+        Route::resource('admin/categories', KategoriController::class)->names('categories');
+
+        Route::post('admin/cassiers/bulk-delete', [CassierController::class, 'bulkDelete'])->name('cassiers.bulk-delete');
+        Route::resource('admin/cassiers', CassierController::class)->names('cassiers')->except(['create', 'edit', 'show']);
+
+        Route::get('admin/customers/export', [CustomerController::class, 'exportCustomers'])->name('export.customers');
+        Route::post('admin/customers/bulk-delete', [CustomerController::class, 'bulkDelete'])->name('customers.bulk-delete');
+        Route::resource('admin/customers', CustomerController::class)->names('customers')->except(['create', 'edit', 'show']);
+
+        Route::post('admin/messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('messages.bulk-delete');
+        Route::resource('admin/messages', ContactMessageController::class)->names('messages')->only(['index', 'show', 'destroy']);
+        Route::patch('admin/messages/{id}/status', [ContactMessageController::class, 'updateStatus'])->name('messages.update-status');
+
+        Route::post('admin/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');
+        Route::post('admin/banners/{banner}/toggle', [BannerController::class, 'toggleStatus'])->name('banners.toggle');
+        Route::resource('admin/banners', BannerController::class)->names('banners')->except(['create', 'edit', 'show']);
+
+        Route::post('admin/settings/store', [AdminSettingsController::class, 'updateStoreInfo'])->name('settings.store.update');
+
+        Route::post('admin/orders/bulk-delete', [PesananController::class, 'bulkDelete'])->name('orders.bulk-delete');
+        Route::delete('admin/orders/{order}', [PesananController::class, 'destroy'])->name('orders.destroy');
+    });
 });

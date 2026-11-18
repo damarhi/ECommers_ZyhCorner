@@ -17,14 +17,15 @@ class KategoriController extends Controller
 
     public function create()
     {
-        return view('Admin.kelola_produk.categories');
+        $kategoris = Kategori::withCount('produks')->get();
+        return view('Admin.kelola_produk.categories', compact('kategoris'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'nama_kategori' => 'required|string|max:255',
-            'gambar_kategori' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar_kategori' => 'required|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $imagePath = $request->file('gambar_kategori')->store('kategori_images', 'public');
@@ -39,13 +40,14 @@ class KategoriController extends Controller
 
     public function show(Kategori $kategori)
     {
-        //
+        return redirect()->route('categories.index');
     }
 
     public function edit($id)
     {
         $kategori = Kategori::findOrFail($id);
-        return view('Admin.kelola_produk.categories', compact('kategori'));
+        $kategoris = Kategori::withCount('produks')->get();
+        return view('Admin.kelola_produk.categories', compact('kategori', 'kategoris'));
     }
 
     public function update(Request $request, $id)
@@ -54,7 +56,7 @@ class KategoriController extends Controller
 
         $request->validate([
             'nama_kategori' => 'required|string|max:255',
-            'gambar_kategori' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar_kategori' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('gambar_kategori')) {

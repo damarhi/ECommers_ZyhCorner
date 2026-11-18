@@ -53,8 +53,8 @@
         }
     </style>
     <script>
-        window.storePhone = "{{ $storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber() }}";
-        window.storeName = "{!! addslashes($storeSettings['store_name'] ?? 'Zyh Corner') !!}";
+        window.storePhone = @json((string) ($storeSettings['wa_number'] ?? \App\Models\StoreSetting::getWaNumber()));
+        window.storeName = @json($storeSettings['store_name'] ?? 'Zyh Corner');
     </script>
 </head>
 
@@ -456,103 +456,16 @@
     <script>
         window.layoutConfig = {
             isLoggedIn: {{ Auth::check() ? 'true' : 'false' }},
-            userRole: "{{ Auth::check() ? Auth::user()->role : 'guest' }}",
-            loginRoute: "{{ route('login') }}",
-            checkoutRoute: "{{ route('checkout') }}",
-            cartRoute: "{{ route('userChart') }}",
-            posRoute: "{{ route('pos.index') }}",
-            adminDashboardRoute: "{{ url('/admin/dashboard') }}",
-            successMessage: "{{ session('success') }}",
-            searchSuggestionsRoute: "{{ route('search.suggestions') }}",
-            productsStockMap: @json(\App\Models\Produk::all()->pluck('stok', 'id_produk'))
+            userRole: @json(Auth::check() ? Auth::user()->role : 'guest'),
+            loginRoute: @json(route('login')),
+            checkoutRoute: @json(route('checkout')),
+            cartRoute: @json(route('userChart')),
+            posRoute: @json(route('pos.index')),
+            adminDashboardRoute: @json(url('/admin/dashboard')),
+            successMessage: @json(session('success')),
+            searchSuggestionsRoute: @json(route('search.suggestions')),
+            productsStockMap: @json(\App\Models\Produk::getCachedStockMap())
         };
-        // Inline Fail-proof Search Suggestions Handler
-        document.addEventListener('DOMContentLoaded', function() {
-            function initSearch(inputId, dropdownId, formId) {
-                var inputEl = document.getElementById(inputId);
-                var dropdownEl = document.getElementById(dropdownId);
-                var formEl = document.getElementById(formId);
-                if (!inputEl || !dropdownEl) return;
-
-                var timer = null;
-
-                inputEl.addEventListener('input', function() {
-                    var q = this.value.trim();
-                    clearTimeout(timer);
-
-                    if (q.length < 2) {
-                        dropdownEl.style.display = 'none';
-                        dropdownEl.innerHTML = '';
-                        return;
-                    }
-
-                    dropdownEl.style.display = 'block';
-                    dropdownEl.innerHTML = '<div style="padding: 14px; text-align: center; color: #888; font-size: 13px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px; color: #00b207;"></i> Mencari produk...</div>';
-
-                    timer = setTimeout(function() {
-                        var targetUrl = window.layoutConfig.searchSuggestionsRoute + '?q=' + encodeURIComponent(q);
-                        fetch(targetUrl, {
-                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-                        })
-                        .then(function(res) { return res.json(); })
-                        .then(function(data) {
-                            if (!Array.isArray(data) || data.length === 0) {
-                                dropdownEl.style.display = 'block';
-                                dropdownEl.innerHTML = '<div style="padding: 16px; text-align: center; color: #777; font-size: 13.5px;"><i class="fa-solid fa-face-frown" style="font-size: 20px; color: #bbb; display: block; margin-bottom: 6px;"></i>Tidak ada produk yang cocok</div>';
-                                return;
-                            }
-
-                            var html = '<div style="max-height: 360px; overflow-y: auto;">';
-                            data.forEach(function(item) {
-                                var stockBadge = (item.stok === '0' || String(item.stok).toLowerCase() === 'habis') ? '<span style="font-size: 11px; background: #fee2e2; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-weight: 500;">Habis</span>' : '';
-                                var customBadge = item.is_kustom ? '<span style="font-size: 11px; background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-weight: 500; margin-left: 4px;">Kustom</span>' : '';
-
-                                html += '<a href="' + item.url + '" class="search-suggestion-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; text-decoration: none; color: inherit; border-bottom: 1px solid #f2f2f2; transition: background 0.2s ease;">' +
-                                    '<img src="' + item.image + '" alt="' + item.name + '" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #f9f9f9;">' +
-                                    '<div style="flex: 1; min-width: 0;">' +
-                                        '<div style="font-weight: 600; font-size: 14px; color: #1a1a1a; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">' + item.name + '</div>' +
-                                        '<div style="font-size: 12px; color: #888; display: flex; align-items: center; gap: 4px; margin-top: 2px;"><span>' + item.category + '</span>' + customBadge + stockBadge + '</div>' +
-                                    '</div>' +
-                                    '<div style="font-weight: 600; font-size: 13.5px; color: #00b207; white-space: nowrap; flex-shrink: 0;">' + item.price + '</div>' +
-                                '</a>';
-                            });
-                            html += '</div>';
-
-                            var formAction = formEl ? formEl.getAttribute('action') : '/shop';
-                            var searchUrl = formAction + '?search=' + encodeURIComponent(q);
-                            html += '<a href="' + searchUrl + '" class="search-suggestion-footer" style="display: block; text-align: center; padding: 11px 14px; background: #f8faf8; color: #00b207; font-weight: 600; font-size: 13px; text-decoration: none; border-top: 1px solid #e6e6e6; transition: background 0.2s;">Lihat semua hasil untuk "' + q + '" <i class="fa-solid fa-arrow-right" style="margin-left: 4px; font-size: 11px;"></i></a>';
-
-                            dropdownEl.style.display = 'block';
-                            dropdownEl.innerHTML = html;
-                        })
-                        .catch(function(err) {
-                            console.error(err);
-                            dropdownEl.style.display = 'none';
-                        });
-                    }, 350);
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
-                        dropdownEl.style.display = 'none';
-                    }
-                });
-
-                inputEl.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') {
-                        dropdownEl.style.display = 'none';
-                    }
-                });
-
-                inputEl.addEventListener('focus', function() {
-                    if (this.value.trim().length >= 2 && dropdownEl.children.length > 0) {
-                        dropdownEl.style.display = 'block';
-                    }
-                });
-            }
-
-            initSearch('headerSearchInput', 'headerSearchSuggestions', 'headerSearchForm');
-        });
     </script>
 
     <!-- Anti-bfcache Back Button Protection -->

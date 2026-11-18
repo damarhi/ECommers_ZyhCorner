@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Pesanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,11 +31,33 @@ class BuktiBayarController extends Controller
             return redirect()->back()->with('error', 'Pesanan ini sudah berstatus Lunas.');
         }
 
+        if ($order->is_canceled) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan yang telah dibatalkan tidak dapat dikonfirmasi pembayarannya.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Pesanan yang telah dibatalkan tidak dapat dikonfirmasi pembayarannya.');
+        }
+
+        if (!$order->is_bank_transfer || empty($order->bukti_pembayaran)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Belum ada berkas bukti transfer bank yang valid untuk dikonfirmasi.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Belum ada berkas bukti transfer bank yang valid untuk dikonfirmasi.');
+        }
+
         $order->update([
             'payment_status' => 'Paid',
             'order_status' => 'dikemas',
             'catatan_verifikasi_pembayaran' => 'Diverifikasi Lunas oleh Kasir/Admin pada ' . now()->isoFormat('D MMMM YYYY, HH:mm') . ' WIB',
         ]);
+
+        Customer::syncMetricsForOrder($order->fresh());
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -60,6 +83,26 @@ class BuktiBayarController extends Controller
     public function rejectProof(Request $request, $id)
     {
         $order = Pesanan::findOrFail($id);
+
+        if ($order->payment_status === 'Paid' || $order->is_canceled) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bukti pembayaran pada pesanan lunas atau dibatalkan tidak dapat ditolak.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Bukti pembayaran pada pesanan lunas atau dibatalkan tidak dapat ditolak.');
+        }
+
+        if (empty($order->bukti_pembayaran)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada berkas bukti pembayaran untuk ditolak.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Tidak ada berkas bukti pembayaran untuk ditolak.');
+        }
 
         $request->validate([
             'alasan_penolakan' => 'required|string|max:255',

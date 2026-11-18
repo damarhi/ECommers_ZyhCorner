@@ -272,5 +272,4 @@
         @endif
     });
 </script>
-<script src="{{ asset('js/live-instant-search.js') }}?v={{ file_exists(public_path('js/live-instant-search.js')) ? filemtime(public_path('js/live-instant-search.js')) : time() }}"></script>
 @endsection

@@ -347,22 +347,22 @@
 
     <script>
         window.settingsConfig = {
-            userNama: "{{ $user->nama }}",
-            userEmail: "{{ $user->email }}",
-            userPhone: "{{ $user->no_hp }}",
-            settingsAccountRoute: "{{ route('settings.account') }}",
-            settingsPasswordRoute: "{{ route('settings.password') }}",
-            settingsAddressRoute: "{{ route('settings.address') }}",
-            settingsAvatarRoute: "{{ route('settings.avatar') }}",
-            csrfToken: "{{ csrf_token() }}"
+            userNama: @json($user->nama),
+            userEmail: @json($user->email),
+            userPhone: @json((string) ($user->no_hp ?? '')),
+            settingsAccountRoute: @json(route('settings.account')),
+            settingsPasswordRoute: @json(route('settings.password')),
+            settingsAddressRoute: @json(route('settings.address')),
+            settingsAvatarRoute: @json(route('settings.avatar')),
+            csrfToken: @json(csrf_token())
         };
 
         window.dashboardConfig = {
-            userNama: "{{ $user->nama }}",
-            userEmail: "{{ $user->email }}",
-            userPhone: "{{ $user->no_hp }}",
-            userAlamat: "{{ $user->alamat ?? '' }}",
-            csrfToken: "{{ csrf_token() }}"
+            userNama: @json($user->nama),
+            userEmail: @json($user->email),
+            userPhone: @json((string) ($user->no_hp ?? '')),
+            userAlamat: @json($user->alamat ?? ''),
+            csrfToken: @json(csrf_token())
         };
     </script>
     @vite(['resources/js/dashboard.js'])

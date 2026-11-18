@@ -381,15 +381,15 @@
 
     <script>
         window.detailConfig = {
-            productId: '{{ $product->id_produk }}',
-            productName: '{{ $product->nama_produk }}',
-            productPrice: {{ $product->has_diskon ? $product->harga_diskon : $product->harga }},
+            productId: @json((string) $product->id_produk),
+            productName: @json($product->nama_produk),
+            productPrice: {{ (float) ($product->has_diskon ? $product->harga_diskon : $product->harga) }},
             productStock: {{ (int) $product->stok }},
             bisaCustomTeks: {{ $product->bisa_custom_teks ? 'true' : 'false' }},
-            productImg: '{{ reset($fotos) }}',
-            checkoutRoute: '{{ route('checkout') }}',
-            cartRoute: '{{ route('userChart') }}',
-            loginRoute: '{{ route('login') }}'
+            productImg: @json(reset($fotos) ?: asset('image/logo_circle.png')),
+            checkoutRoute: @json(route('checkout')),
+            cartRoute: @json(route('userChart')),
+            loginRoute: @json(route('login'))
         };
         @if (isset($unpaidOrder) && $unpaidOrder)
         (function() {

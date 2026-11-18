@@ -50,22 +50,32 @@ class DiskonController extends Controller
 
     public function store(Request $request)
     {
+        $nilaiRules = ['required', 'numeric', 'min:0'];
+        if ($request->input('tipe_diskon') === 'persen') {
+            $nilaiRules[] = 'max:100';
+        }
+
         $validated = $request->validate([
             'id_produk' => 'required',
             'nama_diskon' => 'required|string|max:255',
             'tipe_diskon' => 'required|in:persen,nominal',
-            'nilai_diskon' => 'required|numeric|min:0',
+            'nilai_diskon' => $nilaiRules,
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'status' => 'required|in:Aktif,Nonaktif',
         ]);
 
-        $productIds = is_array($request->input('id_produk')) ? $request->input('id_produk') : [$request->input('id_produk')];
+        $rawIds = $request->input('id_produk');
+        $productIds = is_array($rawIds) ? array_values(array_unique($rawIds)) : [$rawIds];
 
-        // Ensure each selected product exists
-        $request->validate([
-            'id_produk.*' => 'exists:produks,id_produk',
-        ]);
+        // Ensure each selected product exists (works for both scalar and array input)
+        \Illuminate\Support\Facades\Validator::make(
+            ['product_ids' => $productIds],
+            [
+                'product_ids' => 'required|array|min:1',
+                'product_ids.*' => 'required|exists:produks,id_produk',
+            ]
+        )->validate();
 
         unset($validated['id_produk']);
 
@@ -81,11 +91,16 @@ class DiskonController extends Controller
 
     public function update(Request $request, Diskon $discount)
     {
+        $nilaiRules = ['required', 'numeric', 'min:0'];
+        if ($request->input('tipe_diskon') === 'persen') {
+            $nilaiRules[] = 'max:100';
+        }
+
         $validated = $request->validate([
             'id_produk' => 'required|exists:produks,id_produk',
             'nama_diskon' => 'required|string|max:255',
             'tipe_diskon' => 'required|in:persen,nominal',
-            'nilai_diskon' => 'required|numeric|min:0',
+            'nilai_diskon' => $nilaiRules,
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
             'status' => 'required|in:Aktif,Nonaktif',

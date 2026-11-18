@@ -5,6 +5,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Dashboard')</title>
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{ asset('PurpleAdmin/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
@@ -51,8 +52,8 @@
                     </li>
                     <li class="nav-item dropdown">
                         @php
-                            $recentNavbarMessages = \App\Models\ContactMessage::latest()->take(3)->get();
-                            $navbarUnreadMsgCount = \App\Models\ContactMessage::where('status', 'Belum Dibaca')->count();
+                            $recentNavbarMessages = $recentNavbarMessages ?? collect();
+                            $navbarUnreadMsgCount = $navbarUnreadMsgCount ?? 0;
                         @endphp
                         <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -99,9 +100,9 @@
                         </div>
                     </li>
                     @php
-                        $notifUnconfirmed = \App\Models\Pesanan::whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(order_status)'), ['menunggu konfirmasi', 'unconfirmed'])->count();
-                        $notifRetur = \App\Models\Retur::where('status', 'New')->count();
-                        $totalNotif = $notifUnconfirmed + $notifRetur;
+                        $notifUnconfirmed = $notifUnconfirmed ?? 0;
+                        $notifRetur = $notifRetur ?? 0;
+                        $totalNotif = $totalNotif ?? ($notifUnconfirmed + $notifRetur);
                     @endphp
                     <li class="nav-item dropdown">
                         <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
@@ -116,7 +117,7 @@
                             <h6 class="p-3 mb-0">Notifikasi</h6>
                             <div class="dropdown-divider"></div>
                             @if($notifUnconfirmed > 0)
-                                <a class="dropdown-item preview-item" href="{{ route('orders.index') }}?search=menunggu+konfirmasi">
+                                <a class="dropdown-item preview-item" href="{{ route('orders.index', ['order_status' => 'menunggu konfirmasi']) }}">
                                     <div class="preview-thumbnail">
                                         <div class="preview-icon bg-warning text-white d-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px;">
                                             <i class="mdi mdi-cart-outline"></i>
@@ -296,7 +297,7 @@
                                 <span class="menu-title d-flex align-items-center justify-content-between w-100 pe-2">
                                     <span>Pesan Kontak</span>
                                     @php
-                                        $sidebarUnreadCount = \App\Models\ContactMessage::where('status', 'Belum Dibaca')->count();
+                                        $sidebarUnreadCount = $sidebarUnreadCount ?? 0;
                                     @endphp
                                     @if($sidebarUnreadCount > 0)
                                         <span class="badge bg-danger rounded-pill px-2 py-1 text-white" style="font-size: 10px;">{{ $sidebarUnreadCount }}</span>
@@ -337,7 +338,7 @@
                 <!-- partial:../../partials/_footer.html -->
                 <footer class="footer bg-white border-top py-3 px-4">
                     <div class="d-sm-flex justify-content-between align-items-center">
-                        <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © {{ date('Y') }} <a href="{{ route('home') }}" target="_blank" class="text-primary font-weight-bold">Zyh Corner</a>. All rights reserved.</span>
+                        <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © {{ date('Y') }} <a href="{{ route('home') }}" target="_blank" rel="noopener noreferrer" class="text-primary font-weight-bold">Zyh Corner</a>. All rights reserved.</span>
                         <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center text-muted">Dasbor Kelola Toko Zyh Corner</span>
                     </div>
                 </footer>
@@ -355,12 +356,18 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Clear any leftover guest storefront cart state once staff enters Admin/POS panel
+            try {
+                localStorage.removeItem('zyh_cart');
+                localStorage.removeItem('zyh_last_order');
+            } catch (e) {}
+
             // Global Success Alert
             @if (session('success'))
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
-                    text: '{{ session('success') }}',
+                    text: @json(session('success')),
                     showConfirmButton: false,
                     timer: 2000,
                     customClass: {
@@ -371,27 +378,18 @@
 
             // Global Error Alert
             @if (isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any())
-                let errorMessages = '';
-                @if (method_exists($errors, 'all'))
-                    @foreach ($errors->all() as $error)
-                        @if(is_string($error))
-                            errorMessages += '{{ $error }}\n';
-                        @endif
-                    @endforeach
-                @endif
-                if (errorMessages !== '') {
+                const allErrors = @json(method_exists($errors, 'all') ? array_values(array_filter($errors->all(), 'is_string')) : []);
+                if (allErrors.length > 0) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
-                        text: errorMessages,
+                        text: allErrors.join('\n'),
                         customClass: {
                             popup: 'rounded-4'
                         }
                     });
                 }
             @endif
-
-
         });
 
         // --- Admin Confirm Logout Alert ---
@@ -412,6 +410,11 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
+                    try {
+                        localStorage.removeItem('zyh_pos_cart');
+                        localStorage.removeItem('zyh_cart');
+                        localStorage.removeItem('zyh_last_order');
+                    } catch (e) {}
                     document.getElementById('logout-form').submit();
                 }
             });
@@ -441,6 +444,7 @@
     <script src="{{ asset('js/admin-confirmations.js') }}"></script>
     <script src="{{ asset('js/admin-bulk-actions.js') }}"></script>
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

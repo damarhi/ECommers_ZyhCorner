@@ -1,4 +1,4 @@
-@extends('layout.layout_pelanggan')
+@extends('Layout.layout_pelanggan')
 
 @section('title', 'Daftar - Zyh Corner')
 

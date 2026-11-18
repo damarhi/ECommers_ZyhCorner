@@ -17,6 +17,12 @@ class Otp extends Model
     protected $fillable = [
         'email',
         'otp_code',
+        'attempts',
         'expires_at',
+    ];
+
+    protected $casts = [
+        'attempts' => 'integer',
+        'expires_at' => 'datetime',
     ];
 }

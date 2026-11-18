@@ -189,8 +189,11 @@
                         @foreach ($items as $item)
                             <div class="product-item">
                                 <div class="product-thumb">
-                                    @if ($item['product']->gambar)
-                                        <img src="{{ asset('storage/' . $item['product']->gambar) }}"
+                                    @php
+                                        $returnProductThumb = $item['product']->foto_1 ?? $item['product']->gambar ?? null;
+                                    @endphp
+                                    @if ($returnProductThumb)
+                                        <img src="{{ asset('storage/' . $returnProductThumb) }}"
                                             alt="{{ $item['product']->nama_produk }}">
                                     @else
                                         <img src="{{ asset('image/logo_circle.png') }}"

@@ -44,14 +44,29 @@ class BannerController extends Controller
         ));
     }
 
+    private function safeBannerLinkRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || trim((string) $value) === '') {
+                return;
+            }
+            $trimmed = trim((string) $value);
+            $isRelative = str_starts_with($trimmed, '/') && !str_starts_with($trimmed, '//');
+            $isHttpUrl = (bool) preg_match('#^https?://#i', $trimmed) && filter_var($trimmed, FILTER_VALIDATE_URL);
+            if (!$isRelative && !$isHttpUrl) {
+                $fail('URL tautan banner harus berupa path internal (diawali /) atau URL http/https yang valid.');
+            }
+        };
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'judul_banner' => 'required|string|max:255',
             'subjudul' => 'nullable|string|max:255',
-            'gambar_banner' => 'required|image|mimes:jpeg,png,jpg,svg,webp|max:4096',
+            'gambar_banner' => 'required|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
             'posisi_banner' => 'required|in:home_hero,shop_header,custom_header,popup_promo',
-            'link_url' => 'nullable|string|max:255',
+            'link_url' => ['nullable', 'string', 'max:255', $this->safeBannerLinkRule()],
             'urutan' => 'nullable|integer|min:0',
             'status' => 'required|in:Aktif,Nonaktif',
         ]);
@@ -72,9 +87,9 @@ class BannerController extends Controller
         $validated = $request->validate([
             'judul_banner' => 'required|string|max:255',
             'subjudul' => 'nullable|string|max:255',
-            'gambar_banner' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:4096',
+            'gambar_banner' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
             'posisi_banner' => 'required|in:home_hero,shop_header,custom_header,popup_promo',
-            'link_url' => 'nullable|string|max:255',
+            'link_url' => ['nullable', 'string', 'max:255', $this->safeBannerLinkRule()],
             'urutan' => 'nullable|integer|min:0',
             'status' => 'required|in:Aktif,Nonaktif',
         ]);

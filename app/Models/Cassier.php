@@ -7,4 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Cassier extends Model
 {
     protected $fillable = ['name', 'email', 'password', 'status', 'image'];
+
+    protected $hidden = ['password'];
 }

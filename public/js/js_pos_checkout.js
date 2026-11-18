@@ -61,6 +61,23 @@ let cart = {};
         }
     }
 
+    function escapePosCheckoutHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function incrementPosCheckoutItem(id) {
+        if (!cart[id]) return;
+        let item = cart[id];
+        let origPrice = parseFloat(item.originalPrice) || parseFloat(item.price);
+        addToCart(id, item.name, item.price, item.image, item.maxStock || 999, origPrice);
+    }
+
     function renderCheckout() {
         let html = '';
         let breakdownHtml = '';
@@ -78,12 +95,13 @@ let cart = {};
 
         if (distinctCount === 0) {
             if (footerEl) footerEl.style.display = 'none';
+            const posIndexUrl = escapePosCheckoutHtml((window.posCheckoutConfig && window.posCheckoutConfig.posIndexRoute) || '/admin/pos');
             html = `
                 <tr>
                     <td colspan="4" class="text-center py-5 text-muted">
                         <i class="mdi mdi-cart-off mb-2 text-muted" style="font-size: 48px; display: block;"></i>
                         <p class="mb-3" style="font-size: 14px;">Keranjang belanja kosong</p>
-                        <a href=" + ((window.posCheckoutConfig && window.posCheckoutConfig.posIndexRoute) || '/admin/pos') + " class="btn btn-sm btn-primary px-3 shadow-sm" style="border-radius: 6px;">
+                        <a href="${posIndexUrl}" class="btn btn-sm btn-primary px-3 shadow-sm" style="border-radius: 6px;">
                             <i class="mdi mdi-arrow-left me-1"></i> Pilih Produk di Kasir
                         </a>
                     </td>
@@ -105,10 +123,12 @@ let cart = {};
 
         for (let id in cart) {
             let item = cart[id];
+            let safeId = parseInt(id) || 0;
+            let safeQty = parseInt(item.quantity) || 1;
             let origPrice = parseFloat(item.originalPrice) || parseFloat(item.price);
             let finalPrice = parseFloat(item.price);
-            let itemOriginalTotal = origPrice * item.quantity;
-            let itemFinalTotal = finalPrice * item.quantity;
+            let itemOriginalTotal = origPrice * safeQty;
+            let itemFinalTotal = finalPrice * safeQty;
             let itemDiscountTotal = itemOriginalTotal - itemFinalTotal;
             if (itemDiscountTotal < 0) itemDiscountTotal = 0;
 
@@ -124,9 +144,9 @@ let cart = {};
                 <tr class="border-bottom">
                     <td class="align-middle py-4 ps-4">
                         <div class="d-flex align-items-center">
-                            <img src="${item.image}" alt="${item.name}" class="rounded flex-shrink-0" style="width: 70px; height: 70px; object-fit: cover;">
+                            <img src="${escapePosCheckoutHtml(item.image)}" alt="${escapePosCheckoutHtml(item.name)}" class="rounded flex-shrink-0" style="width: 70px; height: 70px; object-fit: cover;">
                             <div class="ms-3">
-                                <span class="d-block text-dark font-weight-500" style="font-size: 14px;">${item.name}</span>
+                                <span class="d-block text-dark font-weight-500" style="font-size: 14px;">${escapePosCheckoutHtml(item.name)}</span>
                                 ${itemDiscountTotal > 0 ? `<span class="badge text-danger mt-1" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #fee2e2; border: 1px solid #fca5a5;">Diskon ${discountPercent}%</span>` : ''}
                             </div>
                         </div>
@@ -137,11 +157,11 @@ let cart = {};
                     </td>
                     <td class="align-middle text-center">
                         <div class="d-inline-flex align-items-center rounded-pill border px-2 py-1" style="background: #f8f9fa;">
-                            <button class="btn p-0 text-muted" onclick="removeFromCart(${id});" style="border:none; background:transparent; line-height: 1;" title="Kurangi">
+                            <button class="btn p-0 text-muted" onclick="removeFromCart(${safeId});" style="border:none; background:transparent; line-height: 1;" title="Kurangi">
                                 <i class="mdi mdi-minus"></i>
                             </button>
-                            <input type="text" class="form-control text-center border-0 p-0 mx-2 bg-transparent" value="${item.quantity}" readonly style="width: 30px; font-size: 14px;">
-                            <button class="btn p-0 text-muted" onclick="addToCart(${id}, '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${item.image}', ${item.maxStock || 999}, ${origPrice});" style="border:none; background:transparent; line-height: 1;" title="Tambah">
+                            <input type="text" class="form-control text-center border-0 p-0 mx-2 bg-transparent" value="${safeQty}" readonly style="width: 30px; font-size: 14px;">
+                            <button class="btn p-0 text-muted" onclick="incrementPosCheckoutItem(${safeId});" style="border:none; background:transparent; line-height: 1;" title="Tambah">
                                 <i class="mdi mdi-plus"></i>
                             </button>
                         </div>
@@ -149,7 +169,7 @@ let cart = {};
                     <td class="align-middle font-weight-bold pe-4 text-end" style="font-size: 14px;">
                         <div class="d-flex align-items-center justify-content-end gap-2">
                             <span>Rp. ${itemFinalTotal.toLocaleString('id-ID')}</span>
-                            <button class="btn btn-sm text-muted p-0" onclick="delete cart[${id}]; saveCartToStorage(); renderCheckout();" style="border:none; background:transparent; line-height: 1;" title="Hapus">
+                            <button class="btn btn-sm text-muted p-0" onclick="delete cart[${safeId}]; saveCartToStorage(); renderCheckout();" style="border:none; background:transparent; line-height: 1;" title="Hapus">
                                 <i class="mdi mdi-close-circle-outline" style="font-size: 20px;"></i>
                             </button>
                         </div>
@@ -160,7 +180,7 @@ let cart = {};
             breakdownHtml += `
                 <div class="p-2 px-3 mb-2 rounded bg-light border" style="font-size: 12px; border-color: #f1f5f9 !important;">
                     <div class="d-flex justify-content-between font-weight-bold text-dark mb-1">
-                        <span class="text-truncate me-2" title="${item.name}">${item.name} (${item.quantity}x)</span>
+                        <span class="text-truncate me-2" title="${escapePosCheckoutHtml(item.name)}">${escapePosCheckoutHtml(item.name)} (${safeQty}x)</span>
                         <span class="text-nowrap">Rp. ${itemFinalTotal.toLocaleString('id-ID')}</span>
                     </div>
                     <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">

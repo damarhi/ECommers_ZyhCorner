@@ -545,13 +545,23 @@ window.saveAddress = function(e) {
             Swal.close();
             console.error(err);
             Swal.fire({
-                title: 'Berhasil!',
-                text: 'Alamat berhasil diperbarui secara lokal.',
-                icon: 'success',
+                title: 'Gagal!',
+                text: 'Koneksi ke server gagal. Perubahan alamat belum tersimpan.',
+                icon: 'error',
                 confirmButtonColor: '#00b207'
             });
         });
 };
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 // Modal Add Address
 window.openAddAddressModal = function() {
@@ -745,9 +755,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             dropdownEl.innerHTML = matches.map(a => `
-                <div class="area-dropdown-item" data-id="${a.id}" data-name="${a.name}, ${a.city}" data-postal="${a.postal}">
-                    <strong>${a.name}</strong>
-                    <div class="area-detail">${a.city} &bull; ${a.postal}</div>
+                <div class="area-dropdown-item" data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.name + ', ' + a.city)}" data-postal="${escapeHtml(a.postal)}">
+                    <strong>${escapeHtml(a.name)}</strong>
+                    <div class="area-detail">${escapeHtml(a.city)} &bull; ${escapeHtml(a.postal)}</div>
                 </div>
             `).join('');
             dropdownEl.style.display = 'block';
@@ -837,8 +847,12 @@ window.showTabAlert = function(tabName) {
     });
 }
 
-// Cancel Order Handler
+// Cancel Order Handler (connected to real backend endpoint)
 window.cancelOrder = function(id, orderNumber) {
+    const csrfToken = (window.dashboardConfig && window.dashboardConfig.csrfToken)
+        || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        || '';
+
     Swal.fire({
         title: 'Batalkan Pesanan?',
         text: `Apakah Anda yakin ingin membatalkan pesanan ${orderNumber}?`,
@@ -857,20 +871,52 @@ window.cancelOrder = function(id, orderNumber) {
                 showConfirmButton: false,
                 didOpen: () => { Swal.showLoading(); }
             });
-            
-            // POST request to cancel order (mocking logic or endpoint if exists, otherwise display success)
-            setTimeout(() => {
+
+            fetch(`/order-history/${encodeURIComponent(id)}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    cancel_reason: 'Dibatalkan oleh pelanggan'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
                 Swal.close();
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Dibatalkan!',
+                        text: data.message || 'Pesanan Anda telah berhasil dibatalkan.',
+                        icon: 'success',
+                        confirmButtonColor: '#00b207',
+                        customClass: { popup: 'rounded-4' }
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Gagal!',
+                        text: data.message || 'Pesanan tidak dapat dibatalkan.',
+                        icon: 'error',
+                        confirmButtonColor: '#00b207',
+                        customClass: { popup: 'rounded-4' }
+                    });
+                }
+            })
+            .catch(err => {
+                Swal.close();
+                console.error(err);
                 Swal.fire({
-                    title: 'Dibatalkan!',
-                    text: 'Pesanan Anda telah berhasil dibatalkan.',
-                    icon: 'success',
+                    title: 'Error!',
+                    text: 'Koneksi ke server gagal. Silakan coba kembali.',
+                    icon: 'error',
                     confirmButtonColor: '#00b207',
                     customClass: { popup: 'rounded-4' }
-                }).then(() => {
-                    window.location.reload();
                 });
-            }, 1000);
+            });
         }
     });
 }

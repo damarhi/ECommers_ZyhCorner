@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cassier;
 use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -34,24 +35,43 @@ class AdminSettingsController extends Controller
     public function updateProfile(Request $request)
     {
         $admin = auth()->user();
+        $oldEmail = $admin->email;
+
+        $emailRules = ['required', 'email', 'unique:users,email,' . $admin->user_id . ',user_id'];
+        if ($admin->role === 'kasir') {
+            $existingCassier = Cassier::where('email', $oldEmail)->first();
+            $cassierIgnore = $existingCassier ? (',' . $existingCassier->id) : '';
+            $emailRules[] = 'unique:cassiers,email' . $cassierIgnore;
+        }
 
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $admin->user_id . ',user_id',
+            'email' => $emailRules,
             'no_hp' => 'nullable|string|max:20',
-            'foto' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:4096',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|extensions:jpeg,png,jpg,gif,webp|max:4096',
         ]);
 
         if ($request->hasFile('foto')) {
             if ($admin->foto && Storage::disk('public')->exists($admin->foto)) {
                 Storage::disk('public')->delete($admin->foto);
+            } elseif ($admin->avatar && str_starts_with($admin->avatar, 'uploads/avatars/') && !str_contains($admin->avatar, '..') && is_file(public_path($admin->avatar))) {
+                @unlink(public_path($admin->avatar));
             }
-            $validated['foto'] = $request->file('foto')->store('profiles', 'public');
+            $storedProfile = $request->file('foto')->store('profiles', 'public');
+            $validated['avatar'] = 'storage/' . $storedProfile;
         }
+        unset($validated['foto']);
 
         $admin->update($validated);
 
-        if (!empty($validated['no_hp'])) {
+        if ($admin->role === 'kasir') {
+            Cassier::where('email', $oldEmail)->update([
+                'name' => $validated['nama'],
+                'email' => $validated['email'],
+            ]);
+        }
+
+        if ($admin->role === 'admin' && !empty($validated['no_hp'])) {
             StoreSetting::set('store_phone', $validated['no_hp'], 'Nomor WhatsApp / Telepon', 'contact');
             session(['store_phone' => $validated['no_hp']]);
         }

@@ -18,6 +18,10 @@ class EnsureUserRole
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!Auth::check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
             return redirect()->route('login');
         }
 
@@ -28,6 +32,12 @@ class EnsureUserRole
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
+                ], 403);
+            }
+
             return redirect()->route('login')->withErrors([
                 'email' => 'Akun Anda telah dinonaktifkan atau diblokir oleh administrator. Silakan hubungi layanan pelanggan.',
             ]);
@@ -35,6 +45,12 @@ class EnsureUserRole
 
         // If specific roles are required and user's role is not in the allowed list
         if (!empty($roles) && !in_array($user->role, $roles, true)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Akses Ditolak: Anda tidak memiliki izin untuk mengakses halaman ini.',
+                ], 403);
+            }
+
             abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
 

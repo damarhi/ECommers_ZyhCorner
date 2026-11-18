@@ -22,7 +22,7 @@ class KasirEmailNotificationTest extends TestCase
     {
         Mail::fake();
 
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir Zyh',
             'email' => 'kasir@zyhcorner.com',
             'no_hp' => '08123456789',
@@ -43,7 +43,15 @@ class KasirEmailNotificationTest extends TestCase
             'jenis_produk' => 'showcase',
         ]);
 
-        $response = $this->actingAs($kasir)->postJson('/checkout', [
+        $pelanggan = User::factory()->create([
+            'nama' => 'Pelanggan Zyh',
+            'email' => 'pembeli@zyhcorner.com',
+            'no_hp' => '08123456799',
+            'password' => bcrypt('password'),
+            'role' => 'pelanggan',
+        ]);
+
+        $response = $this->actingAs($pelanggan)->postJson('/checkout', [
             'items' => [
                 ['id' => $product->id_produk, 'qty' => 1]
             ],
@@ -61,6 +69,7 @@ class KasirEmailNotificationTest extends TestCase
     public function test_retur_produk_triggers_kasir_email_notification()
     {
         Mail::fake();
+        \Illuminate\Support\Facades\Storage::fake('public');
 
         $user = User::create([
             'nama' => 'Pelanggan Test',
@@ -106,7 +115,7 @@ class KasirEmailNotificationTest extends TestCase
         });
 
         // Test admin updating return status maintains foto_retur intact
-        $admin = User::create([
+        $admin = User::factory()->create([
             'nama' => 'Admin Test',
             'email' => 'admin_test@gmail.com',
             'no_hp' => '081234567899',

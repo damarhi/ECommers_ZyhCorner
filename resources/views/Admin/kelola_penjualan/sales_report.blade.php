@@ -183,14 +183,15 @@
                 <tbody>
                     @foreach($expiredProductsList as $idx => $exp)
                         @php
+                            $stokExpiredNum = \App\Services\SalesReportService::parseStockQuantity($exp->jumlah_stok);
                             $hargaSatuan = $exp->produk ? floatval($exp->produk->harga) : 0;
-                            $subtotalLoss = $hargaSatuan * intval($exp->jumlah_stok);
+                            $subtotalLoss = $hargaSatuan * $stokExpiredNum;
                         @endphp
                         <tr>
                             <td>{{ $idx + 1 }}</td>
                             <td><strong>{{ $exp->produk->nama_produk ?? 'Produk Dihapus' }}</strong></td>
                             <td>{{ $exp->tanggal_expired ? \Carbon\Carbon::parse($exp->tanggal_expired)->format('d/m/Y') : '-' }}</td>
-                            <td style="text-align: center; font-weight: 600; color: #ea580c;">{{ number_format($exp->jumlah_stok, 0, ',', '.') }} pcs</td>
+                            <td style="text-align: center; font-weight: 600; color: #ea580c;">{{ number_format($stokExpiredNum, 0, ',', '.') }} pcs</td>
                             <td style="text-align: right;">Rp. {{ number_format($hargaSatuan, 0, ',', '.') }}</td>
                             <td style="text-align: right; font-weight: 600; color: #dc2626;">Rp. {{ number_format($subtotalLoss, 0, ',', '.') }}</td>
                         </tr>
@@ -226,25 +227,9 @@
                     @php $sumReturPrice = 0; @endphp
                     @foreach($returnedProductsList as $idx => $retur)
                         @php
-                            $pPrice = 0;
-                            $productMapByName = \App\Models\Produk::all()->keyBy('nama_produk');
-                            $orderMapByNumber = \App\Models\Pesanan::all()->keyBy('order_number');
-
-                            if ($retur->product_name && $productMapByName->has($retur->product_name)) {
-                                $pPrice = floatval($productMapByName->get($retur->product_name)->harga);
-                            } elseif ($retur->order_id && $orderMapByNumber->has($retur->order_id)) {
-                                $ord = $orderMapByNumber->get($retur->order_id);
-                                $items = is_array($ord->items) ? $ord->items : [];
-                                foreach ($items as $it) {
-                                    if (strcasecmp($it['name'] ?? '', $retur->product_name ?? '') === 0) {
-                                        $pPrice = floatval($it['price'] ?? 0);
-                                        break;
-                                    }
-                                }
-                                if ($pPrice <= 0 && count($items) > 0) {
-                                    $pPrice = floatval($items[0]['price'] ?? 0);
-                                }
-                            }
+                            $pPrice = isset($returResolvedPrices[$retur->id])
+                                ? (float) $returResolvedPrices[$retur->id]
+                                : 0.0;
                             $sumReturPrice += $pPrice;
                         @endphp
                         <tr>

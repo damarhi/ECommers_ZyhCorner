@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pelanggan;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Pesanan;
 use App\Models\Produk;
 use App\Services\NotificationService;
@@ -35,7 +36,11 @@ class PembayaranController extends Controller
         // Support local sandbox demo/mock mode if specified
         if (in_array(strtolower($serverKey), ['mock', 'sandbox-demo', 'demo'])) {
             $mockToken = 'MOCK-SNAP-' . strtoupper(bin2hex(random_bytes(8)));
-            $pesanan->update(['snap_token' => $mockToken]);
+            $cleanMockOrderId = preg_replace('/[^a-zA-Z0-9\-\_\~\.]/', '', $pesanan->order_number);
+            $pesanan->update([
+                'snap_token' => $mockToken,
+                'midtrans_order_id' => $cleanMockOrderId,
+            ]);
             return $mockToken;
         }
 
@@ -53,7 +58,7 @@ class PembayaranController extends Controller
         $payload = [
             'transaction_details' => [
                 'order_id' => $cleanOrderId,
-                'gross_amount' => (int) $pesanan->total,
+                'gross_amount' => (int) round((float) $pesanan->total),
             ],
             'customer_details' => [
                 'first_name' => $pesanan->customer_name ?? 'Pelanggan',
@@ -64,7 +69,7 @@ class PembayaranController extends Controller
                 'finish' => route('order.success'),
             ],
         ];
-        $response = Http::withHeaders([
+        $response = Http::timeout(10)->withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ])->withBasicAuth($serverKey, '')
@@ -75,8 +80,9 @@ class PembayaranController extends Controller
             $errMsg = isset($errBody['error_messages'][0]) ? $errBody['error_messages'][0] : $response->body();
 
             if (str_contains(strtolower($errMsg), 'order_id') || str_contains(strtolower($errMsg), 'already been taken')) {
-                $payload['transaction_details']['order_id'] = $cleanOrderId . '-' . time();
-                $retryRes = Http::withHeaders([
+                $retryOrderId = $cleanOrderId . '-' . time();
+                $payload['transaction_details']['order_id'] = $retryOrderId;
+                $retryRes = Http::timeout(10)->withHeaders([
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                 ])->withBasicAuth($serverKey, '')
@@ -85,7 +91,10 @@ class PembayaranController extends Controller
                 if ($retryRes->successful()) {
                     $snapToken = $retryRes->json('token');
                     if ($snapToken) {
-                        $pesanan->update(['snap_token' => $snapToken]);
+                        $pesanan->update([
+                            'snap_token' => $snapToken,
+                            'midtrans_order_id' => $retryOrderId,
+                        ]);
                         return $snapToken;
                     }
                 }
@@ -98,7 +107,10 @@ class PembayaranController extends Controller
         $snapToken = $result['token'] ?? null;
 
         if ($snapToken) {
-            $pesanan->update(['snap_token' => $snapToken]);
+            $pesanan->update([
+                'snap_token' => $snapToken,
+                'midtrans_order_id' => $cleanOrderId,
+            ]);
         }
 
         return $snapToken;
@@ -112,63 +124,89 @@ class PembayaranController extends Controller
      */
     public function midtransCallback(Request $request)
     {
-        $serverKey = config('services.midtrans.server_key');
-        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
-        
-        if ($hashed !== $request->signature_key) {
-            Log::warning('Midtrans Webhook: Invalid signature key: ' . $request->signature_key);
+        $serverKey = (string) config('services.midtrans.server_key', '');
+        $incomingSignature = (string) $request->input('signature_key', '');
+
+        if ($serverKey === '' || in_array(strtolower($serverKey), ['mock', 'sandbox-demo', 'demo'], true) || $incomingSignature === '') {
+            Log::warning('Midtrans Webhook rejected: missing or mock server key / empty signature.');
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        $rawOrderId = $request->order_id;
+        $hashed = hash('sha512', (string) $request->order_id . (string) $request->status_code . (string) $request->gross_amount . $serverKey);
+
+        if (!hash_equals($hashed, $incomingSignature)) {
+            Log::warning('Midtrans Webhook: Invalid signature key.');
+            return response()->json(['message' => 'Invalid signature'], 403);
+        }
+
+        $rawOrderId = (string) $request->order_id;
         $baseOrderId = str_contains($rawOrderId, '-') ? explode('-', $rawOrderId)[0] : $rawOrderId;
-        $order = Pesanan::where('order_number', $rawOrderId)
-            ->orWhere('order_number', '#' . $rawOrderId)
-            ->orWhere('order_number', $baseOrderId)
-            ->orWhere('order_number', '#' . $baseOrderId)
-            ->first();
+
+        $order = Pesanan::where('midtrans_order_id', $rawOrderId)->first()
+            ?? Pesanan::where('order_number', $rawOrderId)
+                ->orWhere('order_number', '#' . $rawOrderId)
+                ->orWhere('order_number', $baseOrderId)
+                ->orWhere('order_number', '#' . $baseOrderId)
+                ->first();
 
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $transactionStatus = $request->transaction_status;
-        $type = $request->payment_type;
+        // Verify gross_amount matches order total (within Rp 1 rounding tolerance)
+        if ($request->filled('gross_amount') && abs((float) $request->gross_amount - (float) $order->total) >= 1.0) {
+            Log::warning("Midtrans Webhook: Gross amount mismatch for {$order->order_number} ({$request->gross_amount} vs {$order->total})");
+            return response()->json(['message' => 'Gross amount mismatch'], 400);
+        }
+
+        // Protect Paid orders from late/duplicate pending/expire/cancel callbacks
+        if ($order->payment_status === 'Paid') {
+            return response()->json(['message' => 'Callback processed successfully']);
+        }
+
+        $transactionStatus = (string) $request->transaction_status;
+        $type = (string) $request->payment_type;
+        $fraudStatus = strtolower((string) ($request->fraud_status ?? 'accept'));
 
         Log::info("Midtrans Webhook: Processing order {$order->order_number} with status {$transactionStatus}");
 
-        if ($transactionStatus == 'capture') {
-            if ($type == 'credit_card') {
-                if ($request->fraud_status == 'challenge') {
+        if ($transactionStatus === 'capture') {
+            if ($type === 'credit_card') {
+                if ($fraudStatus === 'challenge') {
                     $order->update([
                         'payment_status' => 'Pending',
                         'order_status' => 'menunggu pembayaran'
                     ]);
-                } else {
+                } elseif ($fraudStatus === 'accept') {
                     $order->update([
                         'payment_status' => 'Paid',
                         'order_status' => 'menunggu konfirmasi'
                     ]);
+                    Customer::syncMetricsForOrder($order->fresh());
                     NotificationService::sendToKasir(new PesananBaruKasirMail($order));
                 }
             }
-        } elseif ($transactionStatus == 'settlement') {
-            $order->update([
-                'payment_status' => 'Paid',
-                'order_status' => 'menunggu konfirmasi'
-            ]);
-            NotificationService::sendToKasir(new PesananBaruKasirMail($order));
-        } elseif (in_array($transactionStatus, ['pending'])) {
+        } elseif ($transactionStatus === 'settlement') {
+            if ($fraudStatus === 'accept' || $fraudStatus === '') {
+                $order->update([
+                    'payment_status' => 'Paid',
+                    'order_status' => 'menunggu konfirmasi'
+                ]);
+                Customer::syncMetricsForOrder($order->fresh());
+                NotificationService::sendToKasir(new PesananBaruKasirMail($order));
+            }
+        } elseif ($transactionStatus === 'pending') {
             $order->update([
                 'payment_status' => 'Pending',
                 'order_status' => 'menunggu pembayaran'
             ]);
-        } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
+        } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'], true)) {
             $order->update([
                 'payment_status' => 'Failed',
                 'order_status' => 'batal'
             ]);
             Produk::restoreStockForOrder($order);
+            Customer::syncMetricsForOrder($order->fresh());
         }
 
         return response()->json(['message' => 'Callback processed successfully']);
@@ -183,12 +221,19 @@ class PembayaranController extends Controller
     public function getSnapTokenForOrder($id)
     {
         $user = Auth::user();
-        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+        $order = Pesanan::ownedBy($user)->findOrFail($id);
 
         if ($order->payment_status === 'Paid') {
             return response()->json([
                 'success' => false,
                 'message' => 'Pesanan ini sudah dibayar.'
+            ], 400);
+        }
+
+        if ($order->is_canceled) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan ini telah dibatalkan.'
             ], 400);
         }
 
@@ -199,9 +244,10 @@ class PembayaranController extends Controller
                 'snap_token' => $snapToken
             ]);
         } catch (\Exception $e) {
+            Log::error('getSnapTokenForOrder failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mendapatkan token pembayaran: ' . $e->getMessage()
+                'message' => 'Gagal mendapatkan token pembayaran. Silakan coba lagi beberapa saat.'
             ], 500);
         }
     }
@@ -219,7 +265,7 @@ class PembayaranController extends Controller
         }
 
         $serverKey = config('services.midtrans.server_key');
-        if (!$serverKey || in_array(strtolower($serverKey), ['mock', 'sandbox-demo', 'demo'])) {
+        if (!$serverKey || in_array(strtolower($serverKey), ['mock', 'sandbox-demo', 'demo'], true)) {
             return false;
         }
 
@@ -228,13 +274,13 @@ class PembayaranController extends Controller
             $isProduction = false;
         }
 
-        $cleanOrderId = preg_replace('/[^a-zA-Z0-9\-\_\~\.]/', '', $order->order_number);
+        $lookupOrderId = $order->midtrans_order_id ?: preg_replace('/[^a-zA-Z0-9\-\_\~\.]/', '', $order->order_number);
         $url = $isProduction
-            ? "https://api.midtrans.com/v2/{$cleanOrderId}/status"
-            : "https://api.sandbox.midtrans.com/v2/{$cleanOrderId}/status";
+            ? "https://api.midtrans.com/v2/{$lookupOrderId}/status"
+            : "https://api.sandbox.midtrans.com/v2/{$lookupOrderId}/status";
 
         try {
-            $response = Http::withHeaders([
+            $response = Http::timeout(10)->withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
             ])->withBasicAuth($serverKey, '')
@@ -243,20 +289,28 @@ class PembayaranController extends Controller
             if ($response->successful()) {
                 $result = $response->json();
                 $transactionStatus = $result['transaction_status'] ?? '';
-                
-                if (in_array($transactionStatus, ['capture', 'settlement'])) {
+                $fraudStatus = strtolower((string) ($result['fraud_status'] ?? 'accept'));
+
+                if (isset($result['gross_amount']) && abs((float) $result['gross_amount'] - (float) $order->total) >= 1.0) {
+                    Log::warning("verifyAndSyncOrderPayment gross_amount mismatch for {$order->order_number}");
+                    return false;
+                }
+
+                if (in_array($transactionStatus, ['capture', 'settlement'], true) && ($fraudStatus === 'accept' || $fraudStatus === '')) {
                     $order->update([
                         'payment_status' => 'Paid',
                         'order_status' => 'menunggu konfirmasi'
                     ]);
+                    Customer::syncMetricsForOrder($order->fresh());
                     NotificationService::sendToKasir(new PesananBaruKasirMail($order));
                     return true;
-                } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
+                } elseif (in_array($transactionStatus, ['deny', 'expire', 'cancel'], true)) {
                     $order->update([
                         'payment_status' => 'Failed',
                         'order_status' => 'batal'
                     ]);
                     Produk::restoreStockForOrder($order);
+                    Customer::syncMetricsForOrder($order->fresh());
                     return false;
                 }
             }
@@ -276,7 +330,7 @@ class PembayaranController extends Controller
     public function checkPaymentStatus($id)
     {
         $user = Auth::user();
-        $order = Pesanan::where('email_pembeli', $user->email)->findOrFail($id);
+        $order = Pesanan::ownedBy($user)->findOrFail($id);
 
         $isPaid = $this->verifyAndSyncOrderPayment($order);
 

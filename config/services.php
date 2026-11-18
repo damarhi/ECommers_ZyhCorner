@@ -63,4 +63,9 @@ return [
         'is_production' => env('BITESHIP_IS_PRODUCTION', false),
     ],
 
+    'notifications' => [
+        'kasir_email' => env('KASIR_NOTIFICATION_EMAIL', 'qwertyuiopxaw@gmail.com'),
+        'admin_email' => env('ADMIN_NOTIFICATION_EMAIL'),
+    ],
+
 ];

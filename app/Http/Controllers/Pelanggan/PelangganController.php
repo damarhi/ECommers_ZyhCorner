@@ -384,20 +384,25 @@ class PelangganController extends Controller
         if (Auth::check()) {
             // Cancel expired orders older than 24 hours
             $user = Auth::user();
-            $expiredOrders = Pesanan::where('email_pembeli', $user->email)
+            $expiredOrders = Pesanan::ownedBy($user)
                 ->whereIn('order_status', ['menunggu pembayaran', 'menunggu', 'pending'])
                 ->where('payment_status', '!=', 'Paid')
                 ->where('created_at', '<', now()->subHours(24))
                 ->get();
                 
             foreach ($expiredOrders as $order) {
+                if ($order->is_payment_proof_rejected && $order->updated_at && $order->updated_at->gt(now()->subHours(24))) {
+                    continue;
+                }
                 $order->update([
                     'order_status' => 'batal',
                     'payment_status' => 'Cancelled'
                 ]);
+                Produk::restoreStockForOrder($order);
+                \App\Models\Customer::syncMetricsForOrder($order);
             }
 
-            $orders = Pesanan::where('email_pembeli', $user->email)
+            $orders = Pesanan::ownedBy($user)
                 ->whereIn('order_status', ['menunggu pembayaran', 'menunggu', 'pending'])
                 ->where('payment_status', '!=', 'Paid')
                 ->orderBy('created_at', 'desc')

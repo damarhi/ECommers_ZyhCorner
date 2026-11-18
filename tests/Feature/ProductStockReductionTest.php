@@ -51,7 +51,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_product_stock_decrements_on_pos_offline_checkout()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir POS Test',
             'email' => 'kasirpos@zyhcorner.com',
             'no_hp' => '08123456788',
@@ -95,7 +95,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_pos_offline_checkout_rejects_out_of_stock_product()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir POS OutOfStock',
             'email' => 'kasiroos@zyhcorner.com',
             'no_hp' => '08123456787',
@@ -132,7 +132,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_pos_offline_checkout_rejects_excessive_quantity()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir POS Excessive',
             'email' => 'kasirexcess@zyhcorner.com',
             'no_hp' => '08123456786',
@@ -169,7 +169,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_pos_offline_checkout_works_with_browser_keyed_items()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir Browser Payload',
             'email' => 'kasirbrowser@zyhcorner.com',
             'no_hp' => '08123456785',
@@ -219,7 +219,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_kasir_can_add_stock_from_pos_modal()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir Restock Test',
             'email' => 'kasirrestock@zyhcorner.com',
             'no_hp' => '08123456784',
@@ -262,7 +262,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_add_stock_from_pos_validates_input()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir Invalid Restock',
             'email' => 'kasirinvalid@zyhcorner.com',
             'no_hp' => '08123456783',
@@ -293,7 +293,7 @@ class ProductStockReductionTest extends TestCase
 
     public function test_pos_page_prioritizes_products_with_stock()
     {
-        $kasir = User::create([
+        $kasir = User::factory()->create([
             'nama' => 'Kasir Priority Test',
             'email' => 'kasirpriority@zyhcorner.com',
             'no_hp' => '08123456782',

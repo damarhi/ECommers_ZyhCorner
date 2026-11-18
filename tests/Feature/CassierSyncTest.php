@@ -86,7 +86,7 @@ class CassierSyncTest extends TestCase
             'status' => 'Active'
         ]);
 
-        $user = User::create([
+        $user = User::factory()->create([
             'nama' => 'Old Name',
             'email' => 'old.email@example.com',
             'password' => Hash::make('old_password'),
@@ -130,7 +130,7 @@ class CassierSyncTest extends TestCase
             'status' => 'Active'
         ]);
 
-        $user = User::create([
+        $user = User::factory()->create([
             'nama' => 'Delete Me',
             'email' => 'delete.me@example.com',
             'password' => Hash::make('password'),

@@ -32,21 +32,29 @@ class AdminDashboardController extends Controller
 
         $totalPelanggan = User::where('role', 'pelanggan')->count();
 
-        // 2. Data Grafik Penjualan 7 Hari Terakhir
+        // 2. Data Grafik Penjualan 7 Hari Terakhir (1 agregasi GROUP BY menggantikan 7 query berulang)
+        $sevenDaysStart = $now->copy()->subDays(6)->startOfDay();
+        $dailyTotalsMap = Pesanan::where('payment_status', 'Paid')
+            ->where('created_at', '>=', $sevenDaysStart)
+            ->selectRaw('DATE(created_at) as sale_date, SUM(total) as daily_sum')
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('daily_sum', 'sale_date');
+
         $chartLabels = [];
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $day = $now->copy()->subDays($i);
+            $dateKey = $day->format('Y-m-d');
             $chartLabels[] = $day->translatedFormat('d M');
-            $dailyTotal = Pesanan::where('payment_status', 'Paid')
-                ->whereDate('created_at', $day->format('Y-m-d'))
-                ->sum('total');
-            $chartData[] = (float) $dailyTotal;
+            $chartData[] = (float) ($dailyTotalsMap[$dateKey] ?? 0);
         }
 
-        // 3. Sumber Transaksi (Online vs Offline)
-        $onlineCount = Pesanan::where('jenis_penjualan', 'Online')->count();
-        $offlineCount = Pesanan::where('jenis_penjualan', 'Offline')->count();
+        // 3. Sumber Transaksi (Online vs Offline) dalam 1 query GROUP BY
+        $channelCounts = Pesanan::selectRaw('jenis_penjualan, COUNT(*) as cnt')
+            ->groupBy('jenis_penjualan')
+            ->pluck('cnt', 'jenis_penjualan');
+        $onlineCount = (int) ($channelCounts['Online'] ?? 0);
+        $offlineCount = (int) ($channelCounts['Offline'] ?? 0);
 
         // 4. Pesanan Terbaru (5 transaksi terakhir)
         $recentOrders = Pesanan::latest('created_at')->take(5)->get();

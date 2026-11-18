@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -44,48 +45,51 @@ class BiteshipService
             return [];
         }
 
-        $apiKey = config('services.biteship.api_key');
+        $apiKey = (string) config('services.biteship.api_key', '');
+        $cacheKey = 'biteship_areas_' . md5(strtolower($query) . '|' . ($apiKey !== '' ? 'api' : 'local'));
 
-        if ($apiKey) {
-            try {
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Accept' => 'application/json',
-                ])->timeout(5)->get('https://api.biteship.com/v1/locations/areas', [
-                    'countries' => 'ID',
-                    'input' => $query,
-                    'type' => 'single',
-                ]);
+        return Cache::remember($cacheKey, 3600, function () use ($query, $apiKey) {
+            if ($apiKey !== '') {
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Accept' => 'application/json',
+                    ])->timeout(5)->get('https://api.biteship.com/v1/locations/areas', [
+                        'countries' => 'ID',
+                        'input' => $query,
+                        'type' => 'single',
+                    ]);
 
-                if ($response->successful()) {
-                    $areas = $response->json('areas') ?? [];
-                    if (!empty($areas)) {
-                        return array_map(function ($item) {
-                            $division2 = $item['administrative_division_level_2_name'] ?? '';
-                            $division1 = $item['administrative_division_level_1_name'] ?? '';
-                            $city = trim($division2 . ($division1 ? ', ' . $division1 : ''));
+                    if ($response->successful()) {
+                        $areas = $response->json('areas') ?? [];
+                        if (!empty($areas)) {
+                            return array_map(function ($item) {
+                                $division2 = $item['administrative_division_level_2_name'] ?? '';
+                                $division1 = $item['administrative_division_level_1_name'] ?? '';
+                                $city = trim($division2 . ($division1 ? ', ' . $division1 : ''));
 
-                            return [
-                                'id' => $item['id'] ?? '',
-                                'name' => $item['name'] ?? '',
-                                'city' => $city,
-                                'postal' => (string) ($item['postal_code'] ?? ''),
-                            ];
-                        }, $areas);
+                                return [
+                                    'id' => $item['id'] ?? '',
+                                    'name' => $item['name'] ?? '',
+                                    'city' => $city,
+                                    'postal' => (string) ($item['postal_code'] ?? ''),
+                                ];
+                            }, $areas);
+                        }
                     }
+                } catch (\Throwable $e) {
+                    Log::warning('Biteship API area search failed: ' . $e->getMessage());
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Biteship API area search failed: ' . $e->getMessage());
             }
-        }
 
-        // Fast local fallback for Pelalawan & Riau
-        $qLower = strtolower($query);
-        return array_values(array_filter(self::$defaultAreas, function ($a) use ($qLower) {
-            return str_contains(strtolower($a['name']), $qLower) ||
-                   str_contains(strtolower($a['city']), $qLower) ||
-                   str_contains((string) $a['postal'], $qLower);
-        }));
+            // Fast local fallback for Pelalawan & Riau
+            $qLower = strtolower($query);
+            return array_values(array_filter(self::$defaultAreas, function ($a) use ($qLower) {
+                return str_contains(strtolower($a['name']), $qLower) ||
+                       str_contains(strtolower($a['city']), $qLower) ||
+                       str_contains((string) $a['postal'], $qLower);
+            }));
+        });
     }
 
     /**
